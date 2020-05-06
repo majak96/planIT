@@ -53,7 +53,7 @@ public class SignInActivity extends AppCompatActivity {
                     t.show();
                 }
                 else{
-                    SharedPreference.setLeggedEmail(getApplicationContext(), email.getText().toString());
+                    SharedPreference.setLoggedEmail(getApplicationContext(), email.getText().toString());
                     Intent intent = new Intent(SignInActivity.this, ChooseModeActivity.class);
                     startActivity(intent);
                 }

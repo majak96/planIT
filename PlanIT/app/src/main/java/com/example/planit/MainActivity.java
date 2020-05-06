@@ -40,16 +40,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        if(SharedPreference.getUserName(MainActivity.this)==""){
+        String page = getIntent().getStringExtra("page");
+
+        if(SharedPreference.getLoggedEmail(MainActivity.this)==""){
             startActivity(new Intent(MainActivity.this, SignInActivity.class));
         }
         else{
             //if we enter the activity for the first time (not after rotating etc)
             if(savedInstanceState == null) {
-                //TODO: change the default fragment?
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                        new CalendarFragment()).commit();
-                navigationView.setCheckedItem(R.id.nav_calendar);
+                if(page==null || page.equals("personal")){
+                    //TODO: change the default fragment?
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                            new CalendarFragment()).commit();
+                    navigationView.setCheckedItem(R.id.nav_calendar);
+                }
+                else{
+                    //TODO: change the default fragment?
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                            new TeamsFragment()).commit();
+                    navigationView.setCheckedItem(R.id.nav_teams);
+                }
+
             }
         }
 
@@ -76,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 //TODO: delete this and add settings
                 break;
             case R.id.nav_signout:
-                SharedPreference.setLeggedEmail(getApplicationContext(), "");
+                SharedPreference.setLoggedEmail(getApplicationContext(), "");
                 startActivity(new Intent(MainActivity.this, SignInActivity.class));
                 break;
             default:
