@@ -7,13 +7,15 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.example.planit.activities.SignInActivity;
 import com.example.planit.fragments.CalendarFragment;
 import com.example.planit.fragments.TeamsFragment;
+import com.example.planit.utils.SharedPreference;
 import com.google.android.material.navigation.NavigationView;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -38,13 +40,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        //if we enter the activity for the first time (not after rotating etc)
-        if(savedInstanceState == null) {
-            //TODO: change the default fragment?
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                    new CalendarFragment()).commit();
-            navigationView.setCheckedItem(R.id.nav_calendar);
+        if(SharedPreference.getUserName(MainActivity.this)==""){
+            startActivity(new Intent(MainActivity.this, SignInActivity.class));
         }
+        else{
+            //if we enter the activity for the first time (not after rotating etc)
+            if(savedInstanceState == null) {
+                //TODO: change the default fragment?
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                        new CalendarFragment()).commit();
+                navigationView.setCheckedItem(R.id.nav_calendar);
+            }
+        }
+
     }
 
     @Override
@@ -68,8 +76,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 //TODO: delete this and add settings
                 break;
             case R.id.nav_signout:
-                Toast.makeText(this, "Sign Out!", Toast.LENGTH_SHORT).show();
-                //TODO: delete this and implement sign out
+                SharedPreference.setLeggedEmail(getApplicationContext(), "");
+                startActivity(new Intent(MainActivity.this, SignInActivity.class));
                 break;
             default:
         }

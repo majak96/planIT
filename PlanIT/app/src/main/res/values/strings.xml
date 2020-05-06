@@ -3,4 +3,25 @@
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="logo">Logo image</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_in_google">Sign in with google</string>
+    <string name="sign_in_description">Hi there! Nice to see you again.</string>
+    <string name="sign_in_hint">example@gmail.com</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="password_hint">••••••••</string>
+    <string name="new_to_planit">New to PlanIT?</string>
+    <string name="btn_logout_from_google">Logout from Google</string>
+    <string name="sign_up_now">Sign up now</string>
+
+    <string name="sign_up">Sign up</string>
+    <string name="sign_up_description">Hi there! Welcome to PlanIT.</string>
+    <string name="have_an_account">Have an account?</string>
+    <string name="sign_in_now">Sign in now</string>
+
+    <string name="personal">Personal</string>
+    <string name="teams">Teams</string>
+
 </resources>
