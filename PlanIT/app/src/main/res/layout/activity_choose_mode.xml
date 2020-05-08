@@ -27,20 +27,20 @@
             android:textAlignment="center"
             android:textColor="@color/white"
             android:text="@string/personal"
-            android:background="@color/colorPrimary"
+            android:background="@drawable/rounded_button_primary"
             android:layout_marginTop="40dp"
             android:layout_marginLeft="30dp"
             android:layout_marginRight="30dp" />
 
         <Button
-            android:id="@+id/TeamsModeButton"
+            android:id="@+id/teamsModeButton"
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:textAllCaps="false"
             android:textAlignment="center"
             android:textColor="@color/colorPrimary"
             android:text="@string/teams"
-            android:background="@color/white"
+            android:background="@drawable/rounded_button_white"
             android:layout_marginTop="20dp"
             android:layout_marginLeft="30dp"
             android:layout_marginRight="30dp" />

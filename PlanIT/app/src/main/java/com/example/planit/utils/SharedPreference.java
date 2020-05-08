@@ -12,14 +12,14 @@ public class SharedPreference {
         return PreferenceManager.getDefaultSharedPreferences(ctx);
     }
 
-    public static void setLeggedEmail(Context ctx, String email)
+    public static void setLoggedEmail(Context ctx, String email)
     {
         SharedPreferences.Editor editor = getSharedPreferences(ctx).edit();
         editor.putString(PREF_USER_NAME, email);
         editor.apply();
     }
 
-    public static String getUserName(Context ctx)
+    public static String getLoggedEmail(Context ctx)
     {
         return getSharedPreferences(ctx).getString(PREF_USER_NAME, "");
     }
