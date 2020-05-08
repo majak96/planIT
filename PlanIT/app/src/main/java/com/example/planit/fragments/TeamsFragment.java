@@ -1,4 +1,5 @@
 package com.example.planit.fragments;
+
 import com.example.planit.R;
 
 import android.os.Bundle;
@@ -11,6 +12,10 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 public class TeamsFragment extends Fragment {
+
+    public static TeamsFragment newInstance() {
+        return new TeamsFragment();
+    }
 
     @Nullable
     @Override

@@ -17,6 +17,8 @@ import com.example.planit.fragments.CalendarFragment;
 import com.example.planit.fragments.TeamsFragment;
 import com.example.planit.utils.SharedPreference;
 import com.google.android.material.navigation.NavigationView;
+import androidx.fragment.app.FragmentTransaction;
+
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -60,16 +62,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         switch (item.getItemId()) {
             case R.id.nav_calendar:
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                        new CalendarFragment()).commit();
+                getSupportFragmentManager().beginTransaction()
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                        .replace(R.id.fragment_container, CalendarFragment.newInstance())
+                        .commit();
                 break;
             case R.id.nav_habits:
                 Toast.makeText(this, "Habits!", Toast.LENGTH_SHORT).show();
                 //TODO: delete this and add habits fragment
                 break;
             case R.id.nav_teams:
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                        new TeamsFragment()).commit();
+                getSupportFragmentManager().beginTransaction()
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                        .replace(R.id.fragment_container, TeamsFragment.newInstance())
+                        .commit();
                 break;
             case R.id.nav_settings:
                 Toast.makeText(this, "Settings!", Toast.LENGTH_SHORT).show();
