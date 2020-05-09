@@ -15,14 +15,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.planit.R;
+import com.example.planit.utils.Utils;
+
+import model.User;
 
 public class SignUpActivity extends AppCompatActivity {
-
 
     private TextView signIpLink;
     private Button signUpBtn;
     private EditText email;
     private EditText password;
+    private EditText name;
+    private EditText lastName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,16 +34,19 @@ public class SignUpActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
 
-        email=findViewById(R.id.SignUpEmailInput);
-        password=findViewById(R.id.SignUpPasswordInput);
+        email=findViewById(R.id.signUpEmailInput);
+        password=findViewById(R.id.signUpPasswordInput);
+        name=findViewById(R.id.signUpNameInput);
+        lastName=findViewById(R.id.signUpLastNameInput);
+
         signIpLink = findViewById(R.id.signInLink);
-        signUpBtn = findViewById(R.id.SignUpButton);
+        signUpBtn = findViewById(R.id.signUpButton);
 
         signUpBtn.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
                 hideKeyboard();
-                if(isEmpty(password) || isEmpty(email)){
-                    Toast t = Toast.makeText(SignUpActivity.this, "You must enter email and passwied!", Toast.LENGTH_SHORT);
+                if(isEmpty(password) || isEmpty(email) || isEmpty(name) || isEmpty(lastName)){
+                    Toast t = Toast.makeText(SignUpActivity.this, "You must enter email all fields!", Toast.LENGTH_SHORT);
                     t.show();
                 }
                 else if(!isValidEmail(email.getText().toString())) {
@@ -47,6 +54,9 @@ public class SignUpActivity extends AppCompatActivity {
                     t.show();
                 }
                 else{
+                    User newUser=new User(name.toString(), lastName.toString(), password.toString(), email.toString());
+                    newUser.setColour(Utils.getRandomColor());
+
                     Intent intent = new Intent(SignUpActivity.this, SignInActivity.class);
                     startActivity(intent);
                 }

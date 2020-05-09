@@ -20,8 +20,13 @@
     <string name="sign_up_description">Hi there! Welcome to PlanIT.</string>
     <string name="have_an_account">Have an account?</string>
     <string name="sign_in_now">Sign in now</string>
-
+    <string name="name">Name</string>
+    <string name="last_name">Last name</string>
+    <string name="name_hint">John</string>
+    <string name="last_name_hint">Doe</string>
     <string name="personal">Personal</string>
     <string name="teams">Teams</string>
+
+    <string name="message">Enter message</string>
 
 </resources>

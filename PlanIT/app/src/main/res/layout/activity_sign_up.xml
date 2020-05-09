@@ -37,54 +37,97 @@ tools:context=".activities.SignUpActivity">
         android:text="@string/sign_up_description"
         android:textColor="@color/lightGray"
         android:textSize="15sp"
-        android:layout_marginTop="5dp"
         android:layout_marginLeft="20dp"/>
 
     <TextView
-        android:id="@+id/SignUpEmailText"
+        android:id="@+id/signUpName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/name"
+        android:textColor="@color/colorPrimary"
+        android:textSize="15sp"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="20dp" />
+
+    <EditText
+        android:id="@+id/signUpNameInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/name_hint"
+        android:inputType="textPassword"
+        android:textColor="@color/darkGray"
+        android:textSize="15sp"
+        android:layout_marginTop="1dp"
+        android:layout_marginLeft="18dp"
+        android:layout_marginRight="20dp" />
+
+    <TextView
+        android:id="@+id/signUpLastName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/last_name"
+        android:textColor="@color/colorPrimary"
+        android:textSize="15sp"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="20dp" />
+
+    <EditText
+        android:id="@+id/signUpLastNameInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/last_name_hint"
+        android:inputType="textPassword"
+        android:textColor="@color/darkGray"
+        android:textSize="15sp"
+        android:layout_marginTop="1dp"
+        android:layout_marginLeft="18dp"
+        android:layout_marginRight="20dp" />
+
+    <TextView
+        android:id="@+id/signUpEmailText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/email"
         android:textColor="@color/colorPrimary"
         android:textSize="15sp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="5dp"
         android:layout_marginLeft="20dp" />
 
     <EditText
-        android:id="@+id/SignUpEmailInput"
+        android:id="@+id/signUpEmailInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/sign_in_hint"
         android:textColor="@color/darkGray"
         android:textSize="15sp"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="1dp"
         android:layout_marginLeft="18dp"
         android:layout_marginRight="20dp"/>
 
     <TextView
-        android:id="@+id/SignUpPasswordText"
+        android:id="@+id/signUpPasswordText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/password"
         android:textColor="@color/colorPrimary"
         android:textSize="15sp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="5dp"
         android:layout_marginLeft="20dp" />
 
     <EditText
-        android:id="@+id/SignUpPasswordInput"
+        android:id="@+id/signUpPasswordInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/password_hint"
         android:inputType="textPassword"
         android:textColor="@color/darkGray"
         android:textSize="15sp"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="1dp"
         android:layout_marginLeft="18dp"
         android:layout_marginRight="20dp" />
 
     <Button
-        android:id="@+id/SignUpButton"
+        android:id="@+id/signUpButton"
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:textAllCaps="false"

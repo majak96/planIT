@@ -26,6 +26,7 @@ public class ChooseModeActivity extends AppCompatActivity {
                 Intent intent = new Intent(ChooseModeActivity.this, MainActivity.class);
                 intent.putExtra("page", "personal");
                 startActivity(intent);
+                //startActivity(new Intent(ChooseModeActivity.this, ChatActivity.class));
             }
         });
         teamsModeButton.setOnClickListener(new View.OnClickListener(){
