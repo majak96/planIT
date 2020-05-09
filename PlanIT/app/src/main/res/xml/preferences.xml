@@ -1,0 +1,51 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- DATE AND TIME CATEGORY -->
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:key="pref_date_and_time_category"
+        app:title="Date and Time">
+
+        <ListPreference
+            app:defaultValue="3"
+            app:entries="@array/pref_first_day"
+            app:entryValues="@array/pref_first_day_values"
+            app:iconSpaceReserved="false"
+            app:key="pref_start_day"
+            app:title="Start day of the week" />
+
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:key="pref_week_numbers"
+            app:title="Show week numbers" />
+
+    </PreferenceCategory>
+
+    <!-- NOTIFICATIONS CATEGORY -->
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:key="pref_notifications_category"
+        app:title="Notifications">
+
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:key="pref_notifications"
+            app:title="Enable notifications" />
+
+    </PreferenceCategory>
+
+    <!-- HELP CATEGORY -->
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:key="pref_help_category"
+        app:title="Help">
+
+        <Preference
+            app:iconSpaceReserved="false"
+            app:key="pref_feedback"
+            app:summary="Report technical issues or suggest new features"
+            app:title="Send feedback" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
