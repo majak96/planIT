@@ -12,6 +12,9 @@
         <activity android:name=".activities.ChooseModeActivity"></activity>
         <activity android:name=".activities.SignInActivity" />
         <activity android:name=".activities.SignUpActivity" />
+        <activity android:name=".activities.SettingsActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:parentActivityName=".MainActivity"/>
         <activity
             android:name=".activities.TaskDetailActivity"
             android:theme="@style/AppTheme.NoActionBar"

@@ -9,20 +9,32 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.SignInActivity;
 import com.example.planit.fragments.CalendarFragment;
+import com.example.planit.fragments.DailyPreviewFragment;
+import com.example.planit.fragments.PreferencesFragment;
 import com.example.planit.fragments.TeamsFragment;
 import com.example.planit.utils.SharedPreference;
 import com.google.android.material.navigation.NavigationView;
+
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
+    private static final String TAG = "MainActivity";
+
     private DrawerLayout drawer;
+    private NavigationView navigationView;
+
+    private int currentMenuItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         drawer = findViewById(R.id.drawer_layout);
 
-        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar,
@@ -44,34 +56,61 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         String page = getIntent().getStringExtra("page");
 
-        if(SharedPreference.getLoggedEmail(MainActivity.this)==""){
+        if (SharedPreference.getLoggedEmail(MainActivity.this) == "") {
             startActivity(new Intent(MainActivity.this, SignInActivity.class));
-        }
-        else{
+        } else {
             //if we enter the activity for the first time (not after rotating etc)
-            if(savedInstanceState == null) {
-                if(page==null || page.equals("personal")){
+            if (savedInstanceState == null) {
+                if (page == null || page.equals("personal")) {
                     //TODO: change the default fragment?
                     getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                             new CalendarFragment()).commit();
                     navigationView.setCheckedItem(R.id.nav_calendar);
-                }
-                else{
+                    currentMenuItem = R.id.nav_calendar;
+                } else {
                     //TODO: change the default fragment?
                     getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                             new TeamsFragment()).commit();
                     navigationView.setCheckedItem(R.id.nav_teams);
+                    currentMenuItem = R.id.nav_teams;
                 }
 
             }
+
         }
 
+        //update navigation drawer selection after back
+        /*this.getSupportFragmentManager().addOnBackStackChangedListener(
+                new FragmentManager.OnBackStackChangedListener() {
+                    public void onBackStackChanged() {
+                        Fragment current = getCurrentFragment();
+                        if (current instanceof CalendarFragment) {
+                            navigationView.setCheckedItem(R.id.nav_calendar);
+                            currentMenuItem = R.id.nav_calendar;
+                        } else if (current instanceof DailyPreviewFragment) {
+                            navigationView.setCheckedItem(R.id.nav_calendar);
+                            currentMenuItem = R.id.nav_calendar;
+                        } else if (current instanceof TeamsFragment) {
+                            navigationView.setCheckedItem(R.id.nav_teams);
+                            currentMenuItem = R.id.nav_teams;
+                        }
+                    }
+                });
+        */
     }
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
-        switch (item.getItemId()) {
+        //selected menu item id
+        int id = item.getItemId();
+
+        /*if (id == currentMenuItem) {
+            drawer.closeDrawer(GravityCompat.START);
+            return false;
+        }*/
+
+        switch (id) {
             case R.id.nav_calendar:
                 getSupportFragmentManager().beginTransaction()
                         .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
@@ -89,8 +128,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         .commit();
                 break;
             case R.id.nav_settings:
-                Toast.makeText(this, "Settings!", Toast.LENGTH_SHORT).show();
-                //TODO: delete this and add settings
+                Intent intent = new Intent(this, SettingsActivity.class);
+                this.startActivity(intent);
+                /*getSupportFragmentManager().beginTransaction()
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                        .replace(R.id.fragment_container, PreferencesFragment.newInstance())
+                        .addToBackStack(null)
+                        .commit();*/
                 break;
             case R.id.nav_signout:
                 SharedPreference.setLoggedEmail(getApplicationContext(), "");
@@ -99,6 +143,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             default:
         }
 
+        currentMenuItem = id;
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -108,7 +153,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+            if (currentMenuItem != R.id.nav_calendar) {
+                getSupportFragmentManager().beginTransaction()
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                        .replace(R.id.fragment_container, CalendarFragment.newInstance())
+                        .commit();
+                navigationView.setCheckedItem(R.id.nav_calendar);
+                currentMenuItem = R.id.nav_calendar;
+            } else {
+                super.onBackPressed();
+            }
         }
+    }
+
+    public Fragment getCurrentFragment() {
+        return this.getSupportFragmentManager().findFragmentById(R.id.fragment_container);
     }
 }
