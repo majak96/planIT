@@ -69,12 +69,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         String page = getIntent().getStringExtra("page");
 
         //google sign out
-        GoogleSignInOptions gso =  new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .build();
         googleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        if (SharedPreference.getLoggedEmail(MainActivity.this)==""){
+        if (SharedPreference.getLoggedEmail(MainActivity.this) == "") {
             startActivity(new Intent(MainActivity.this, SignInActivity.class));
         } else {
             //if we enter the activity for the first time (not after rotating etc)
@@ -195,7 +195,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
             });
     }
-
 
     public Fragment getCurrentFragment() {
         return this.getSupportFragmentManager().findFragmentById(R.id.fragment_container);

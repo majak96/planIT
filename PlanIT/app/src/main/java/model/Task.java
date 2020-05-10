@@ -1,18 +1,28 @@
 package model;
 
-import java.sql.Time;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class Task {
+    private Long id;
     private String title;
     private String description;
-    private Date startDateAndTime;
+    private String address;
+    private Date startDate;
+    private Date startTime;
     private Boolean done;
+    private TaskPriority priority;
 
-    public Task(String title, String description, Date startDateAndTime, Boolean done) {
+    private List<Label> labels = new ArrayList<Label>();
+
+    public Task(Long id, String title, String description, Date startDate, Date startTime, Boolean done) {
+        this.id = id;
         this.title = title;
         this.description = description;
-        this.startDateAndTime = startDateAndTime;
+        this.startDate = startDate;
+        this.startTime = startTime;
         this.done = done;
     }
 
@@ -32,12 +42,12 @@ public class Task {
         this.description = description;
     }
 
-    public Date getStartDateAndTime() {
-        return startDateAndTime;
+    public Date getStartDate() {
+        return startDate;
     }
 
-    public void setStartDateAndTime(Date startDateAndTime) {
-        this.startDateAndTime = startDateAndTime;
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
     }
 
     public Boolean getDone() {
@@ -47,4 +57,60 @@ public class Task {
     public void setDone(Boolean done) {
         this.done = done;
     }
+
+    public TaskPriority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(TaskPriority priority) {
+        this.priority = priority;
+    }
+
+    public List<Label> getLabels() {
+        return labels;
+    }
+
+    public void setLabels(List<Label> labels) {
+        this.labels = labels;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    @Override
+    public String toString() {
+        return "Task{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", description='" + description + '\'' +
+                ", address='" + address + '\'' +
+                ", startDateAndTime=" + startDate +
+                ", done=" + done +
+                ", priority=" + priority +
+                ", labels=" + labels +
+                '}';
+    }
 }
+
+

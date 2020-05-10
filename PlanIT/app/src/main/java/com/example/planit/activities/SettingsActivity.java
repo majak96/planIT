@@ -30,10 +30,10 @@ public class SettingsActivity extends AppCompatActivity {
                 .commit();
     }
 
-    /*@Override
-    public boolean onSupportNavigateUp() {
-        onBackPressed();
-        return true;
-    }*/
+    @Override
+    public void onBackPressed() {
+        //go back to parent activity -> MainActivity
+        NavUtils.navigateUpFromSameTask(this);
+    }
 }
 
