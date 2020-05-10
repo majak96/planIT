@@ -18,6 +18,10 @@
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
         <activity
+            android:name=".activities.EditTaskActivity"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBarWithStatus" />
+        <activity
             android:name=".activities.TaskDetailActivity"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
