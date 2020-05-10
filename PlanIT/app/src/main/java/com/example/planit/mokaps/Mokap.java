@@ -3,11 +3,14 @@ package com.example.planit.mokaps;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import model.Label;
 import model.Task;
 import model.TaskPriority;
+import model.Team;
 import model.User;
 import model.Message;
 
@@ -124,6 +127,48 @@ public class Mokap {
         }
 
         return task;
+    }
+
+    public static List<Team> getTeams() {
+        List<Team> teams = new ArrayList<>();
+
+        User u1 = new User("Vesna", "Milic", "vesna.22", "wesna@gmail.com");
+        User u2 = new User("Marijana", "Kolosnjaji", "majak", "majak@gmail.com");
+        User u3 = new User("Marijana", "Matkovski", "majam", "majam@gmail.com");
+
+        Team team1 = new Team("DSL Tim 3", "Najbolji tim an svetu!", "http://nekiLink.com", u3);
+        Team team2 = new Team("Pma Tim 3", "Najbolji tim!", "http://nekiLink2.com", u1);
+
+        teams.add(team1);
+        teams.add(team2);
+
+        return teams;
+    }
+
+    public static Team getTeam(Long id) {
+
+        Team team;
+        User u1 = new User("Vesna", "Milic", "vesna.22", "wesna@gmail.com");
+        User u2 = new User("Marijana", "Kolosnjaji", "majak", "majak@gmail.com");
+        User u3 = new User("Marijana", "Matkovski", "majam", "majam@gmail.com");
+
+        switch (id.intValue()) {
+            case 1:
+                team = new Team("DSL Tim 3", "Najbolji tim an svetu!", "http://nekiLink.com", u3);
+                List<User>users=new ArrayList<>();
+                users.add(u1);
+                users.add(u2);
+                team.setUsers(users);
+                break;
+            case 2:
+                team = new Team("Pma Tim 3", "Najbolji tim!", "http://nekiLink2.com", u1);
+                break;
+            default:
+                team = new Team("DSL Tim 3", "Najbolji tim an svetu!", "http://nekiLink.com", u3);
+                break;
+        }
+
+        return team;
     }
 
 }

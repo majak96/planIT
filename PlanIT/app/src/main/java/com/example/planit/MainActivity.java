@@ -11,7 +11,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.planit.activities.ChatActivity;
@@ -43,10 +46,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private static final String TAG = "MainActivity";
 
     private DrawerLayout drawer;
-    private Button googleSignout;
     private GoogleSignInClient googleSignInClient;
     private NavigationView navigationView;
     private int currentMenuItem;
+    private TextView loggedEmail;
+    private TextView loggedName;
+    private TextView loggedFirstChar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +62,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         setSupportActionBar(toolbar);
 
         drawer = findViewById(R.id.drawer_layout);
-
         navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
@@ -77,6 +81,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (SharedPreference.getLoggedEmail(MainActivity.this) == "") {
             startActivity(new Intent(MainActivity.this, SignInActivity.class));
         } else {
+            View header = navigationView.getHeaderView(0);
+            loggedEmail = (TextView) header.findViewById(R.id.loggedEmail);
+            loggedName = (TextView) header.findViewById(R.id.loggedName);
+            loggedFirstChar=(TextView) header.findViewById(R.id.loggedFirstChar);
+
+            loggedEmail.setText(SharedPreference.getLoggedEmail(MainActivity.this));
+            loggedName.setText(SharedPreference.getLoggedName(MainActivity.this));
+            loggedFirstChar.setText(SharedPreference.getLoggedName(MainActivity.this).substring(0, 1));
+
             //if we enter the activity for the first time (not after rotating etc)
             if (savedInstanceState == null) {
                 if (page == null || page.equals("personal")) {
