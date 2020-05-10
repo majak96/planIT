@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 public class CalendarFragment extends Fragment {
-    
+
     private static final String TAG = "CalendarFragment";
 
     ArrayList<CalendarDay> eventDates = new ArrayList<CalendarDay>();
@@ -36,7 +36,7 @@ public class CalendarFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_calendar, container, false);
 
         //set activity title
-            getActivity().setTitle(R.string.personal);
+        getActivity().setTitle(R.string.personal);
 
         //initializing a few example events
         initializeExampleEvents();
@@ -45,8 +45,8 @@ public class CalendarFragment extends Fragment {
         calendarView.setDateSelected(CalendarDay.today(), true);
 
         //update the size of the calendar tiles
-        if(this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
-            calendarView.setTileSizeDp(view.getHeight()/8);
+        if (this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            calendarView.setTileSizeDp(view.getHeight() / 8);
         }
 
         //decorator for marking dates with events
@@ -62,7 +62,7 @@ public class CalendarFragment extends Fragment {
 
                 Calendar cal = Calendar.getInstance();
                 cal.set(Calendar.YEAR, date.getYear());
-                cal.set(Calendar.MONTH, date.getMonth()-1);
+                cal.set(Calendar.MONTH, date.getMonth() - 1);
                 cal.set(Calendar.DAY_OF_MONTH, date.getDay());
                 Long dateInMilliseconds = cal.getTimeInMillis();
 
@@ -79,7 +79,7 @@ public class CalendarFragment extends Fragment {
     }
 
     //TODO: delete this and add actual events
-    private void initializeExampleEvents(){
+    private void initializeExampleEvents() {
         eventDates.add(CalendarDay.from(2020, 5, 2));
         eventDates.add(CalendarDay.from(2020, 5, 3));
         eventDates.add(CalendarDay.from(2020, 5, 12));

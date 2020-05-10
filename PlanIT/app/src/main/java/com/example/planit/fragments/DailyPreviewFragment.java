@@ -13,20 +13,18 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.planit.R;
 import com.example.planit.adapters.DailyPreviewAdapter;
+import com.example.planit.mokaps.Mokap;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import model.Task;
 
 public class DailyPreviewFragment extends Fragment {
 
     private static final String TAG = "DailyPreviewFragment";
-
-    private ArrayList<Task> tasks = new ArrayList<Task>();
 
     public static DailyPreviewFragment newInstance(Long selectedDateInMilliseconds) {
         Bundle args = new Bundle();
@@ -44,7 +42,7 @@ public class DailyPreviewFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_dailypreview, container, false);
 
         Bundle bundle = getArguments();
-        if (bundle != null){
+        if (bundle != null) {
             Date date = new Date(bundle.getLong("SELECTED_DATE"));
 
             //set activity title to date
@@ -52,8 +50,9 @@ public class DailyPreviewFragment extends Fragment {
             String dateString = dateFormat.format(date);
             getActivity().setTitle(dateString);
 
+            //TODO: delete this and get tasks from db
             //initializing a few example tasks
-            initializeExampleTasks(date);
+            List<Task> tasks = Mokap.getTasks();
 
             //initialize RecyclerView
             RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.daily_preview_recycle_view);
@@ -68,29 +67,4 @@ public class DailyPreviewFragment extends Fragment {
         return view;
     }
 
-    //TODO: delete this and get tasks from the db
-    private void initializeExampleTasks(Date date) {
-        Calendar cal0 = Calendar.getInstance();
-        cal0.setTime(date);
-        cal0.set(Calendar.HOUR_OF_DAY, -1);
-        cal0.set(Calendar.MINUTE, -1);
-        cal0.set(Calendar.SECOND, -1);
-
-        Calendar cal1 = Calendar.getInstance();
-        cal1.setTime(date);
-        cal1.set(Calendar.HOUR_OF_DAY, 16);
-        cal1.set(Calendar.MINUTE, 0);
-        cal1.set(Calendar.SECOND, 0);
-
-        Calendar cal2 = Calendar.getInstance();
-        cal2.setTime(date);
-        cal2.set(Calendar.HOUR_OF_DAY, 20);
-        cal2.set(Calendar.MINUTE, 0);
-        cal2.set(Calendar.SECOND, 0);
-
-        tasks.add(new Task("buy milk", "", null, true));
-        tasks.add(new Task("jogging", "", null, false));
-        tasks.add(new Task("meeting", "", cal1.getTime(), false));
-        tasks.add(new Task("dinner with Vesna", "", cal2.getTime(), false));
-    }
 }
