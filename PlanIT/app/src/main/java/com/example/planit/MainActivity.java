@@ -189,7 +189,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
                     SharedPreference.setLoggedEmail(getApplicationContext(), "");
-                    startActivity(new Intent(MainActivity.this, SignInActivity.class));
+                    Intent intent=new Intent(MainActivity.this, SignInActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
                 }
             });
     }
@@ -198,4 +200,5 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public Fragment getCurrentFragment() {
         return this.getSupportFragmentManager().findFragmentById(R.id.fragment_container);
     }
+
 }

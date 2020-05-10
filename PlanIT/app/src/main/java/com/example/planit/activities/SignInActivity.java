@@ -96,6 +96,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
                 else{
                     SharedPreference.setLoggedEmail(getApplicationContext(), email.getText().toString());
                     Intent intent = new Intent(SignInActivity.this, ChooseModeActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                 }
             }
@@ -142,6 +143,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
 
     private void gotoHomePage(){
         Intent intent=new Intent(SignInActivity.this, ChooseModeActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
     }
 
@@ -157,6 +159,11 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
     public boolean isEmpty(EditText text) {
         CharSequence str = text.getText().toString();
         return TextUtils.isEmpty(str);
+    }
+
+    @Override
+    public void onBackPressed() {
+        finishAffinity();
     }
 
 }
