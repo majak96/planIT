@@ -1,41 +1,31 @@
 package com.example.planit;
 
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.MenuItem;
+import android.widget.Button;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.MenuItem;
-import android.widget.Button;
-import android.widget.Toast;
-
-import com.example.planit.activities.ChatActivity;
 import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.SignInActivity;
 import com.example.planit.fragments.CalendarFragment;
-import com.example.planit.fragments.DailyPreviewFragment;
-import com.example.planit.fragments.PreferencesFragment;
-import com.example.planit.fragments.TeamsFragment;
+import com.example.planit.fragments.HabitsOverviewFragment;
+import com.example.planit.fragments.TeamsOverviewFragment;
 import com.example.planit.utils.SharedPreference;
-import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.SignInButton;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
-
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -69,12 +59,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         String page = getIntent().getStringExtra("page");
 
         //google sign out
-        GoogleSignInOptions gso =  new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .build();
         googleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        if (SharedPreference.getLoggedEmail(MainActivity.this)==""){
+        if (SharedPreference.getLoggedEmail(MainActivity.this) == "") {
             startActivity(new Intent(MainActivity.this, SignInActivity.class));
         } else {
             //if we enter the activity for the first time (not after rotating etc)
@@ -88,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 } else {
                     //TODO: change the default fragment?
                     getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                            new TeamsFragment()).commit();
+                            TeamsOverviewFragment.newInstance()).commit();
                     navigationView.setCheckedItem(R.id.nav_teams);
                     currentMenuItem = R.id.nav_teams;
                 }
@@ -136,13 +126,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         .commit();
                 break;
             case R.id.nav_habits:
-                Toast.makeText(this, "Habits!", Toast.LENGTH_SHORT).show();
-                //TODO: delete this and add habits fragment
+                getSupportFragmentManager().beginTransaction()
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                        .replace(R.id.fragment_container, HabitsOverviewFragment.newInstance())
+                        .commit();
                 break;
             case R.id.nav_teams:
                 getSupportFragmentManager().beginTransaction()
                         .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                        .replace(R.id.fragment_container, TeamsFragment.newInstance())
+                        .replace(R.id.fragment_container, TeamsOverviewFragment.newInstance())
                         .commit();
                 break;
             case R.id.nav_settings:
@@ -185,15 +177,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void signOut() {
         googleSignInClient.signOut()
-            .addOnCompleteListener(this, new OnCompleteListener<Void>() {
-                @Override
-                public void onComplete(@NonNull Task<Void> task) {
-                    SharedPreference.setLoggedEmail(getApplicationContext(), "");
-                    startActivity(new Intent(MainActivity.this, SignInActivity.class));
-                }
-            });
+                .addOnCompleteListener(this, new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        SharedPreference.setLoggedEmail(getApplicationContext(), "");
+                        startActivity(new Intent(MainActivity.this, SignInActivity.class));
+                    }
+                });
     }
-
 
     public Fragment getCurrentFragment() {
         return this.getSupportFragmentManager().findFragmentById(R.id.fragment_container);

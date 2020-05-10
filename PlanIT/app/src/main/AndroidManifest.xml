@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.planit">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -9,17 +11,37 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".activities.ChatActivity"></activity>
+        <activity
+            android:name=".activities.CreateTeamActivity"
+            android:theme="@style/AppTheme.NoActionBarWithStatus" />
+        <activity
+            android:name=".activities.CreateHabitActivity"
+            android:theme="@style/AppTheme.NoActionBarWithStatus" />
+        <activity
+            android:name=".activities.HabitDetailsActivity"
+            android:theme="@style/AppTheme.NoActionBarWithStatus" />
+        <!--
+        <activity
+            android:name=".activities.SplashScreenActivity"
+            android:theme="@style/AppTheme.NoActionBarWithStatus" />
+         -->
+        <activity android:name=".activities.ChatActivity" />
         <activity android:name=".activities.ChooseModeActivity" />
         <activity android:name=".activities.SignInActivity" />
         <activity android:name=".activities.SignUpActivity" />
-        <activity android:name=".activities.SettingsActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:parentActivityName=".MainActivity"/>
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <activity
+            android:name=".activities.EditTaskActivity"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBarWithStatus" />
         <activity
             android:name=".activities.TaskDetailActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:parentActivityName=".MainActivity"/>
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBarWithStatus" />
         <activity
             android:name=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
@@ -30,7 +52,5 @@
             </intent-filter>
         </activity>
     </application>
-
-    <uses-permission android:name="android.permission.INTERNET" />
 
 </manifest>

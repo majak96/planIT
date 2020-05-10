@@ -19,15 +19,16 @@ import com.example.planit.activities.TaskDetailActivity;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.List;
 
 import model.Task;
 
 public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapter.ViewHolder>{
 
-    private ArrayList<Task> tasks = new ArrayList<Task>();
+    private List<Task> tasks = new ArrayList<Task>();
     private Context context;
 
-    public DailyPreviewAdapter(Context context, ArrayList<Task> tasks){
+    public DailyPreviewAdapter(Context context, List<Task> tasks){
         this.context = context;
         this.tasks = tasks;
     }
@@ -55,11 +56,11 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
             holder.taskTitleTextView.setTextColor(context.getResources().getColor(R.color.gray));
         }
 
-        //if task has set time //TODO: fix this later
-        if(task.getStartDateAndTime() != null){
+        //if task has set time
+        if(task.getStartTime() != null){
             DateFormat dateFormat = new SimpleDateFormat("HH:mm");
 
-            String taskTime = dateFormat.format(task.getStartDateAndTime());
+            String taskTime = dateFormat.format(task.getStartTime());
             holder.taskTimeTextView.setText(taskTime);
         }
 
@@ -68,7 +69,7 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(context, TaskDetailActivity.class);
-                intent.putExtra("title", tasks.get(position).getTitle());
+                intent.putExtra("task", tasks.get(position).getId());
 
                 context.startActivity(intent);
             }

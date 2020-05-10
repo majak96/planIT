@@ -1,21 +1,28 @@
 package com.example.planit.mokaps;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
+import model.Label;
+import model.Task;
+import model.TaskPriority;
 import model.User;
 import model.Message;
 
 public class Mokap {
 
-    public static List<Message> getMessages(){
+    private static final String TAG = "Mokap";
+
+    public static List<Message> getMessages() {
         ArrayList<Message> messages = new ArrayList<Message>();
 
         User u1 = new User("Vesna", "Milic", "vesna.22", "wesna@gmail.com");
         User u2 = new User("Marijana", "Kolosnjaji", "majak", "majak@gmail.com");
         User u3 = new User("Marijana", "Matkovski", "majam", "majam@gmail.com");
 
-        Message m1 = new Message("Konacno smo polozile PMA", u1, 1320917972 );
+        Message m1 = new Message("Konacno smo polozile PMA", u1, 1320917972);
         Message m2 = new Message("I JSD", u2, 11122211);
         Message m3 = new Message("JEEEJ", u3, 11122211);
 
@@ -26,7 +33,7 @@ public class Mokap {
         return messages;
     }
 
-    public static List<User> getUsers(){
+    public static List<User> getUsers() {
         ArrayList<User> users = new ArrayList<User>();
 
         User u1 = new User("Vesna", "Milic", "vesna.22", "wesna@gmail.com");
@@ -38,6 +45,85 @@ public class Mokap {
         users.add(u3);
 
         return users;
+    }
+
+    public static List<Task> getTasks() {
+        List<Task> tasks = new ArrayList<Task>();
+
+        Date date = new Date();
+
+        Calendar cal1 = Calendar.getInstance();
+        cal1.setTime(date);
+        cal1.set(Calendar.HOUR_OF_DAY, 16);
+        cal1.set(Calendar.MINUTE, 0);
+        cal1.set(Calendar.SECOND, 0);
+
+        Calendar cal2 = Calendar.getInstance();
+        cal2.setTime(date);
+        cal2.set(Calendar.HOUR_OF_DAY, 20);
+        cal2.set(Calendar.MINUTE, 0);
+        cal2.set(Calendar.SECOND, 0);
+
+        Task task1 = new Task(1L, "buy milk", "", date, null, true);
+        Task task2 = new Task(2L, "jogging", "", date, null, false);
+        Task task3 = new Task(3L, "meeting", "", date, cal1.getTime(), false);
+        Task task4 = new Task(4L, "dinner with Vesna", "", date, cal2.getTime(), false);
+
+        tasks.add(task1);
+        tasks.add(task2);
+        tasks.add(task3);
+        tasks.add(task4);
+
+        return tasks;
+    }
+
+    public static Task getTask(Long id) {
+        Date date = new Date();
+
+        Calendar cal1 = Calendar.getInstance();
+        cal1.setTime(date);
+        cal1.set(Calendar.HOUR_OF_DAY, 16);
+        cal1.set(Calendar.MINUTE, 0);
+        cal1.set(Calendar.SECOND, 0);
+
+        Calendar cal2 = Calendar.getInstance();
+        cal2.setTime(date);
+        cal2.set(Calendar.HOUR_OF_DAY, 20);
+        cal2.set(Calendar.MINUTE, 0);
+        cal2.set(Calendar.SECOND, 0);
+
+        Task task;
+        switch (id.intValue()) {
+            case 1:
+                task = new Task(1L, "buy milk", null, date, null, true);
+                task.getLabels().add(new Label("shop", "#99ff66"));
+                task.setPriority(TaskPriority.MEDIUM);
+                break;
+            case 2:
+                task = new Task(2L, "jogging", "5km", date, null, false);
+                task.getLabels().add(new Label("exercising", "#6699ff"));
+                task.setPriority(TaskPriority.LOW);
+                break;
+            case 3:
+                task = new Task(3L, "meeting", null, date, cal1.getTime(), false);
+                task.setPriority(TaskPriority.HIGH);
+                break;
+            case 4:
+                task = new Task(4L, "dinner with Vesna", null, date, cal2.getTime(), false);
+                task.setPriority(TaskPriority.HIGH);
+                task.getLabels().add(new Label("label 1", "#99b4f4"));
+                task.getLabels().add(new Label("label 2", "#f3b1e9"));
+                task.setAddress("Bulevar Despota Stefana 5a, Novi Sad");
+                break;
+            default:
+                task = new Task(0L, "Example task", "This is an example description.", date, null, true);
+                task.getLabels().add(new Label("label 1", "#99b4f4"));
+                task.getLabels().add(new Label("label 2", "#f3b1e9"));
+                task.setPriority(TaskPriority.HIGH);
+                break;
+        }
+
+        return task;
     }
 
 }
