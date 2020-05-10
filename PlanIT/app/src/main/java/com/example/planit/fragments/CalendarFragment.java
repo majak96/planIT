@@ -1,11 +1,15 @@
 package com.example.planit.fragments;
 
 import com.example.planit.R;
+import com.example.planit.activities.EditTaskActivity;
+import com.example.planit.activities.SettingsActivity;
 import com.example.planit.utils.EventDecorator;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.prolificinteractive.materialcalendarview.CalendarDay;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 import com.prolificinteractive.materialcalendarview.OnDateSelectedListener;
 
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -72,6 +76,16 @@ public class CalendarFragment extends Fragment {
                         .replace(R.id.fragment_container, DailyPreviewFragment.newInstance(dateInMilliseconds))
                         .addToBackStack(null)
                         .commit();
+            }
+        });
+
+        //floating action button for creating a new task
+        FloatingActionButton floatingActionButton = view.findViewById(R.id.fab);
+        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), EditTaskActivity.class);
+                getActivity().startActivity(intent);
             }
         });
 

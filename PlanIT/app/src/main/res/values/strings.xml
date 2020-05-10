@@ -33,6 +33,7 @@
     <string name="settings">Settings</string>
     <string name="sign_out">Sign out</string>
     <string name="task_details">Task Details</string>
+    <string name="save">Save</string>
 
     <string name="message">Enter message</string>
 
@@ -57,5 +58,14 @@
     <string name="default_link">https://pma_tim_3/new_team_member/1234</string>
     <string name="sharing_link_description">Sharing link</string>
     <string name="team_members_description">Team members</string>
+    
+    //create task
+    <string name="task_created">Task created!</string>
+    <string name="title">Title</string>
+    <string name="description">Description</string>
+    <string name="reminder">Reminder</string>
+    <string name="location">Location</string>
+    <string name="labels">Labels</string>
+    <string name="priority">Priority</string>
 
 </resources>

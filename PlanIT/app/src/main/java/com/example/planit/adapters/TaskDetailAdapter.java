@@ -46,7 +46,7 @@ public class TaskDetailAdapter extends RecyclerView.Adapter<TaskDetailAdapter.Vi
 
         //set label text and color
         holder.labelTextView.setText(label.getName());
-        Drawable labelShape = holder.layout.getBackground();
+        Drawable labelShape = holder.labelTextView.getBackground();
         labelShape.setColorFilter(Color.parseColor(label.getColor()), PorterDuff.Mode.SRC_ATOP);
     }
 
