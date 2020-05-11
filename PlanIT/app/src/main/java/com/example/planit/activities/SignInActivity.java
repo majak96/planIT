@@ -32,7 +32,7 @@ import java.util.List;
 
 import model.User;
 
-public class SignInActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener{
+public class SignInActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
 
     private TextView signUpLink;
     private Button signInBtn;
@@ -47,15 +47,15 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
 
-        email=findViewById(R.id.signInEmailInput);
-        password=findViewById(R.id.signInPasswordInput);
+        email = findViewById(R.id.signInEmailInput);
+        password = findViewById(R.id.signInPasswordInput);
         signUpLink = findViewById(R.id.signInLink);
         signInBtn = findViewById(R.id.signInButton);
 
         //google sign in
-        googleSignInButton=(SignInButton)findViewById(R.id.googleSignInButton);
+        googleSignInButton = (SignInButton) findViewById(R.id.googleSignInButton);
 
-        GoogleSignInOptions gso =  new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .build();
         googleSignInClient = GoogleSignIn.getClient(this, gso);
@@ -70,32 +70,30 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
         });
 
         //link to sign up activity
-        signUpLink.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View v){
+        signUpLink.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
                 Intent intent = new Intent(SignInActivity.this, SignUpActivity.class);
                 startActivity(intent);
             }
         });
 
         //login button
-        signInBtn.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View v){
+        signInBtn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
                 hideKeyboard();
-                if(isEmpty(password) || isEmpty(email)){
+                if (isEmpty(password) || isEmpty(email)) {
                     Toast t = Toast.makeText(SignInActivity.this, "You must enter email and passwied!", Toast.LENGTH_SHORT);
                     t.show();
-                }
-                else if(!isValidEmail(email.getText().toString())) {
+                } else if (!isValidEmail(email.getText().toString())) {
                     Toast t = Toast.makeText(SignInActivity.this, "You must enter valid email address!", Toast.LENGTH_SHORT);
                     t.show();
-                }
-                else if(checkCredentials()==false){
+                } else if (checkCredentials() == false) {
                     Toast t = Toast.makeText(SignInActivity.this, "Credentials does not match!", Toast.LENGTH_SHORT);
                     t.show();
-                }
-                else{
+                } else {
                     SharedPreference.setLoggedEmail(getApplicationContext(), email.getText().toString());
                     Intent intent = new Intent(SignInActivity.this, ChooseModeActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                 }
             }
@@ -103,15 +101,15 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
 
     }
 
-    public boolean checkCredentials(){
-        List<User>users= Mokap.getUsers();
-        for(User u:users){
+    public boolean checkCredentials() {
+        List<User> users = Mokap.getUsers();
+        for (User u : users) {
             Log.i("LOGIN", u.getEmail());
             Log.i("LOGIN", u.getPassword());
             Log.i("UNERO", email.getText().toString());
             Log.i("UNETO", password.getText().toString());
 
-            if(u.getEmail().equals(email.getText().toString()) && u.getPassword().equals(password.getText().toString()))
+            if (u.getEmail().equals(email.getText().toString()) && u.getPassword().equals(password.getText().toString()))
                 return true;
         }
         return false;
@@ -125,23 +123,25 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode==RC_SIGN_IN){
+        if (requestCode == RC_SIGN_IN) {
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             handleSignInResult(result);
         }
     }
 
-    private void handleSignInResult(GoogleSignInResult result){
-        if(result.isSuccess()){
+    private void handleSignInResult(GoogleSignInResult result) {
+        if (result.isSuccess()) {
             SharedPreference.setLoggedEmail(SignInActivity.this, result.getSignInAccount().getEmail());
+            SharedPreference.setLoggedName(SignInActivity.this, result.getSignInAccount().getDisplayName());
             gotoHomePage();
-        }else{
-            Toast.makeText(getApplicationContext(),"Sign in cancel",Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getApplicationContext(), "Sign in cancel", Toast.LENGTH_LONG).show();
         }
     }
 
-    private void gotoHomePage(){
-        Intent intent=new Intent(SignInActivity.this, ChooseModeActivity.class);
+    private void gotoHomePage() {
+        Intent intent = new Intent(SignInActivity.this, ChooseModeActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
     }
 
@@ -149,7 +149,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
         return (!TextUtils.isEmpty(target) && Patterns.EMAIL_ADDRESS.matcher(target).matches());
     }
 
-    public void hideKeyboard(){
+    public void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
         imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
     }
@@ -157,6 +157,11 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
     public boolean isEmpty(EditText text) {
         CharSequence str = text.getText().toString();
         return TextUtils.isEmpty(str);
+    }
+
+    @Override
+    public void onBackPressed() {
+        finishAffinity();
     }
 
 }

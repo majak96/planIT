@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingVertical="10dp"
+    android:paddingLeft="15dp"
+    android:paddingRight="60dp"
+    android:clipToPadding="false">
+
+    <TextView
+        android:id="@+id/member_credential"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_alignParentLeft="true"
+        android:background="@drawable/circle"
+        android:gravity="center"
+        android:scaleType="centerInside"
+        android:text="MM"
+        android:textColor="@color/white"
+        android:textSize="20dp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/memberName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/member_credential"
+        android:layout_alignTop="@+id/member_credential"
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="10dp"
+        android:paddingBottom="4dp"
+        android:textSize="20dp" />
+
+
+</RelativeLayout>

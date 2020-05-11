@@ -1,5 +1,14 @@
 package com.example.planit.fragments;
 
+import com.example.planit.R;
+import com.example.planit.activities.EditTaskActivity;
+import com.example.planit.activities.SettingsActivity;
+import com.example.planit.utils.EventDecorator;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.prolificinteractive.materialcalendarview.CalendarDay;
+import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
+import com.prolificinteractive.materialcalendarview.OnDateSelectedListener;
+
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;

@@ -1,7 +1,9 @@
 package model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class Team implements Serializable {
@@ -10,13 +12,14 @@ public class Team implements Serializable {
     private String description;
     private String URLShare;
     private User teamCreator;
-    private Set<User> users;
+    private List<User> users;
 
     public Team() {
-        this.users = new HashSet<>();
+        this.users = new ArrayList<>();
     }
 
     public Team(String name, String description, String URLShare, User user) {
+        this.users = new ArrayList<>();
         this.name = name;
         this.description = description;
         this.URLShare = URLShare;
@@ -55,11 +58,11 @@ public class Team implements Serializable {
         this.teamCreator = teamCreator;
     }
 
-    public Set<User> getUsers() {
+    public List<User> getUsers() {
         return users;
     }
 
-    public void setUsers(Set<User> users) {
+    public void setUsers(List<User> users) {
         this.users = users;
     }
 }

@@ -14,6 +14,17 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.example.planit.activities.ChatActivity;
 import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.SignInActivity;
 import com.example.planit.fragments.CalendarFragment;
@@ -33,10 +44,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private static final String TAG = "MainActivity";
 
     private DrawerLayout drawer;
-    private Button googleSignout;
     private GoogleSignInClient googleSignInClient;
     private NavigationView navigationView;
     private int currentMenuItem;
+    private TextView loggedEmail;
+    private TextView loggedName;
+    private TextView loggedFirstChar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +60,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         setSupportActionBar(toolbar);
 
         drawer = findViewById(R.id.drawer_layout);
-
         navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
@@ -67,6 +79,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (SharedPreference.getLoggedEmail(MainActivity.this) == "") {
             startActivity(new Intent(MainActivity.this, SignInActivity.class));
         } else {
+            View header = navigationView.getHeaderView(0);
+            loggedEmail = (TextView) header.findViewById(R.id.loggedEmail);
+            loggedName = (TextView) header.findViewById(R.id.loggedName);
+            loggedFirstChar=(TextView) header.findViewById(R.id.loggedFirstChar);
+
+            loggedEmail.setText(SharedPreference.getLoggedEmail(MainActivity.this));
+            loggedName.setText(SharedPreference.getLoggedName(MainActivity.this));
+            loggedFirstChar.setText(SharedPreference.getLoggedName(MainActivity.this).substring(0, 1));
+
             //if we enter the activity for the first time (not after rotating etc)
             if (savedInstanceState == null) {
                 if (page == null || page.equals("personal")) {
@@ -176,17 +197,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void signOut() {
-        googleSignInClient.signOut()
-                .addOnCompleteListener(this, new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        SharedPreference.setLoggedEmail(getApplicationContext(), "");
-                        startActivity(new Intent(MainActivity.this, SignInActivity.class));
-                    }
-                });
+        googleSignInClient.signOut().addOnCompleteListener(this, new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    SharedPreference.setLoggedEmail(getApplicationContext(), "");
+                    Intent intent=new Intent(MainActivity.this, SignInActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                }
+            });
     }
 
     public Fragment getCurrentFragment() {
         return this.getSupportFragmentManager().findFragmentById(R.id.fragment_container);
     }
+
 }
