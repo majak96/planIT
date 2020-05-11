@@ -1,13 +1,11 @@
 package com.example.planit.activities;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -16,6 +14,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.planit.MainActivity;
 import com.example.planit.R;
 import com.example.planit.mokaps.Mokap;
 import com.example.planit.utils.SharedPreference;
@@ -24,15 +23,13 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
-import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.util.List;
 
 import model.User;
 
-public class SignInActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
+public class SignInActivity extends AppCompatActivity  {
 
     private TextView signUpLink;
     private Button signInBtn;
@@ -53,7 +50,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
         signInBtn = findViewById(R.id.signInButton);
 
         //google sign in
-        googleSignInButton = (SignInButton) findViewById(R.id.googleSignInButton);
+        googleSignInButton = findViewById(R.id.googleSignInButton);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
@@ -94,7 +91,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
                     SharedPreference.setLoggedEmail(getApplicationContext(), email.getText().toString());
                     SharedPreference.setLoggedName(getApplicationContext(), findCredentials());
 
-                    Intent intent = new Intent(SignInActivity.this, ChooseModeActivity.class);
+                    Intent intent = new Intent(SignInActivity.this, MainActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                 }
@@ -123,11 +120,6 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
     }
 
     @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Toast t = Toast.makeText(SignInActivity.this, "No internet connection!", Toast.LENGTH_SHORT);
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == RC_SIGN_IN) {
@@ -147,7 +139,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
     }
 
     private void gotoHomePage() {
-        Intent intent = new Intent(SignInActivity.this, ChooseModeActivity.class);
+        Intent intent = new Intent(SignInActivity.this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
     }

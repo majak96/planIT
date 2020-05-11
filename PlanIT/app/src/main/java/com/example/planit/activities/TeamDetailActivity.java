@@ -17,6 +17,7 @@ import com.example.planit.mokaps.Mokap;
 import java.util.ArrayList;
 
 import model.Team;
+import model.User;
 
 public class TeamDetailActivity extends AppCompatActivity {
 
@@ -44,11 +45,11 @@ public class TeamDetailActivity extends AppCompatActivity {
             teamDescription.setText(team.getDescription());
             teamLink.setText(team.getURLShare());
 
-            RecyclerView recyclerView = (RecyclerView) findViewById(R.id.team_detail_recycle_view);
+            RecyclerView recyclerView = findViewById(R.id.team_detail_recycle_view);
             recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
             recyclerView.setHasFixedSize(true);
 
-            TeamDetailAdapter adapter = new TeamDetailAdapter(TeamDetailActivity.this, (ArrayList) team.getUsers());
+            TeamDetailAdapter adapter = new TeamDetailAdapter(TeamDetailActivity.this, (ArrayList<User>)team.getUsers());
             recyclerView.setAdapter(adapter);
 
         }
