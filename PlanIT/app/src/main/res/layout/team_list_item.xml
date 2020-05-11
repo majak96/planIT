@@ -13,7 +13,7 @@
         android:layout_height="42dp"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="10dp"
-        android:background="@drawable/habits_icon" />
+        android:background="@drawable/teams_icon" />
 
     <TextView
         android:id="@+id/teams_item_recycle_view_name"

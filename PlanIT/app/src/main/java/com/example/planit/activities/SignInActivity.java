@@ -82,7 +82,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
             public void onClick(View v) {
                 hideKeyboard();
                 if (isEmpty(password) || isEmpty(email)) {
-                    Toast t = Toast.makeText(SignInActivity.this, "You must enter email and passwied!", Toast.LENGTH_SHORT);
+                    Toast t = Toast.makeText(SignInActivity.this, "You must enter email and password!", Toast.LENGTH_SHORT);
                     t.show();
                 } else if (!isValidEmail(email.getText().toString())) {
                     Toast t = Toast.makeText(SignInActivity.this, "You must enter valid email address!", Toast.LENGTH_SHORT);
@@ -92,6 +92,8 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
                     t.show();
                 } else {
                     SharedPreference.setLoggedEmail(getApplicationContext(), email.getText().toString());
+                    SharedPreference.setLoggedName(getApplicationContext(), findCredentials());
+
                     Intent intent = new Intent(SignInActivity.this, ChooseModeActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
@@ -104,15 +106,20 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
     public boolean checkCredentials() {
         List<User> users = Mokap.getUsers();
         for (User u : users) {
-            Log.i("LOGIN", u.getEmail());
-            Log.i("LOGIN", u.getPassword());
-            Log.i("UNERO", email.getText().toString());
-            Log.i("UNETO", password.getText().toString());
-
             if (u.getEmail().equals(email.getText().toString()) && u.getPassword().equals(password.getText().toString()))
                 return true;
         }
         return false;
+    }
+
+    public String findCredentials() {
+        List<User> users = Mokap.getUsers();
+        for (User u : users) {
+            if (u.getEmail().equals(email.getText().toString())){
+               return u.getName().concat(" ").concat(u.getLastName());
+            }
+        }
+        return "";
     }
 
     @Override
