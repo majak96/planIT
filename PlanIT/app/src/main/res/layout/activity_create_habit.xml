@@ -27,6 +27,7 @@
             android:orientation="vertical">
 
             <EditText
+                android:id="@+id/title_habit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="15dp"
@@ -35,6 +36,7 @@
                 android:hint="@string/title" />
 
             <EditText
+                android:id="@+id/details_habit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="15dp"
@@ -83,6 +85,7 @@
                     android:textSize="16dp" />
             </RadioGroup>
 
+
             <LinearLayout
                 android:id="@+id/habit_create_daily_pick_days"
                 android:layout_width="match_parent"
@@ -94,89 +97,74 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
                     android:text="@string/pick_days"
                     android:textColor="@color/black"
-                    android:textSize="16dp"
-                    android:layout_marginTop="15dp"/>
+                    android:textSize="16dp" />
 
-
-                <RelativeLayout
+                <ScrollView
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginTop="15dp">
+                    android:layout_height="match_parent">
 
-                    <Button
-                        android:id="@+id/monday_button"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginRight="5dp"
-                        android:background="@drawable/circle_primary"
-                        android:text="M"
-                        android:textColor="@color/white"/>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="15dp"
+                        android:orientation="horizontal">
 
-                    <Button
-                        android:layout_toRightOf="@id/monday_button"
-                        android:id="@+id/tuesday_button"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginRight="5dp"
-                        android:background="@drawable/circle_primary"
-                        android:text="T"
-                        android:textColor="@color/white"/>
+                        <CheckBox
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="M"
+                            android:textColor="@color/black"
+                            android:textSize="16dp" />
 
-                    <Button
-                        android:layout_toRightOf="@id/tuesday_button"
-                        android:id="@+id/wednesday_button"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginRight="5dp"
-                        android:background="@drawable/circle_primary"
-                        android:text="W"
-                        android:textColor="@color/white"/>
+                        <CheckBox
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="T"
+                            android:textColor="@color/black"
+                            android:textSize="16dp" />
 
-                    <Button
-                        android:layout_toRightOf="@id/wednesday_button"
-                        android:id="@+id/thursday_button"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginRight="5dp"
-                        android:background="@drawable/circle_primary"
-                        android:text="T"
-                        android:textColor="@color/white"/>
+                        <CheckBox
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="W"
+                            android:textColor="@color/black"
+                            android:textSize="16dp" />
 
-                    <Button
-                        android:layout_toRightOf="@id/thursday_button"
-                        android:id="@+id/friday_button"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginRight="5dp"
-                        android:background="@drawable/circle_primary"
-                        android:text="F"
-                        android:textColor="@color/white"/>
+                        <CheckBox
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="T"
+                            android:textColor="@color/black"
+                            android:textSize="16dp" />
 
-                    <Button
-                        android:layout_toRightOf="@id/friday_button"
-                        android:id="@+id/saturday_button"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginRight="5dp"
-                        android:background="@drawable/circle_primary"
-                        android:text="S"
-                        android:textColor="@color/white"/>
+                        <CheckBox
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="F"
+                            android:textColor="@color/black"
+                            android:textSize="16dp" />
 
-                    <Button
-                        android:layout_toRightOf="@id/saturday_button"
-                        android:id="@+id/sunday_button"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:background="@drawable/circle_primary"
-                        android:text="S"
-                        android:textColor="@color/white"/>
+                        <CheckBox
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="S"
+                            android:textColor="@color/black"
+                            android:textSize="16dp" />
 
-                </RelativeLayout>
+                        <CheckBox
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="S"
+                            android:textColor="@color/black"
+                            android:textSize="16dp" />
 
-
+                    </LinearLayout>
+                </ScrollView>
             </LinearLayout>
+
 
             <LinearLayout
                 android:id="@+id/habit_create_daily_pick_weeks"
@@ -184,82 +172,58 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="15dp"
                 android:orientation="vertical"
-                android:visibility="gone"
-                >
+                android:visibility="gone">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
                     android:text="@string/num_weeks"
                     android:textColor="@color/black"
-                    android:textSize="16dp"
-                    android:layout_marginTop="15dp"/>
+                    android:textSize="16dp" />
 
-                <RelativeLayout
+                <RadioGroup
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginTop="15dp">
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:orientation="horizontal">
 
-                    <Button
-                        android:id="@+id/one_button"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginRight="5dp"
-                        android:background="@drawable/circle_primary"
+                    <RadioButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="1"
-                        android:textColor="@color/white"/>
+                        android:textSize="16dp" />
 
-                    <Button
-                        android:layout_toRightOf="@id/one_button"
-                        android:id="@+id/two_button"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginRight="5dp"
-                        android:background="@drawable/circle_primary"
+                    <RadioButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="2"
-                        android:textColor="@color/white"/>
+                        android:textSize="16dp" />
 
-                    <Button
-                        android:layout_toRightOf="@id/two_button"
-                        android:id="@+id/three_button"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginRight="5dp"
-                        android:background="@drawable/circle_primary"
+                    <RadioButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="3"
-                        android:textColor="@color/white"/>
+                        android:textSize="16dp" />
 
-                    <Button
-                        android:layout_toRightOf="@id/three_button"
-                        android:id="@+id/four_button"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginRight="5dp"
-                        android:background="@drawable/circle_primary"
+                    <RadioButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="4"
-                        android:textColor="@color/white"/>
+                        android:textSize="16dp" />
 
-                    <Button
-                        android:layout_toRightOf="@id/four_button"
-                        android:id="@+id/five_button"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginRight="5dp"
-                        android:background="@drawable/circle_primary"
+                    <RadioButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="5"
-                        android:textColor="@color/white"/>
+                        android:textSize="16dp" />
 
-                    <Button
-                        android:layout_toRightOf="@id/five_button"
-                        android:id="@+id/six_button"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginRight="5dp"
-                        android:background="@drawable/circle_primary"
+                    <RadioButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="6"
-                        android:textColor="@color/white"/>
-
-                </RelativeLayout>
+                        android:textSize="16dp" />
+                </RadioGroup>
 
             </LinearLayout>
 
@@ -352,9 +316,10 @@
                     android:layout_height="52dp"
                     android:layout_marginLeft="15dp"
                     android:layout_marginTop="15dp"
-                    android:background="@drawable/ic_add_circle"
+                    android:background="@drawable/ic_add"
+                    android:backgroundTint="@color/colorPrimary"
                     android:textColor="@color/white"
-                    android:textSize="16dp"/>
+                    android:textSize="16dp" />
 
 
             </LinearLayout>

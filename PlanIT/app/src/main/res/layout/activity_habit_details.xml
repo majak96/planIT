@@ -50,6 +50,7 @@
                 android:textColor="@color/darkGray"
                 android:textSize="16dp"/>
             <Switch
+                android:id="@+id/habit_done"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginRight="15dp"/>

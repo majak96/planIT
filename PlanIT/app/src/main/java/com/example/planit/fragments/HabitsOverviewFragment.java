@@ -80,7 +80,7 @@ public class HabitsOverviewFragment extends Fragment {
         this.habitList.add(new Habit("running","Make sure you run every day! Stay healthy", 100, 1));
         this.habitList.add(new Habit("read a book","Find a good read to amuse yourself. Take a break, you deserve it!", 10, 2));
         this.habitList.add(new Habit("learn new things","Always is a good time to improve yourself! Start learning something new.", 150, 50));
-        this.habitList.add(new Habit("practise coding","Don't get rusty! Practise your coding skills", 200, 100));
+        this.habitList.add(new Habit("practice coding","Don't get rusty! Practice your coding skills", 200, 100));
 
     }
 }

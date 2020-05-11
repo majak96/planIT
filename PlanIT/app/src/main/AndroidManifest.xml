@@ -20,15 +20,17 @@
         <activity
             android:name=".activities.HabitDetailsActivity"
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
-        <!--
+
+        <activity android:name=".activities.SplashScreenActivity" android:theme="@style/AppTheme.NoActionBar"  >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
-            android:name=".activities.SplashScreenActivity"
-            android:theme="@style/AppTheme.NoActionBarWithStatus" />
-         -->
-        <activity android:name=".activities.TeamDetailActivity"
+            android:name=".activities.TeamDetailActivity"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
-            
         <activity android:name=".activities.ChatActivity" />
         <activity android:name=".activities.ChooseModeActivity" />
         <activity android:name=".activities.SignInActivity" />
@@ -37,7 +39,6 @@
             android:name=".activities.SettingsActivity"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar" />
-
         <activity
             android:name=".activities.EditTaskActivity"
             android:parentActivityName=".MainActivity"
@@ -48,13 +49,8 @@
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
         <activity
             android:name=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar"/>
     </application>
 
 </manifest>
