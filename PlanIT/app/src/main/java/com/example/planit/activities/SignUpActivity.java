@@ -34,27 +34,25 @@ public class SignUpActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
 
-        email=findViewById(R.id.signUpEmailInput);
-        password=findViewById(R.id.signUpPasswordInput);
-        name=findViewById(R.id.signUpNameInput);
-        lastName=findViewById(R.id.signUpLastNameInput);
+        email = findViewById(R.id.signUpEmailInput);
+        password = findViewById(R.id.signUpPasswordInput);
+        name = findViewById(R.id.signUpNameInput);
+        lastName = findViewById(R.id.signUpLastNameInput);
 
         signIpLink = findViewById(R.id.signInLink);
         signUpBtn = findViewById(R.id.signUpButton);
 
-        signUpBtn.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View v){
+        signUpBtn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
                 hideKeyboard();
-                if(isEmpty(password) || isEmpty(email) || isEmpty(name) || isEmpty(lastName)){
+                if (isEmpty(password) || isEmpty(email) || isEmpty(name) || isEmpty(lastName)) {
                     Toast t = Toast.makeText(SignUpActivity.this, "You must enter email all fields!", Toast.LENGTH_SHORT);
                     t.show();
-                }
-                else if(!isValidEmail(email.getText().toString())) {
+                } else if (!isValidEmail(email.getText().toString())) {
                     Toast t = Toast.makeText(SignUpActivity.this, "You must enter valid email address!", Toast.LENGTH_SHORT);
                     t.show();
-                }
-                else{
-                    User newUser=new User(name.toString(), lastName.toString(), password.toString(), email.toString());
+                } else {
+                    User newUser = new User(name.toString(), lastName.toString(), password.toString(), email.toString());
                     newUser.setColour(Utils.getRandomColor());
 
                     Intent intent = new Intent(SignUpActivity.this, SignInActivity.class);
@@ -63,8 +61,8 @@ public class SignUpActivity extends AppCompatActivity {
             }
         });
 
-        signIpLink.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View v){
+        signIpLink.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
                 Intent intent = new Intent(SignUpActivity.this, SignInActivity.class);
                 startActivity(intent);
             }
@@ -76,7 +74,7 @@ public class SignUpActivity extends AppCompatActivity {
         return (!TextUtils.isEmpty(target) && Patterns.EMAIL_ADDRESS.matcher(target).matches());
     }
 
-    public void hideKeyboard(){
+    public void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
         imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
     }

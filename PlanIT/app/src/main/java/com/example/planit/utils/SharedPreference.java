@@ -6,7 +6,9 @@ import android.preference.PreferenceManager;
 
 public class SharedPreference {
 
-    static final String PREF_USER_NAME= "username";
+    static final String PREF_EMAIL_NAME= "email";
+    static final String PREF_USER_NAME= "name";
+
 
     static SharedPreferences getSharedPreferences(Context ctx) {
         return PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -15,11 +17,23 @@ public class SharedPreference {
     public static void setLoggedEmail(Context ctx, String email)
     {
         SharedPreferences.Editor editor = getSharedPreferences(ctx).edit();
-        editor.putString(PREF_USER_NAME, email);
+        editor.putString(PREF_EMAIL_NAME, email);
         editor.apply();
     }
 
     public static String getLoggedEmail(Context ctx)
+    {
+        return getSharedPreferences(ctx).getString(PREF_EMAIL_NAME, "");
+    }
+
+    public static void setLoggedName(Context ctx, String email)
+    {
+        SharedPreferences.Editor editor = getSharedPreferences(ctx).edit();
+        editor.putString(PREF_USER_NAME, email);
+        editor.apply();
+    }
+
+    public static String getLoggedName(Context ctx)
     {
         return getSharedPreferences(ctx).getString(PREF_USER_NAME, "");
     }

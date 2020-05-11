@@ -9,7 +9,7 @@ import java.util.Random;
 public class Utils {
 
     public static String getDate(long time_stamp_server) {
-        SimpleDateFormat formatter = new SimpleDateFormat("dd:mm");
+        SimpleDateFormat formatter = new SimpleDateFormat("hh:mm");
         return formatter.format(time_stamp_server);
     }
 
