@@ -53,78 +53,130 @@
             <View style="@style/Divider" />
 
             <!-- REMINDERS -->
-            <TextView
-                android:id="@+id/reminder_create_task"
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="15dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="20dp"
-                android:clickable="true"
-                android:drawableLeft="@drawable/ic_time"
-                android:drawablePadding="5dp"
-                android:drawableTint="@color/gray"
-                android:onClick="addReminder"
-                android:text="@string/reminder"
-                android:textColor="@color/gray"
-                android:textSize="16dp" />
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/reminder_create_task"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="20dp"
+                    android:clickable="true"
+                    android:drawableLeft="@drawable/ic_time"
+                    android:drawablePadding="5dp"
+                    android:drawableTint="@color/gray"
+                    android:onClick="addReminder"
+                    android:text="@string/add_reminder"
+                    android:textColor="@color/gray"
+                    android:textSize="16dp" />
+
+                <ImageButton
+                    android:id="@+id/reminder_remove"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:layout_gravity="right"
+                    android:background="@null"
+                    android:clickable="true"
+                    android:onClick="clearReminder"
+                    android:paddingRight="5dp"
+                    android:src="@drawable/ic_close_darkgray"
+                    android:visibility="gone" />
+
+            </RelativeLayout>
 
             <View style="@style/Divider" />
 
             <!-- LOCATION -->
-            <TextView
+            <EditText
                 android:id="@+id/location_create_task"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="15dp"
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="20dp"
-                android:clickable="true"
+                android:background="@null"
                 android:drawableLeft="@drawable/ic_place"
                 android:drawablePadding="5dp"
                 android:drawableTint="@color/gray"
-                android:onClick="addLocation"
-                android:text="@string/location"
-                android:textColor="@color/gray"
+                android:hint="@string/add_location"
+                android:textColor="@color/darkGray"
                 android:textSize="16dp" />
 
             <View style="@style/Divider" />
 
             <!-- PRIORITY -->
-            <TextView
-                android:id="@+id/priority_create_task"
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="15dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="20dp"
-                android:clickable="true"
-                android:drawableLeft="@drawable/ic_priority"
-                android:drawablePadding="5dp"
-                android:drawableTint="@color/gray"
-                android:onClick="addPriority"
-                android:text="@string/priority"
-                android:textColor="@color/gray"
-                android:textSize="16dp" />
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/priority_create_task"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="20dp"
+                    android:clickable="true"
+                    android:drawableLeft="@drawable/ic_priority"
+                    android:drawablePadding="5dp"
+                    android:drawableTint="@color/gray"
+                    android:onClick="addPriority"
+                    android:text="@string/add_priority"
+                    android:textColor="@color/gray"
+                    android:textSize="16dp" />
+
+                <ImageButton
+                    android:id="@+id/priority_remove"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:layout_gravity="right"
+                    android:background="@null"
+                    android:clickable="true"
+                    android:onClick="clearPriority"
+                    android:paddingRight="5dp"
+                    android:src="@drawable/ic_close_darkgray"
+                    android:visibility="gone" />
+            </RelativeLayout>
 
             <View style="@style/Divider" />
 
             <!-- LABELS -->
-            <TextView
-                android:id="@+id/label_create_task"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="15dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="20dp"
-                android:clickable="true"
-                android:drawableLeft="@drawable/ic_label"
-                android:drawablePadding="5dp"
-                android:drawableTint="@color/gray"
-                android:onClick="addLabels"
-                android:text="@string/labels"
-                android:textColor="@color/gray"
-                android:textSize="16dp" />
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/label_create_task"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="20dp"
+                    android:clickable="true"
+                    android:drawableLeft="@drawable/ic_label"
+                    android:drawablePadding="5dp"
+                    android:drawableTint="@color/gray"
+                    android:onClick="addLabels"
+                    android:text="@string/add_labels"
+                    android:textColor="@color/gray"
+                    android:textSize="16dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/edit_task_recycler_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:scrollbars="horizontal" />
+
+            </LinearLayout>
 
             <View style="@style/Divider" />
 
