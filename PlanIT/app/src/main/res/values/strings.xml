@@ -56,7 +56,6 @@
     <string name="amount_number_of_days">Enter a number of days</string>
     <string name="done_today">Done for today</string>
     <string name="habit_created">Habit created!</string>
-    <string name="reminder">Reminder</string>
     <string name="search_member">Search for a member</string>
 
     <!-- Teams -->
