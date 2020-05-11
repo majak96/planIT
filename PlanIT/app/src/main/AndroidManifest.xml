@@ -25,7 +25,9 @@
             android:name=".activities.HabitDetailsActivity"
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
 
-        <activity android:name=".activities.SplashScreenActivity" android:theme="@style/AppTheme.NoActionBar"  >
+        <activity
+            android:name=".activities.SplashScreenActivity"
+            android:theme="@style/AppTheme.NoActionBarWithStatus">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -35,12 +37,6 @@
             android:name=".activities.TeamDetailActivity"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
-
-        <activity
-            android:name=".activities.TeamDetailActivity"
-            android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBarWithStatus" />
-        <activity android:name=".activities.ChatActivity" />
 
         <activity
             android:name=".activities.ChatActivity"
@@ -53,7 +49,7 @@
         <activity
             android:name=".activities.SettingsActivity"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBarWithStatus" />
         <activity
             android:name=".activities.EditTaskActivity"
             android:parentActivityName=".MainActivity"
