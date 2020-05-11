@@ -34,11 +34,11 @@ public class TeamDetailActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        teamDescription= findViewById(R.id.description_team_detail);
-        teamLink=findViewById(R.id.sharing_link_team_detail);
+        teamDescription = findViewById(R.id.description_team_detail);
+        teamLink = findViewById(R.id.sharing_link_team_detail);
 
-        if (getIntent().hasExtra("name")) {
-            team = Mokap.getTeam(getIntent().getLongExtra("name", 1));
+        if (getIntent().hasExtra("team")) {
+            team = Mokap.getTeam(getIntent().getLongExtra("team", 1));
             setTitle(team.getName());
 
             teamDescription.setText(team.getDescription());
@@ -48,9 +48,15 @@ public class TeamDetailActivity extends AppCompatActivity {
             recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
             recyclerView.setHasFixedSize(true);
 
-            TeamDetailAdapter adapter = new TeamDetailAdapter(TeamDetailActivity.this, (ArrayList)team.getUsers());
+            TeamDetailAdapter adapter = new TeamDetailAdapter(TeamDetailActivity.this, (ArrayList) team.getUsers());
             recyclerView.setAdapter(adapter);
 
         }
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
     }
 }

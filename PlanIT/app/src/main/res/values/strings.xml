@@ -35,6 +35,8 @@
     <string name="task_details">Task Details</string>
     <string name="save">Save</string>
     <string name="label">Label</string>
+    <string name="chat">Chat</string>
+    <string name="details">Details</string>
 
     <string name="message">Enter message</string>
 
@@ -99,4 +101,5 @@
     <string name="ok">Ok</string>
     <string name="cancel">Cancel</string>
 
+    <string name="reminder">Reminder</string>
 </resources>

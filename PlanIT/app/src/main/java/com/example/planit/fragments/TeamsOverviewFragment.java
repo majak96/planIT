@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.planit.R;
 import com.example.planit.activities.CreateTeamActivity;
 import com.example.planit.adapters.TeamsPreviewAdapter;
+import com.example.planit.mokaps.Mokap;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
@@ -52,7 +53,9 @@ public class TeamsOverviewFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_teams_overview, container, false);
         this.getActivity().setTitle("Teams");
-        initTeams();
+
+        //initTeams();
+        teamsList = Mokap.getTeams();
 
         RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.teams_overview_recycle_view);
         recyclerView.setHasFixedSize(true);
@@ -73,8 +76,8 @@ public class TeamsOverviewFragment extends Fragment {
     }
 
     public void initTeams() {
-        this.teamsList.add(new Team("PMA TIM 3", "Programiranje mobilnih aplikacija", "", null));
-        this.teamsList.add(new Team("UKS TIM 3", "Upravljenje konfiguracijom softvera", "", null));
-        this.teamsList.add(new Team("MBRS TIM 3", "Metodologije brzog razvoja softvera", "", null));
+        this.teamsList.add(new Team(1L, "PMA TIM 3", "Programiranje mobilnih aplikacija", "", null));
+        this.teamsList.add(new Team(2L, "UKS TIM 3", "Upravljenje konfiguracijom softvera", "", null));
+        this.teamsList.add(new Team(3L, "MBRS TIM 3", "Metodologije brzog razvoja softvera", "", null));
     }
 }

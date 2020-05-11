@@ -20,7 +20,7 @@ import java.util.List;
 
 import model.Team;
 
-public class TeamsPreviewAdapter extends RecyclerView.Adapter<TeamsPreviewAdapter.ViewHolder>{
+public class TeamsPreviewAdapter extends RecyclerView.Adapter<TeamsPreviewAdapter.ViewHolder> {
 
     private List<Team> teamsList = new ArrayList<>();
     private Context context;
@@ -42,17 +42,17 @@ public class TeamsPreviewAdapter extends RecyclerView.Adapter<TeamsPreviewAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, final int position) {
-        Team team = this.teamsList.get(position);
+        final Team team = this.teamsList.get(position);
 
         holder.teamNameTextView.setText(team.getName());
 
-
-       holder.relativeLayout.setOnClickListener(new View.OnClickListener() {
+        holder.relativeLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ((FragmentActivity) context).getSupportFragmentManager().beginTransaction()
                         .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                        .replace(R.id.fragment_container, CalendarFragment.newInstance())
+                        .replace(R.id.fragment_container, CalendarFragment.newInstance(teamsList.get(position).getId()))
+                        //.addToBackStack(null)
                         .commit();
             }
         });
@@ -73,7 +73,6 @@ public class TeamsPreviewAdapter extends RecyclerView.Adapter<TeamsPreviewAdapte
             super(itemView);
             teamNameTextView = itemView.findViewById(R.id.teams_item_recycle_view_name);
             relativeLayout = itemView.findViewById(R.id.team_item_relative_layout);
-
         }
     }
 }
