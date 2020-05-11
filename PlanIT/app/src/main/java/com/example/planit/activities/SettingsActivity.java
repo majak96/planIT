@@ -6,6 +6,7 @@ import android.view.MenuItem;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.NavUtils;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.example.planit.R;
 import com.example.planit.fragments.PreferencesFragment;
@@ -26,6 +27,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         getSupportFragmentManager()
                 .beginTransaction()
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                 .replace(R.id.preferences_container, PreferencesFragment.newInstance())
                 .commit();
     }

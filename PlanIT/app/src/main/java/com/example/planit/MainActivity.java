@@ -2,6 +2,8 @@ package com.example.planit;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Button;
 
@@ -152,7 +154,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             case R.id.nav_calendar:
                 getSupportFragmentManager().beginTransaction()
                         .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                        .replace(R.id.fragment_container, CalendarFragment.newInstance())
+                        .replace(R.id.fragment_container, CalendarFragment.newInstance(null))
                         .commit();
                 break;
             case R.id.nav_habits:
@@ -195,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (currentMenuItem != R.id.nav_calendar) {
                 getSupportFragmentManager().beginTransaction()
                         .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                        .replace(R.id.fragment_container, CalendarFragment.newInstance())
+                        .replace(R.id.fragment_container, CalendarFragment.newInstance(null))
                         .commit();
                 navigationView.setCheckedItem(R.id.nav_calendar);
                 currentMenuItem = R.id.nav_calendar;

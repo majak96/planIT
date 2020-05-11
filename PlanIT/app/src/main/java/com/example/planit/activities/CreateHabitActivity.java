@@ -1,6 +1,7 @@
 package com.example.planit.activities;
 
 import android.app.TimePickerDialog;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -25,14 +26,19 @@ public class CreateHabitActivity extends AppCompatActivity {
     private LinearLayout pickDaysLayout;
     private LinearLayout pickWeeksLayout;
     private LinearLayout goalAmountLayout;
+    private RadioButton frequencyDaysButton;
+    private RadioButton frequencyWeeksButton;
+    private RadioButton goalAllButton;
+    private RadioButton goalAmountButton;
     private Button reminderButton;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_create_habit);
-        setTitle("Create Habit");
+        this.setContentView(R.layout.activity_create_habit);
+        this.setTitle("Create Habit");
+
         // toolbar settings
         Toolbar toolbar = findViewById(R.id.toolbar_habit_create);
         this.setSupportActionBar(toolbar);
@@ -41,11 +47,19 @@ public class CreateHabitActivity extends AppCompatActivity {
         this.getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
 
         // getting layouts
-        pickDaysLayout = findViewById(R.id.habit_create_daily_pick_days);
-        pickWeeksLayout = findViewById(R.id.habit_create_daily_pick_weeks);
-        goalAmountLayout = findViewById(R.id.habit_create_goal_amount_layout);
-        this.reminderButton = findViewById(R.id.reminder_button);
+        this.pickDaysLayout = findViewById(R.id.habit_create_daily_pick_days);
+        this.pickWeeksLayout = findViewById(R.id.habit_create_daily_pick_weeks);
+        this.goalAmountLayout = findViewById(R.id.habit_create_goal_amount_layout);
 
+        // getting buttons
+        this.reminderButton = findViewById(R.id.reminder_button);
+        this.frequencyDaysButton = findViewById(R.id.habit_create_daily);
+        this.frequencyWeeksButton = findViewById(R.id.habit_create_weekly);
+        this.goalAllButton = findViewById(R.id.habit_create_goal_all);
+        this.goalAmountButton = findViewById(R.id.habit_create_goal_amount);
+
+
+        // Reminder Button Click Listener for opening TimePickerDialog
         this.reminderButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -58,7 +72,7 @@ public class CreateHabitActivity extends AppCompatActivity {
                 mTimePicker = new TimePickerDialog(CreateHabitActivity.this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
-                        reminderButton.setText( selectedHour + ":" + selectedMinute);
+                        reminderButton.setText(selectedHour + ":" + selectedMinute);
                         reminderButton.setBackground(ContextCompat.getDrawable(CreateHabitActivity.this, R.drawable.circle_primary));
                     }
                 }, hour, minute, true);//Yes 24 hour time
@@ -102,6 +116,8 @@ public class CreateHabitActivity extends AppCompatActivity {
                 if (checked) {
                     pickDaysLayout.setVisibility(View.VISIBLE);
                     pickWeeksLayout.setVisibility(View.GONE);
+                    ((RadioButton) view).setTextColor(Color.rgb(17, 207, 197));
+                    frequencyWeeksButton.setTextColor(Color.rgb(142, 142, 142));
                 }
 
                 break;
@@ -109,6 +125,8 @@ public class CreateHabitActivity extends AppCompatActivity {
                 if (checked) {
                     pickDaysLayout.setVisibility(View.GONE);
                     pickWeeksLayout.setVisibility(View.VISIBLE);
+                    ((RadioButton) view).setTextColor(Color.rgb(17, 207, 197));
+                    frequencyDaysButton.setTextColor(Color.rgb(142, 142, 142));
                 }
                 break;
         }
@@ -117,18 +135,25 @@ public class CreateHabitActivity extends AppCompatActivity {
     public void onRadioButtonGoalClicked(View view) {
         boolean checked = ((RadioButton) view).isChecked();
 
-
         // Check which radio button was clicked
         switch (view.getId()) {
             case R.id.habit_create_goal_all:
-                if (checked)
+                if (checked) {
                     goalAmountLayout.setVisibility(View.GONE);
+                    ((RadioButton) view).setTextColor(Color.rgb(17, 207, 197));
+                    goalAmountButton.setTextColor(Color.rgb(142, 142, 142));
+                }
+
                 break;
             case R.id.habit_create_goal_amount:
-                if (checked)
+                if (checked) {
                     goalAmountLayout.setVisibility(View.VISIBLE);
+                    ((RadioButton) view).setTextColor(Color.rgb(17, 207, 197));
+                    goalAllButton.setTextColor(Color.rgb(142, 142, 142));
+                }
                 break;
         }
     }
+
 
 }
