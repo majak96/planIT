@@ -21,15 +21,19 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.planit.activities.ChatActivity;
+import com.example.planit.activities.ProfileActivity;
 import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.SignInActivity;
+import com.example.planit.activities.SignUpActivity;
 import com.example.planit.fragments.CalendarFragment;
 import com.example.planit.fragments.HabitsOverviewFragment;
 import com.example.planit.fragments.TeamsOverviewFragment;
+import com.example.planit.mokaps.Mokap;
 import com.example.planit.utils.SharedPreference;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -37,6 +41,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
+
+import model.User;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -50,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private TextView loggedEmail;
     private TextView loggedName;
     private TextView loggedFirstChar;
+    private LinearLayout profileLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,26 +91,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             loggedName = (TextView) header.findViewById(R.id.loggedName);
             loggedFirstChar=(TextView) header.findViewById(R.id.loggedFirstChar);
 
+            profileLayout=(LinearLayout) header.findViewById(R.id.profileLayout);
+
             loggedEmail.setText(SharedPreference.getLoggedEmail(MainActivity.this));
             loggedName.setText(SharedPreference.getLoggedName(MainActivity.this));
-            loggedFirstChar.setText(SharedPreference.getLoggedName(MainActivity.this).substring(0, 1));
+            loggedFirstChar.setText(findLoggedUserName().substring(0, 1).concat(findLoggedUserLastName().substring(0, 1)));
+
+            profileLayout.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Intent intent = new Intent(MainActivity.this, ProfileActivity.class);
+                    startActivity(intent);
+                }
+            });
 
             //if we enter the activity for the first time (not after rotating etc)
             if (savedInstanceState == null) {
-                if (page == null || page.equals("personal")) {
+                if (page == null) {
                     //TODO: change the default fragment?
                     getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                             new CalendarFragment()).commit();
                     navigationView.setCheckedItem(R.id.nav_calendar);
                     currentMenuItem = R.id.nav_calendar;
-                } else {
-                    //TODO: change the default fragment?
-                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                            TeamsOverviewFragment.newInstance()).commit();
-                    navigationView.setCheckedItem(R.id.nav_teams);
-                    currentMenuItem = R.id.nav_teams;
                 }
-
             }
 
         }
@@ -210,6 +219,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     public Fragment getCurrentFragment() {
         return this.getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+    }
+
+    public String findLoggedUserName() {
+        for (User u : Mokap.getUsers()) {
+            if (u.getEmail().equals(SharedPreference.getLoggedEmail(MainActivity.this))) {
+                return u.getName();
+            }
+        }
+        return "";
+    }
+
+    public String findLoggedUserLastName() {
+        for (User u : Mokap.getUsers()) {
+            if (u.getEmail().equals(SharedPreference.getLoggedEmail(MainActivity.this))) {
+                return u.getLastName();
+            }
+        }
+        return "";
     }
 
 }

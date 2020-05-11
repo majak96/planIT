@@ -42,10 +42,14 @@ public class Mokap {
         User u1 = new User("Vesna", "Milic", "vesna.22", "wesna@gmail.com");
         User u2 = new User("Marijana", "Kolosnjaji", "majak", "majak@gmail.com");
         User u3 = new User("Marijana", "Matkovski", "majam", "majam@gmail.com");
+        User u4 = new User("Marijana", "Matkovski", "majam", "matkovskim@gmail.com");
+        User u5 = new User("IsaProjekat", "Mail", "isa.22", "timisaprojekat@gmail.com");
 
         users.add(u1);
         users.add(u2);
         users.add(u3);
+        users.add(u4);
+        users.add(u5);
 
         return users;
     }

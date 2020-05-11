@@ -12,6 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".activities.ProfileActivity"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBarWithStatus" />
+        <activity
             android:name=".activities.CreateTeamActivity"
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
         <activity
@@ -24,11 +28,11 @@
         <activity
             android:name=".activities.SplashScreenActivity"
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
-         -->
-        <activity android:name=".activities.TeamDetailActivity"
+        -->
+        <activity
+            android:name=".activities.TeamDetailActivity"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
-            
         <activity android:name=".activities.ChatActivity" />
         <activity android:name=".activities.ChooseModeActivity" />
         <activity android:name=".activities.SignInActivity" />
@@ -37,7 +41,6 @@
             android:name=".activities.SettingsActivity"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar" />
-
         <activity
             android:name=".activities.EditTaskActivity"
             android:parentActivityName=".MainActivity"

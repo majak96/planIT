@@ -79,7 +79,7 @@
     <string name="default_link">https://pma_tim_3/new_team_member/1234</string>
     <string name="sharing_link_description">Sharing link</string>
     <string name="team_members_description">Team members</string>
-    
+
     //create task
     <string name="task_created">Task created!</string>
     <string name="title">Title</string>
@@ -96,5 +96,6 @@
 
     <string name="ok">Ok</string>
     <string name="cancel">Cancel</string>
+    <string name="edit">Edit</string>
 
 </resources>
