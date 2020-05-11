@@ -12,14 +12,22 @@ import android.widget.EditText;
 import com.example.planit.R;
 import com.example.planit.adapters.MessageListAdapter;
 import com.example.planit.mokaps.Mokap;
+import com.example.planit.utils.SharedPreference;
+import com.example.planit.utils.Utils;
 
+import java.util.ArrayList;
+
+import  model.Message;
+import model.Label;
 import model.Team;
+import model.User;
 
 public class ChatActivity extends AppCompatActivity {
 
     private RecyclerView mMessageRecycler;
     private MessageListAdapter mMessageAdapter;
     private EditText messageText;
+    private ArrayList<Message>messages;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,9 +47,9 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         messageText = (EditText) findViewById(R.id.message_text);
-
+        messages = (ArrayList<Message>)Mokap.getMessages();
         mMessageRecycler = (RecyclerView) findViewById(R.id.recyclerview);
-        mMessageAdapter = new MessageListAdapter(this, Mokap.getMessages());
+        mMessageAdapter = new MessageListAdapter(this, messages);
         mMessageRecycler.setLayoutManager(new LinearLayoutManager(this));
         mMessageRecycler.setAdapter(mMessageAdapter);
 
@@ -50,6 +58,10 @@ public class ChatActivity extends AppCompatActivity {
     public void sendMessage(View view) {
         String message = messageText.getText().toString();
         if (message.length() > 0) {
+
+            Message newMessage = new Message(message, findLoggedUser(), Utils.getCurrentDateTime());
+            messages.add(newMessage);
+            mMessageAdapter.notifyItemInserted(messages.size() + 1);
             messageText.getText().clear();
         }
     }
@@ -58,6 +70,15 @@ public class ChatActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
+    }
+
+    public User findLoggedUser(){
+        for(User u:Mokap.getUsers()){
+            if(u.getEmail().equals(SharedPreference.getLoggedEmail(ChatActivity.this))){
+                return u;
+            }
+        }
+        return null;
     }
 
 }
