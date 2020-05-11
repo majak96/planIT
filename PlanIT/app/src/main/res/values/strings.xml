@@ -90,9 +90,12 @@
     <string name="add_location">Add location</string>
     <string name="add_labels">Add labels</string>
     <string name="add_priority">Add priority</string>
+    <string name="add_date">Add date</string>
+    <string name="add_time">Add time</string>
 
     //dialogs
     <string name="task_reminder_dialog">Task Reminder</string>
+    <string name ="task_date_dialog">Task Date</string>
     <string name="task_priority_dialog">Task Priority</string>
     <string name="task_label_dialog">New Label</string>
 

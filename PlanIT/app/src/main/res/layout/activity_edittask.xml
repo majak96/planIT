@@ -52,6 +52,75 @@
 
             <View style="@style/Divider" />
 
+            <!-- TASK DATE -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginTop="10dp"
+                    android:drawableLeft="@drawable/ic_time"
+                    android:drawablePadding="5dp"
+                    android:drawableTint="@color/gray"
+                    android:text="Start date"
+                    android:textColor="@color/gray"
+                    android:textSize="16dp" />
+
+                <TextView
+                    android:id="@+id/date_create_task"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="45dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="5dp"
+                    android:clickable="true"
+
+                    android:onClick="addDate"
+                    android:text="@string/add_date"
+                    android:textColor="@color/darkGray"
+                    android:textSize="16dp" />
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/time_create_task"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginLeft="45dp"
+                        android:layout_marginBottom="20dp"
+                        android:clickable="true"
+                        android:onClick="addTime"
+                        android:text="@string/add_time"
+                        android:textColor="@color/gray"
+                        android:textSize="16dp" />
+
+                    <ImageButton
+                        android:id="@+id/time_remove"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:layout_gravity="right"
+                        android:background="@null"
+                        android:clickable="true"
+                        android:onClick="clearTime"
+                        android:paddingRight="5dp"
+                        android:src="@drawable/ic_close_darkgray"
+                        android:visibility="gone"/>
+
+                </RelativeLayout>
+
+            </LinearLayout>
+
+            <View style="@style/Divider" />
+
             <!-- REMINDERS -->
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -65,7 +134,7 @@
                     android:layout_marginTop="20dp"
                     android:layout_marginBottom="20dp"
                     android:clickable="true"
-                    android:drawableLeft="@drawable/ic_time"
+                    android:drawableLeft="@drawable/ic_alarm"
                     android:drawablePadding="5dp"
                     android:drawableTint="@color/gray"
                     android:onClick="addReminder"
