@@ -3,16 +3,14 @@ package com.example.planit.mokaps;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import model.Label;
+import model.Message;
 import model.Task;
 import model.TaskPriority;
 import model.Team;
 import model.User;
-import model.Message;
 
 public class Mokap {
 
@@ -21,17 +19,19 @@ public class Mokap {
     public static List<Message> getMessages() {
         ArrayList<Message> messages = new ArrayList<Message>();
 
-        User u1 = new User("Vesna", "Milic", "vesna.22", "wesna@gmail.com");
+        User u1 = new User("Vesna", "Milic", "vesna.22", "vesna@gmail.com");
         User u2 = new User("Marijana", "Kolosnjaji", "majak", "majak@gmail.com");
         User u3 = new User("Marijana", "Matkovski", "majam", "majam@gmail.com");
 
-        Message m1 = new Message("Konacno smo polozile PMA", u1, 1320917972);
-        Message m2 = new Message("I JSD", u2, 11122211);
-        Message m3 = new Message("JEEEJ", u3, 11122211);
+        Message m1 = new Message("Let's have a team meeting tomorrow?", u2, 1320917972);
+        Message m2 = new Message("I can't make it tomorrow. How about friday?", u1, 11122211);
+        Message m3 = new Message("Friday works for me!", u3, 11122211);
+        Message m4 = new Message("Great! See you on friday!", u2, 11122211);
 
         messages.add(m1);
         messages.add(m2);
         messages.add(m3);
+        messages.add(m4);
 
         return messages;
     }
@@ -39,7 +39,7 @@ public class Mokap {
     public static List<User> getUsers() {
         ArrayList<User> users = new ArrayList<User>();
 
-        User u1 = new User("Vesna", "Milic", "vesna.22", "wesna@gmail.com");
+        User u1 = new User("Vesna", "Milic", "vesna.22", "vesna@gmail.com");
         User u2 = new User("Marijana", "Kolosnjaji", "majak", "majak@gmail.com");
         User u3 = new User("Marijana", "Matkovski", "majam", "majam@gmail.com");
         User u4 = new User("Marijana", "Matkovski", "majam", "matkovskim@gmail.com");
@@ -136,7 +136,7 @@ public class Mokap {
     public static List<Team> getTeams() {
         List<Team> teams = new ArrayList<>();
 
-        User u1 = new User("Vesna", "Milic", "vesna.22", "wesna@gmail.com");
+        User u1 = new User("Vesna", "Milic", "vesna.22", "vesna@gmail.com");
         User u2 = new User("Marijana", "Kolosnjaji", "majak", "majak@gmail.com");
         User u3 = new User("Marijana", "Matkovski", "majam", "majam@gmail.com");
 
@@ -152,7 +152,7 @@ public class Mokap {
     public static Team getTeam(Long id) {
 
         Team team;
-        User u1 = new User("Vesna", "Milic", "vesna.22", "wesna@gmail.com");
+        User u1 = new User("Vesna", "Milic", "vesna.22", "vesna@gmail.com");
         User u2 = new User("Marijana", "Kolosnjaji", "majak", "majak@gmail.com");
         User u3 = new User("Marijana", "Matkovski", "majam", "majam@gmail.com");
 
