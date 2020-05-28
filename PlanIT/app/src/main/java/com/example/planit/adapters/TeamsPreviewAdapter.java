@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.planit.R;
 import com.example.planit.fragments.CalendarFragment;
+import com.example.planit.fragments.DailyPreviewFragment;
+import com.example.planit.utils.FragmentTransition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,11 +51,7 @@ public class TeamsPreviewAdapter extends RecyclerView.Adapter<TeamsPreviewAdapte
         holder.relativeLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((FragmentActivity) context).getSupportFragmentManager().beginTransaction()
-                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                        .replace(R.id.fragment_container, CalendarFragment.newInstance(teamsList.get(position).getId()))
-                        //.addToBackStack(null)
-                        .commit();
+                FragmentTransition.replaceFragment((FragmentActivity) context, CalendarFragment.newInstance(teamsList.get(position).getId()), R.id.fragment_container, true);
             }
         });
 

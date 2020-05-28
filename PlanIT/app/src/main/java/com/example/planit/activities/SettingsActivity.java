@@ -9,7 +9,9 @@ import androidx.core.app.NavUtils;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.planit.R;
+import com.example.planit.fragments.CalendarFragment;
 import com.example.planit.fragments.PreferencesFragment;
+import com.example.planit.utils.FragmentTransition;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -25,11 +27,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         toolbar.setTitle(R.string.settings);
 
-        getSupportFragmentManager()
-                .beginTransaction()
-                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                .replace(R.id.preferences_container, PreferencesFragment.newInstance())
-                .commit();
+        FragmentTransition.replaceFragment(this, PreferencesFragment.newInstance(), R.id.preferences_container, false);
     }
 
     @Override

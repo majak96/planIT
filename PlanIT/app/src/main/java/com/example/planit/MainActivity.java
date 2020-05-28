@@ -14,6 +14,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
@@ -37,6 +38,7 @@ import com.example.planit.fragments.HabitsOverviewFragment;
 import com.example.planit.fragments.TeamsOverviewFragment;
 import com.example.planit.mokaps.Mokap;
 import com.example.planit.utils.SharedPreference;
+import com.example.planit.utils.FragmentTransition;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -91,9 +93,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             View header = navigationView.getHeaderView(0);
             loggedEmail = (TextView) header.findViewById(R.id.loggedEmail);
             loggedName = (TextView) header.findViewById(R.id.loggedName);
-            loggedFirstChar=(TextView) header.findViewById(R.id.loggedFirstChar);
+            loggedFirstChar = (TextView) header.findViewById(R.id.loggedFirstChar);
 
-            profileLayout=(LinearLayout) header.findViewById(R.id.profileLayout);
+            profileLayout = (LinearLayout) header.findViewById(R.id.profileLayout);
 
             loggedEmail.setText(SharedPreference.getLoggedEmail(MainActivity.this));
             loggedName.setText(SharedPreference.getLoggedName(MainActivity.this));
@@ -109,9 +111,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             //if we enter the activity for the first time (not after rotating etc)
             if (savedInstanceState == null) {
                 if (page == null) {
-                    //TODO: change the default fragment?
-                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                            new CalendarFragment()).commit();
+                    FragmentTransition.replaceFragment(this, CalendarFragment.newInstance(null), R.id.fragment_container, false);
                     navigationView.setCheckedItem(R.id.nav_calendar);
                     currentMenuItem = R.id.nav_calendar;
                 }
@@ -152,22 +152,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         switch (id) {
             case R.id.nav_calendar:
-                getSupportFragmentManager().beginTransaction()
-                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                        .replace(R.id.fragment_container, CalendarFragment.newInstance(null))
-                        .commit();
+                FragmentTransition.replaceFragment(this, CalendarFragment.newInstance(null), R.id.fragment_container, false);
                 break;
             case R.id.nav_habits:
-                getSupportFragmentManager().beginTransaction()
-                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                        .replace(R.id.fragment_container, HabitsOverviewFragment.newInstance())
-                        .commit();
+                FragmentTransition.replaceFragment(this, HabitsOverviewFragment.newInstance(), R.id.fragment_container, false);
                 break;
             case R.id.nav_teams:
-                getSupportFragmentManager().beginTransaction()
-                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                        .replace(R.id.fragment_container, TeamsOverviewFragment.newInstance())
-                        .commit();
+                FragmentTransition.replaceFragment(this, TeamsOverviewFragment.newInstance(), R.id.fragment_container, false);
                 break;
             case R.id.nav_settings:
                 Intent intent = new Intent(this, SettingsActivity.class);
@@ -194,11 +185,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            if (currentMenuItem != R.id.nav_calendar) {
-                getSupportFragmentManager().beginTransaction()
-                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                        .replace(R.id.fragment_container, CalendarFragment.newInstance(null))
-                        .commit();
+            if (getCurrentFragment() instanceof TeamsOverviewFragment || getCurrentFragment() instanceof HabitsOverviewFragment) {
+                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                FragmentTransition.replaceFragment(this, CalendarFragment.newInstance(null), R.id.fragment_container, false);
                 navigationView.setCheckedItem(R.id.nav_calendar);
                 currentMenuItem = R.id.nav_calendar;
             } else {
@@ -209,14 +198,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void signOut() {
         googleSignInClient.signOut().addOnCompleteListener(this, new OnCompleteListener<Void>() {
-                @Override
-                public void onComplete(@NonNull Task<Void> task) {
-                    SharedPreference.setLoggedEmail(getApplicationContext(), "");
-                    Intent intent=new Intent(MainActivity.this, SignInActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
-                }
-            });
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                SharedPreference.setLoggedEmail(getApplicationContext(), "");
+                Intent intent = new Intent(MainActivity.this, SignInActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            }
+        });
     }
 
     public Fragment getCurrentFragment() {

@@ -7,6 +7,7 @@ import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.TeamDetailActivity;
 import com.example.planit.mokaps.Mokap;
 import com.example.planit.utils.EventDecorator;
+import com.example.planit.utils.FragmentTransition;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.prolificinteractive.materialcalendarview.CalendarDay;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
@@ -111,11 +112,8 @@ public class CalendarFragment extends Fragment {
                 Long dateInMilliseconds = cal.getTimeInMillis();
 
                 //go to DailyPreviewFragment for the selected date
-                getActivity().getSupportFragmentManager().beginTransaction()
-                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                        .replace(R.id.fragment_container, DailyPreviewFragment.newInstance(dateInMilliseconds))
-                        .addToBackStack(null)
-                        .commit();
+                FragmentTransition.replaceFragment(getActivity(), DailyPreviewFragment.newInstance(dateInMilliseconds), R.id.fragment_container, true);
+
             }
         });
 
