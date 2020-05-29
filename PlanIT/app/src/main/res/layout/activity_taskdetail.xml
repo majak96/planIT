@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- CHECKBOX, TITLE, PRIORITY -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <CheckBox
+                    android:id="@+id/checkbox_task_detail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:buttonTint="@color/colorPrimary"
+                    android:paddingLeft="15dp" />
+
+                <TextView
+                    android:id="@+id/title_task_detail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_toRightOf="@id/checkbox_task_detail"
+                    android:textColor="@color/darkGray"
+                    android:textSize="16dp" />
+
+                <TextView
+                    android:id="@+id/priority_task_detail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:layout_toRightOf="@id/title_task_detail"
+                    android:textAlignment="textEnd"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="22dp" />
+
+            </RelativeLayout>
+
+            <View style="@style/Divider" />
+
+            <!-- DESCRIPTION -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/description_task_detail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="150dp"
+                    android:paddingLeft="5dp"
+                    android:text="@string/no_description"
+                    android:textColor="@color/darkGray"
+                    android:textSize="16dp" />
+
+            </LinearLayout>
+
+            <View style="@style/Divider" />
+
+            <!-- TIME -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/time_task_detail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawableLeft="@drawable/ic_time"
+                    android:drawablePadding="5dp"
+                    android:drawableTint="@color/gray"
+                    android:paddingLeft="4dp"
+                    android:text="@string/no_time"
+                    android:textColor="@color/darkGray"
+                    android:textSize="16dp" />
+
+            </LinearLayout>
+
+            <View style="@style/Divider" />
+
+            <!-- LOCATION -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/location_task_detail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawableLeft="@drawable/ic_place"
+                    android:drawablePadding="5dp"
+                    android:drawableTint="@color/gray"
+                    android:paddingLeft="4dp"
+                    android:text="@string/no_location"
+                    android:textColor="@color/darkGray"
+                    android:textSize="16dp" />
+
+            </LinearLayout>
+
+            <View style="@style/Divider" />
+
+            <!-- LABELS -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/label_task_detail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:drawableLeft="@drawable/ic_label"
+                    android:drawablePadding="5dp"
+                    android:drawableTint="@color/gray"
+                    android:paddingLeft="4dp"
+                    android:text="@string/no_labels"
+                    android:textColor="@color/darkGray"
+                    android:textSize="16dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/task_detail_recycle_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="horizontal" />
+
+            </LinearLayout>
+
+            <View style="@style/Divider" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>
