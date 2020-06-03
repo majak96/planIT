@@ -1,6 +1,10 @@
 package com.example.planit.activities;
 
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -13,14 +17,20 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.planit.R;
 import com.example.planit.adapters.TaskDetailAdapter;
+import com.example.planit.database.Contract;
 import com.example.planit.mokaps.Mokap;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import model.Task;
+import model.TaskPriority;
 
 public class TaskDetailActivity extends AppCompatActivity {
+
+    private static final String TAG = "TaskDetailActivity";
 
     private Task task;
     private TextView title;
@@ -36,8 +46,9 @@ public class TaskDetailActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         if (getIntent().hasExtra("task")) {
-            //TODO: change this to get a real task
-            task = Mokap.getTask(getIntent().getLongExtra("task", 0));
+
+            //get the task with the id
+            task = getTask(getIntent().getIntExtra("task", 0));
 
             //set activity title
             DateFormat dateFormat = new SimpleDateFormat("MMMM dd, YYYY");
@@ -50,7 +61,8 @@ public class TaskDetailActivity extends AppCompatActivity {
             CheckBox checkBox = findViewById(R.id.checkbox_task_detail);
             TextView location = findViewById(R.id.location_task_detail);
             TextView label = findViewById(R.id.label_task_detail);
-            TextView time = findViewById((R.id.time_task_detail));
+            TextView time = findViewById(R.id.time_task_detail);
+            TextView reminder = findViewById(R.id.reminder_task_detail);
 
             title.setText(task.getTitle());
             if (task.getDone()) {
@@ -58,7 +70,10 @@ public class TaskDetailActivity extends AppCompatActivity {
             }
 
             checkBox.setChecked(task.getDone());
-            priority.setText(task.getPriority().getLabel());
+
+            if (task.getPriority() != null) {
+                priority.setText(task.getPriority().getLabel());
+            }
 
             if (task.getDescription() != null) {
                 description.setText(task.getDescription());
@@ -72,6 +87,12 @@ public class TaskDetailActivity extends AppCompatActivity {
                 DateFormat timeFormat = new SimpleDateFormat("HH:mm");
                 String timeString = timeFormat.format(task.getStartTime());
                 time.setText(timeString);
+            }
+
+            if (task.getReminderTime() != null) {
+                DateFormat timeFormat = new SimpleDateFormat("HH:mm");
+                String reminderString = timeFormat.format(task.getReminderTime());
+                reminder.setText(reminderString);
             }
 
             //initialize RecyclerView
@@ -96,14 +117,14 @@ public class TaskDetailActivity extends AppCompatActivity {
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    if (isChecked) {
-                        //TODO: mark real task as done
-                        task.setDone(true);
-                        title.setTextColor(getResources().getColor(R.color.gray));
+                    //update the state of the task
+                    int rows = updateTask(task.getId(), isChecked);
+
+                    if (rows == 1) {
+                        task.setDone(isChecked);
+                        title.setTextColor(isChecked ? getResources().getColor(R.color.gray) : getResources().getColor(R.color.darkGray));
                     } else {
-                        //TODO: mark real task as not done
-                        task.setDone(false);
-                        title.setTextColor(getResources().getColor(R.color.darkGray));
+                        buttonView.setChecked(!isChecked);
                     }
                 }
             });
@@ -114,5 +135,78 @@ public class TaskDetailActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
+    }
+
+    //update the state of the task
+    private int updateTask(Integer taskId, Boolean isChecked) {
+        Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
+
+        ContentValues values = new ContentValues();
+        values.put(Contract.Task.COLUMN_DONE, isChecked ? 1 : 0);
+
+        int rows = getContentResolver().update(taskUri, values, null, null);
+
+        return rows;
+    }
+
+    //get task with the id from the database
+    private Task getTask(Integer taskId) {
+        Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
+
+        String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_DESCRIPTION, Contract.Task.COLUMN_START_DATE,
+                Contract.Task.COLUMN_START_TIME, Contract.Task.COLUMN_PRIORITY, Contract.Task.COLUMN_ADDRESS, Contract.Task.COLUMN_DONE, Contract.Task.COLUMN_REMINDER};
+
+        Cursor cursor = getContentResolver().query(taskUri, allColumns, null, null, null);
+        cursor.moveToFirst();
+
+        Task task = new Task();
+        task.setId(cursor.getInt(0));
+        task.setTitle(cursor.getString(1));
+        task.setDescription(cursor.getString(2));
+
+        if (cursor.getString(3) == null) {
+            task.setStartDate(null);
+        } else {
+            try {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                Date startDate = dateFormat.parse(cursor.getString(3));
+                task.setStartDate(startDate);
+            } catch (ParseException e) {
+                task.setStartDate(null);
+            }
+        }
+
+        if (cursor.getString(4) == null) {
+            task.setStartTime(null);
+        } else {
+            try {
+                DateFormat timeFormat = new SimpleDateFormat("HH:mm");
+                Date startTime = timeFormat.parse(cursor.getString(4));
+                task.setStartTime(startTime);
+            } catch (ParseException e) {
+                task.setStartTime(null);
+            }
+        }
+
+        if (cursor.getString(5) != null) {
+            task.setPriority(TaskPriority.valueOf(cursor.getString(5)));
+        }
+
+        task.setAddress(cursor.getString(6));
+        task.setDone(cursor.getInt(7) == 1);
+
+        if (cursor.getString(8) == null) {
+            task.setReminderTime(null);
+        } else {
+            try {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
+                Date reminderTime = dateFormat.parse(cursor.getString(8));
+                task.setReminderTime(reminderTime);
+            } catch (ParseException e) {
+                task.setReminderTime(null);
+            }
+        }
+
+        return task;
     }
 }

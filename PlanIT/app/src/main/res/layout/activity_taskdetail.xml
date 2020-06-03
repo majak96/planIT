@@ -103,6 +103,28 @@
 
             <View style="@style/Divider" />
 
+            <!-- REMINDER -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/reminder_task_detail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawableLeft="@drawable/ic_alarm"
+                    android:drawablePadding="5dp"
+                    android:drawableTint="@color/gray"
+                    android:paddingLeft="4dp"
+                    android:text="@string/no_reminder"
+                    android:textColor="@color/darkGray"
+                    android:textSize="16dp" />
+
+            </LinearLayout>
+
+            <View style="@style/Divider" />
+
             <!-- LOCATION -->
             <LinearLayout
                 android:layout_width="match_parent"

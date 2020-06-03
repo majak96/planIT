@@ -1,13 +1,20 @@
 package com.example.planit.activities;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.ContentValues;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -21,6 +28,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.planit.R;
 import com.example.planit.adapters.EditTaskAdapter;
+import com.example.planit.database.Contract;
 import com.example.planit.fragments.DateDialogFragment;
 import com.example.planit.fragments.LabelDialogFragment;
 import com.example.planit.fragments.PriorityDialogFragment;
@@ -35,15 +43,29 @@ import java.util.Date;
 import java.util.List;
 
 import model.Label;
+import model.TaskPriority;
 
 public class EditTaskActivity extends AppCompatActivity implements TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener, PriorityDialogFragment.PriorityDialogListener, LabelDialogFragment.LabelDialogListener {
 
+    private static final String TAG = "EditTaskActivity";
+
     private int selectedPriority;
+
     private EditTaskAdapter adapter;
+
+    private EditText titleEditText;
+    private EditText descriptionEditText;
     private TextView reminderTextView;
     private TextView dateTextView;
     private TextView timeTextView;
     private TextView priorityTextView;
+    private EditText locationEditText;
+
+    private Date startDate;
+    private Date startTime;
+    private Date reminderTime;
+    private TaskPriority taskPriority;
+
     private List<Label> labels = new ArrayList<Label>();
 
     @Override
@@ -57,15 +79,18 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
+        titleEditText = findViewById(R.id.title_create_task);
+        descriptionEditText = findViewById(R.id.description_create_task);
         reminderTextView = findViewById(R.id.reminder_create_task);
         priorityTextView = findViewById(R.id.priority_create_task);
         dateTextView = findViewById(R.id.date_create_task);
         timeTextView = findViewById(R.id.time_create_task);
+        locationEditText = findViewById(R.id.location_create_task);
 
         //set today's date
-        Date date = new Date();
+        startDate = new Date();
         DateFormat dateFormat = new SimpleDateFormat("E, MMMM dd, YYYY");
-        String dateString = dateFormat.format(date);
+        String dateString = dateFormat.format(startDate);
         dateTextView.setText(dateString);
 
         //set X instead of <-
@@ -91,11 +116,26 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_save:
-                Toast.makeText(this, R.string.task_created, Toast.LENGTH_SHORT).show();
+                //check task title field
+                if( TextUtils.isEmpty(titleEditText.getText())){
+                    Toast.makeText(this, R.string.task_title_required, Toast.LENGTH_SHORT).show();
 
-                onBackPressed();
-                /*Intent intent = new Intent(this, MainActivity.class);
-                this.startActivity(intent);*/
+                    return false;
+                }
+
+                //add a new task
+                Uri resultUri = createTask();
+
+                if (resultUri != null) {
+                    Toast.makeText(this, R.string.task_created, Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent();
+                    intent.putExtra("date", startDate.getTime());
+
+                    setResult(Activity.RESULT_OK, intent);
+                    finish();
+                }
+
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -103,18 +143,22 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
 
     @Override
     public boolean onSupportNavigateUp() {
-        onBackPressed();
+        Intent intent = new Intent();
+        setResult(Activity.RESULT_CANCELED, intent);
+
+        finish();
+
         return true;
     }
 
-    public void addDate(View v) {
+    public void openStartDateDialog(View v) {
         DialogFragment dateDialogFragment = DateDialogFragment.getInstance();
         dateDialogFragment.setCancelable(true);
 
         dateDialogFragment.show(getSupportFragmentManager(), "Task date dialog");
     }
 
-    public void addTime(View v) {
+    public void openStartTimeDialog(View v) {
         Calendar c = Calendar.getInstance();
         int hour = c.get(Calendar.HOUR_OF_DAY);
         int minute = c.get(Calendar.MINUTE);
@@ -127,8 +171,11 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                         calendar.set(Calendar.HOUR_OF_DAY, hour);
                         calendar.set(Calendar.MINUTE, minute);
 
+                        //set the variable that keeps the time
+                        startTime = calendar.getTime();
+
                         DateFormat timeFormat = new SimpleDateFormat("HH:mm");
-                        String timeString = timeFormat.format(calendar.getTime());
+                        String timeString = timeFormat.format(startTime);
 
                         timeTextView.setText(timeString);
                         timeTextView.setTextColor(getResources().getColor(R.color.darkGray));
@@ -142,7 +189,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         dialog.show();
     }
 
-    public void addReminder(View v) {
+    public void openReminderDialog(View v) {
         DialogFragment reminderDialogFragment = TaskReminderDialogFragment.getInstance();
         reminderDialogFragment.setCancelable(true);
 
@@ -150,17 +197,17 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     }
 
     public void addLocation(View v) {
-        //TODO: google maps or something
+        //TODO: use google maps or something
     }
 
-    public void addPriority(View v) {
+    public void openPriorityDialog(View v) {
         DialogFragment priorityDialogFragment = PriorityDialogFragment.newInstance(selectedPriority);
         priorityDialogFragment.setCancelable(true);
 
         priorityDialogFragment.show(getSupportFragmentManager(), "Task priority dialog");
     }
 
-    public void addLabels(View v) {
+    public void openLabelDialog(View v) {
         LabelDialogFragment labelDialogFragment = LabelDialogFragment.newInstance();
         labelDialogFragment.setCancelable(true);
 
@@ -173,8 +220,11 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
         calendar.set(Calendar.MINUTE, minute);
 
+        //set the variable that keeps the reminder
+        reminderTime = calendar.getTime();
+
         DateFormat timeFormat = new SimpleDateFormat("HH:mm");
-        String timeString = timeFormat.format(calendar.getTime());
+        String timeString = timeFormat.format(reminderTime);
 
         reminderTextView.setText(timeString);
         reminderTextView.setTextColor(getResources().getColor(R.color.darkGray));
@@ -189,8 +239,11 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         calendar.set(Calendar.MONTH, month);
         calendar.set(Calendar.DAY_OF_MONTH, day);
 
+        //set the variable that keeps the date
+        startDate = calendar.getTime();
+
         DateFormat dateFormat = new SimpleDateFormat("E, MMMM dd, YYYY");
-        String dateString = dateFormat.format(calendar.getTime());
+        String dateString = dateFormat.format(startDate);
 
         dateTextView.setText(dateString);
     }
@@ -200,6 +253,9 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     public void setPriority(String[] choices, Integer position) {
         String choice = choices[position];
         selectedPriority = position;
+
+        //set the variable that keeps the priority
+        taskPriority = TaskPriority.valueOf(choice.toUpperCase());
 
         priorityTextView.setText(choice + " priority");
         priorityTextView.setTextColor(getResources().getColor(R.color.darkGray));
@@ -227,6 +283,9 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         timeTextView.setText(R.string.add_time);
         timeTextView.setTextColor(getResources().getColor(R.color.gray));
 
+        //set the variable that keeps the time
+        startTime = null;
+
         view.setVisibility(View.GONE);
     }
 
@@ -235,6 +294,9 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         reminderTextView = (TextView) findViewById(R.id.reminder_create_task);
         reminderTextView.setText(R.string.add_reminder);
         reminderTextView.setTextColor(getResources().getColor(R.color.gray));
+
+        //set the variable that keeps the reminder
+        reminderTime = null;
 
         view.setVisibility(View.GONE);
     }
@@ -245,8 +307,57 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         priorityTextView.setText(R.string.add_priority);
         priorityTextView.setTextColor(getResources().getColor(R.color.gray));
 
+        //set the variable that keeps the priority
+        taskPriority = null;
+
         view.setVisibility(View.GONE);
 
         selectedPriority = 0;
+    }
+
+    //inserts a new task into the database
+    public Uri createTask() {
+        ContentValues values = new ContentValues();
+
+        //set the title
+        values.put(Contract.Task.COLUMN_TITLE, titleEditText.getText().toString().trim());
+
+        //set the description
+        if (!descriptionEditText.getText().toString().trim().isEmpty()) {
+            values.put(Contract.Task.COLUMN_DESCRIPTION, descriptionEditText.getText().toString().trim());
+        }
+
+        //set the start date
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String dateString = dateFormat.format(startDate);
+        values.put(Contract.Task.COLUMN_START_DATE, dateString);
+
+        //set the start time
+        if (startTime != null) {
+            DateFormat timeFormat = new SimpleDateFormat("HH:mm");
+            String timeString = timeFormat.format(startTime);
+            values.put(Contract.Task.COLUMN_START_TIME, timeString);
+        }
+
+        //set the reminder
+        if (reminderTime != null) {
+            DateFormat timeFormat = new SimpleDateFormat("HH:mm");
+            String timeString = timeFormat.format(reminderTime);
+            values.put(Contract.Task.COLUMN_REMINDER, timeString);
+        }
+
+        //set the priority
+        if (taskPriority != null) {
+            values.put(Contract.Task.COLUMN_PRIORITY, taskPriority.toString());
+        }
+
+        //set the location
+        if (!locationEditText.getText().toString().trim().isEmpty()) {
+            values.put(Contract.Task.COLUMN_ADDRESS, locationEditText.getText().toString().trim());
+        }
+
+        Uri uri = getContentResolver().insert(Contract.Task.CONTENT_URI_TASK, values);
+
+        return uri;
     }
 }

@@ -79,7 +79,7 @@
                     android:layout_marginBottom="5dp"
                     android:clickable="true"
 
-                    android:onClick="addDate"
+                    android:onClick="openStartDateDialog"
                     android:text="@string/add_date"
                     android:textColor="@color/darkGray"
                     android:textSize="16dp" />
@@ -96,7 +96,7 @@
                         android:layout_marginLeft="45dp"
                         android:layout_marginBottom="20dp"
                         android:clickable="true"
-                        android:onClick="addTime"
+                        android:onClick="openStartTimeDialog"
                         android:text="@string/add_time"
                         android:textColor="@color/gray"
                         android:textSize="16dp" />
@@ -137,7 +137,7 @@
                     android:drawableLeft="@drawable/ic_alarm"
                     android:drawablePadding="5dp"
                     android:drawableTint="@color/gray"
-                    android:onClick="addReminder"
+                    android:onClick="openReminderDialog"
                     android:text="@string/add_reminder"
                     android:textColor="@color/gray"
                     android:textSize="16dp" />
@@ -194,7 +194,7 @@
                     android:drawableLeft="@drawable/ic_priority"
                     android:drawablePadding="5dp"
                     android:drawableTint="@color/gray"
-                    android:onClick="addPriority"
+                    android:onClick="openPriorityDialog"
                     android:text="@string/add_priority"
                     android:textColor="@color/gray"
                     android:textSize="16dp" />
@@ -233,7 +233,7 @@
                     android:drawableLeft="@drawable/ic_label"
                     android:drawablePadding="5dp"
                     android:drawableTint="@color/gray"
-                    android:onClick="addLabels"
+                    android:onClick="openLabelDialog"
                     android:text="@string/add_labels"
                     android:textColor="@color/gray"
                     android:textSize="16dp" />

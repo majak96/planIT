@@ -1,5 +1,6 @@
 package com.example.planit;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
@@ -34,6 +35,7 @@ import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.SignInActivity;
 import com.example.planit.activities.SignUpActivity;
 import com.example.planit.fragments.CalendarFragment;
+import com.example.planit.fragments.DailyPreviewFragment;
 import com.example.planit.fragments.HabitsOverviewFragment;
 import com.example.planit.fragments.TeamsOverviewFragment;
 import com.example.planit.mokaps.Mokap;
@@ -228,6 +230,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         }
         return "";
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1) {
+            if (resultCode == Activity.RESULT_OK) {
+                Long date = data.getLongExtra("date", -1);
+
+                if (date != -1) {
+                    getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+                    //show daily preview for the chosen date
+                    FragmentTransition.replaceFragment(this, DailyPreviewFragment.newInstance(date), R.id.fragment_container, true);
+                }
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                //do nothing
+            }
+        }
     }
 
 }

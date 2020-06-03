@@ -123,7 +123,7 @@ public class CalendarFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getActivity(), EditTaskActivity.class);
-                getActivity().startActivity(intent);
+                getActivity().startActivityForResult(intent, 1);
             }
         });
 

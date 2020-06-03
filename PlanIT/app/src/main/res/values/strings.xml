@@ -65,6 +65,9 @@
     <string name="no_description">No description</string>
     <string name="no_location">No location</string>
     <string name="no_time">No time</string>
+    <string name="no_reminder">No reminder</string>
+
+    <string name="task_title_required">Task title can\'t be empty!</string>
 
     //settings
     <string name="set_date_category">Date and time</string>
