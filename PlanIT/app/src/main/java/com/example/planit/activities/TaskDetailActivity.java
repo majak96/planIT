@@ -1,15 +1,22 @@
 package com.example.planit.activities;
 
+import android.app.Activity;
 import android.content.ContentValues;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -18,7 +25,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.planit.R;
 import com.example.planit.adapters.TaskDetailAdapter;
 import com.example.planit.database.Contract;
-import com.example.planit.mokaps.Mokap;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -33,12 +39,17 @@ public class TaskDetailActivity extends AppCompatActivity {
     private static final String TAG = "TaskDetailActivity";
 
     private Task task;
+    private Intent intent;
+    private int taskPosition;
+    private CheckBox checkBox;
     private TextView title;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_taskdetail);
+
+        intent = new Intent();
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -48,7 +59,8 @@ public class TaskDetailActivity extends AppCompatActivity {
         if (getIntent().hasExtra("task")) {
 
             //get the task with the id
-            task = getTask(getIntent().getIntExtra("task", 0));
+            task = getTaskFromDatabase(getIntent().getIntExtra("task", -1));
+            taskPosition = getIntent().getIntExtra("position", -1);
 
             //set activity title
             DateFormat dateFormat = new SimpleDateFormat("MMMM dd, YYYY");
@@ -58,7 +70,7 @@ public class TaskDetailActivity extends AppCompatActivity {
             title = findViewById(R.id.title_task_detail);
             TextView description = findViewById(R.id.description_task_detail);
             TextView priority = findViewById(R.id.priority_task_detail);
-            CheckBox checkBox = findViewById(R.id.checkbox_task_detail);
+            checkBox = findViewById(R.id.checkbox_task_detail);
             TextView location = findViewById(R.id.location_task_detail);
             TextView label = findViewById(R.id.label_task_detail);
             TextView time = findViewById(R.id.time_task_detail);
@@ -118,10 +130,9 @@ public class TaskDetailActivity extends AppCompatActivity {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     //update the state of the task
-                    int rows = updateTask(task.getId(), isChecked);
+                    int rows = updateTaskStatusInDatabase(task.getId(), isChecked);
 
                     if (rows == 1) {
-                        task.setDone(isChecked);
                         title.setTextColor(isChecked ? getResources().getColor(R.color.gray) : getResources().getColor(R.color.darkGray));
                     } else {
                         buttonView.setChecked(!isChecked);
@@ -132,13 +143,67 @@ public class TaskDetailActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.task_preview_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_delete_task:
+                openDeleteTaskDialog();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
     }
 
+    void openDeleteTaskDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.delete_task_title);
+        builder.setMessage(getResources().getString(R.string.delete_task_text) + " " + task.getTitle() + "?");
+        builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                int deletedRows = deleteTaskFromDatabase(task.getId());
+
+                if (deletedRows == 1) {
+                    intent.putExtra("deleted", true);
+                    intent.putExtra("position", taskPosition);
+
+                    setResult(Activity.RESULT_OK, intent);
+                    finish();
+                }
+            }
+        });
+        builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                //do nothing
+            }
+        });
+
+        builder.create().show();
+    }
+
+    //delete the task
+    private int deleteTaskFromDatabase(Integer taskId) {
+        Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
+
+        int rows = getContentResolver().delete(taskUri, null, null);
+
+        return rows;
+    }
+
     //update the state of the task
-    private int updateTask(Integer taskId, Boolean isChecked) {
+    private int updateTaskStatusInDatabase(Integer taskId, Boolean isChecked) {
         Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
 
         ContentValues values = new ContentValues();
@@ -150,7 +215,7 @@ public class TaskDetailActivity extends AppCompatActivity {
     }
 
     //get task with the id from the database
-    private Task getTask(Integer taskId) {
+    private Task getTaskFromDatabase(Integer taskId) {
         Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
 
         String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_DESCRIPTION, Contract.Task.COLUMN_START_DATE,
@@ -208,5 +273,17 @@ public class TaskDetailActivity extends AppCompatActivity {
         }
 
         return task;
+    }
+
+    @Override
+    public void finish() {
+        if (checkBox.isChecked() != task.getDone()) {
+            intent.putExtra("changed", true);
+            intent.putExtra("position", taskPosition);
+
+            setResult(Activity.RESULT_OK, intent);
+        }
+
+        super.finish();
     }
 }

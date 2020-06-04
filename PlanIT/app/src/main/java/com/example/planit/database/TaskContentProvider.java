@@ -96,12 +96,36 @@ public class TaskContentProvider extends ContentProvider {
 
     @Override
     public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs) {
-        return 0;
+        SQLiteDatabase db = database.getWritableDatabase();
+        int uriType = sURIMatcher.match(uri);
+
+        long id = 0;
+        int rowsDeleted = 0;
+        switch (uriType) {
+            case TASK:
+                rowsDeleted = db.delete(Contract.Task.TABLE_NAME, selection, selectionArgs);
+                break;
+            case TASK_ID:
+                String taskId = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection)) {
+                    rowsDeleted = db.delete(Contract.Task.TABLE_NAME, Contract.Task.COLUMN_ID + "=" + taskId, null);
+                } else {
+                    rowsDeleted = db.delete(Contract.Task.TABLE_NAME, Contract.Task.COLUMN_ID + "=" + taskId + " and " + selection, selectionArgs);
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown URI: " + uri);
+        }
+
+        //make sure that potential listeners are getting notified
+        getContext().getContentResolver().notifyChange(uri, null);
+
+        return rowsDeleted;
     }
 
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs) {
-        SQLiteDatabase sqlDB = database.getWritableDatabase();
+        SQLiteDatabase db = database.getWritableDatabase();
         int uriType = sURIMatcher.match(uri);
 
         long id = 0;
@@ -109,19 +133,20 @@ public class TaskContentProvider extends ContentProvider {
 
         switch (uriType) {
             case TASK:
-                rowsUpdated = sqlDB.update(Contract.Task.TABLE_NAME, values, selection, selectionArgs);
+                rowsUpdated = db.update(Contract.Task.TABLE_NAME, values, selection, selectionArgs);
                 break;
             case TASK_ID:
                 String taskId = uri.getLastPathSegment();
                 if (TextUtils.isEmpty(selection)) {
-                    rowsUpdated = sqlDB.update(Contract.Task.TABLE_NAME, values, Contract.Task.COLUMN_ID + "=" + taskId, null);
+                    rowsUpdated = db.update(Contract.Task.TABLE_NAME, values, Contract.Task.COLUMN_ID + "=" + taskId, null);
                 } else {
-                    rowsUpdated = sqlDB.update(Contract.Task.TABLE_NAME, values, Contract.Task.COLUMN_ID + "=" + taskId + " and " + selection, selectionArgs);
+                    rowsUpdated = db.update(Contract.Task.TABLE_NAME, values, Contract.Task.COLUMN_ID + "=" + taskId + " and " + selection, selectionArgs);
                 }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
+
         //make sure that potential listeners are getting notified
         getContext().getContentResolver().notifyChange(uri, null);
 

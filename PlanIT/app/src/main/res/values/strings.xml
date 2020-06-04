@@ -99,13 +99,19 @@
 
     //dialogs
     <string name="task_reminder_dialog">Task Reminder</string>
-    <string name ="task_date_dialog">Task Date</string>
+    <string name="task_date_dialog">Task Date</string>
     <string name="task_priority_dialog">Task Priority</string>
     <string name="task_label_dialog">New Label</string>
 
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
     <string name="ok">Ok</string>
     <string name="cancel">Cancel</string>
     <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
 
     <string name="reminder">Reminder</string>
+
+    <string name="delete_task_text">Are you sure you want to delete</string>
+    <string name="delete_task_title">Delete task</string>
 </resources>

@@ -1,10 +1,10 @@
 package com.example.planit.adapters;
 
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,8 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import model.Task;
-
-import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapter.ViewHolder> {
 
@@ -58,9 +56,9 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
         holder.taskCheckBox.setChecked(task.getDone());
 
         //if task is marked as done
-        /*if (task.getDone()) {
+        if (task.getDone()) {
             holder.taskTitleTextView.setTextColor(context.getResources().getColor(R.color.gray));
-        }*/
+        }
 
         //if task has set time
         if (task.getStartTime() != null) {
@@ -76,8 +74,9 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
             public void onClick(View v) {
                 Intent intent = new Intent(context, TaskDetailActivity.class);
                 intent.putExtra("task", tasks.get(position).getId());
+                intent.putExtra("position", position);
 
-                context.startActivity(intent);
+                ((Activity) context).startActivityForResult(intent, 2);
             }
         });
 
@@ -85,14 +84,11 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
         holder.taskCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                //update task status in the database
                 int rows = updateTask(tasks.get(position).getId(), isChecked);
 
                 if (rows == 1) {
-                    /*if (isChecked) {
-                        holder.taskTitleTextView.setTextColor(context.getResources().getColor(R.color.gray));
-                    } else {
-                        holder.taskTitleTextView.setTextColor(context.getResources().getColor(R.color.darkGray));
-                    }*/
+                    updateTaskStatus(position);
                 } else {
                     buttonView.setChecked(!isChecked);
                 }
@@ -102,10 +98,18 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
     }
 
     @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        super.onViewRecycled(holder);
+
+        holder.taskCheckBox.setOnCheckedChangeListener(null);
+    }
+
+    @Override
     public int getItemCount() {
         return tasks.size();
     }
 
+    //update task status in the database
     private int updateTask(Integer taskId, Boolean isChecked) {
         Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
 
@@ -115,6 +119,20 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
         int rows = context.getContentResolver().update(taskUri, values, null, null);
 
         return rows;
+    }
+
+    //remove task from the recycler view
+    public void deleteTask(int position) {
+        tasks.remove(position);
+        notifyItemRemoved(position);
+        notifyItemRangeChanged(position, tasks.size());
+    }
+
+    //update task in the recycler view
+    public void updateTaskStatus(int position) {
+        Task task = tasks.get(position);
+        task.setDone(!task.getDone());
+        notifyItemChanged(position);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

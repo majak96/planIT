@@ -3,23 +3,21 @@ package com.example.planit.fragments;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.planit.R;
 import com.example.planit.activities.EditTaskActivity;
 import com.example.planit.adapters.DailyPreviewAdapter;
 import com.example.planit.database.Contract;
-import com.example.planit.mokaps.Mokap;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.text.DateFormat;
@@ -30,12 +28,15 @@ import java.util.Date;
 import java.util.List;
 
 import model.Task;
-import model.TaskPriority;
 
 public class DailyPreviewFragment extends Fragment {
 
     private static final String TAG = "DailyPreviewFragment";
 
+    String queryDateString;
+
+    SwipeRefreshLayout refreshLayout;
+    private DailyPreviewAdapter adapter;
     private List<Task> dailyTasks = new ArrayList<Task>();
 
     public static DailyPreviewFragment newInstance(Long selectedDateInMilliseconds) {
@@ -64,7 +65,7 @@ public class DailyPreviewFragment extends Fragment {
 
             //get tasks with this date
             DateFormat queryDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            String queryDateString = queryDateFormat.format(date);
+            queryDateString = queryDateFormat.format(date);
             getDailyTasks(queryDateString);
 
             //initialize RecyclerView
@@ -72,9 +73,23 @@ public class DailyPreviewFragment extends Fragment {
             recyclerView.setHasFixedSize(true);
 
             //set the adapter and layout manager
-            DailyPreviewAdapter adapter = new DailyPreviewAdapter(this.getContext(), dailyTasks);
+            adapter = new DailyPreviewAdapter(this.getContext(), dailyTasks);
             recyclerView.setAdapter(adapter);
             recyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
+
+            //refresh layout
+            refreshLayout = view.findViewById(R.id.daily_refresh_layout);
+            refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                @Override
+                public void onRefresh() {
+                    //TODO: change to synchronize with server
+                    dailyTasks.clear();
+                    adapter.notifyDataSetChanged();
+                    getDailyTasks(queryDateString);
+
+                    refreshLayout.setRefreshing(false);
+                }
+            });
         }
 
         //floating action button for creating a new task
@@ -125,4 +140,11 @@ public class DailyPreviewFragment extends Fragment {
         }
     }
 
+    public void removeTaskFromRecyclerView(Integer position) {
+        adapter.deleteTask(position);
+    }
+
+    public void updateTaskStatusInRecyclerView(Integer position) {
+        adapter.updateTaskStatus(position);
+    }
 }
