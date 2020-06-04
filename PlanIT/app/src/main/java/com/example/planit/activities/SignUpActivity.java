@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -15,13 +16,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.planit.R;
+import com.example.planit.service.AuthService;
+import com.example.planit.service.ServiceUtils;
 import com.example.planit.utils.Utils;
 
-import model.User;
+import model.RegisterDTO;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class SignUpActivity extends AppCompatActivity {
 
-    private TextView signIpLink;
+    private TextView signInLink;
     private Button signUpBtn;
     private EditText email;
     private EditText password;
@@ -39,7 +46,7 @@ public class SignUpActivity extends AppCompatActivity {
         name = findViewById(R.id.signUpNameInput);
         lastName = findViewById(R.id.signUpLastNameInput);
 
-        signIpLink = findViewById(R.id.signInLink);
+        signInLink = findViewById(R.id.signInLink);
         signUpBtn = findViewById(R.id.signUpButton);
 
         signUpBtn.setOnClickListener(new View.OnClickListener() {
@@ -52,16 +59,37 @@ public class SignUpActivity extends AppCompatActivity {
                     Toast t = Toast.makeText(SignUpActivity.this, "You must enter valid email address!", Toast.LENGTH_SHORT);
                     t.show();
                 } else {
-                    User newUser = new User(name.toString(), lastName.toString(), password.toString(), email.toString());
-                    newUser.setColour(Utils.getRandomColor());
 
-                    Intent intent = new Intent(SignUpActivity.this, SignInActivity.class);
-                    startActivity(intent);
+                    RegisterDTO registerDTO = new RegisterDTO(email.getText().toString(), password.getText().toString(), name.getText().toString(), lastName.getText().toString(), Utils.getRandomColor());
+
+                    AuthService apiService = ServiceUtils.getClient().create(AuthService.class);
+                    Call<ResponseBody> call = apiService.register(registerDTO);
+                    call.enqueue(new Callback<ResponseBody>() {
+
+                        @Override
+                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+
+                            if (response.code() == 200) {
+                                Intent intent = new Intent(SignUpActivity.this, SignInActivity.class);
+                                startActivity(intent);
+                            } else {
+                                Toast t = Toast.makeText(SignUpActivity.this, "User with same email already exists!", Toast.LENGTH_SHORT);
+                                t.show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<ResponseBody> call, Throwable t) {
+                            Log.e("tag", "Failed");
+                        }
+
+                    });
+
                 }
             }
         });
 
-        signIpLink.setOnClickListener(new View.OnClickListener() {
+        signInLink.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent intent = new Intent(SignUpActivity.this, SignInActivity.class);
                 startActivity(intent);
