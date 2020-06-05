@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -42,7 +41,6 @@ public class TaskDetailActivity extends AppCompatActivity {
     private Intent intent;
     private int taskPosition;
     private CheckBox checkBox;
-    private TextView title;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +65,7 @@ public class TaskDetailActivity extends AppCompatActivity {
             String dateString = dateFormat.format(task.getStartDate());
             setTitle(dateString);
 
-            title = findViewById(R.id.title_task_detail);
+            TextView title = findViewById(R.id.title_task_detail);
             TextView description = findViewById(R.id.description_task_detail);
             TextView priority = findViewById(R.id.priority_task_detail);
             checkBox = findViewById(R.id.checkbox_task_detail);
@@ -77,9 +75,6 @@ public class TaskDetailActivity extends AppCompatActivity {
             TextView reminder = findViewById(R.id.reminder_task_detail);
 
             title.setText(task.getTitle());
-            if (task.getDone()) {
-                title.setTextColor(getResources().getColor(R.color.gray));
-            }
 
             checkBox.setChecked(task.getDone());
 
@@ -108,7 +103,7 @@ public class TaskDetailActivity extends AppCompatActivity {
             }
 
             //initialize RecyclerView
-            RecyclerView recyclerView = (RecyclerView) findViewById(R.id.task_detail_recycle_view);
+            RecyclerView recyclerView = findViewById(R.id.task_detail_recycle_view);
             recyclerView.setHasFixedSize(true);
 
             //set the adapter and layout manager
@@ -119,10 +114,10 @@ public class TaskDetailActivity extends AppCompatActivity {
             //check if task has labels
             if (task.getLabels().isEmpty()) {
                 recyclerView.setVisibility(View.GONE);
-                label.setText(R.string.no_labels);
+                label.setVisibility(View.VISIBLE);
             } else {
+                label.setVisibility(View.GONE);
                 recyclerView.setVisibility(View.VISIBLE);
-                label.setText("");
             }
 
             //checkbox listener
@@ -133,8 +128,9 @@ public class TaskDetailActivity extends AppCompatActivity {
                     int rows = updateTaskStatusInDatabase(task.getId(), isChecked);
 
                     if (rows == 1) {
-                        title.setTextColor(isChecked ? getResources().getColor(R.color.gray) : getResources().getColor(R.color.darkGray));
+                        //do nothing
                     } else {
+                        //revert the checkbox
                         buttonView.setChecked(!isChecked);
                     }
                 }
@@ -154,6 +150,9 @@ public class TaskDetailActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.menu_delete_task:
                 openDeleteTaskDialog();
+                break;
+            default:
+                //do nothing
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -197,9 +196,7 @@ public class TaskDetailActivity extends AppCompatActivity {
     private int deleteTaskFromDatabase(Integer taskId) {
         Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
 
-        int rows = getContentResolver().delete(taskUri, null, null);
-
-        return rows;
+        return getContentResolver().delete(taskUri, null, null);
     }
 
     //update the state of the task
@@ -209,9 +206,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         ContentValues values = new ContentValues();
         values.put(Contract.Task.COLUMN_DONE, isChecked ? 1 : 0);
 
-        int rows = getContentResolver().update(taskUri, values, null, null);
-
-        return rows;
+        return getContentResolver().update(taskUri, values, null, null);
     }
 
     //get task with the id from the database
@@ -272,11 +267,14 @@ public class TaskDetailActivity extends AppCompatActivity {
             }
         }
 
+        cursor.close();
+
         return task;
     }
 
     @Override
     public void finish() {
+        //check if task status changed
         if (checkBox.isChecked() != task.getDone()) {
             intent.putExtra("changed", true);
             intent.putExtra("position", taskPosition);

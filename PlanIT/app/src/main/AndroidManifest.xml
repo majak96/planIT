@@ -53,7 +53,8 @@
         <activity
             android:name=".activities.EditTaskActivity"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBarWithStatus" />
+            android:theme="@style/AppTheme.NoActionBarWithStatus"
+            android:windowSoftInputMode="stateVisible" />
         <activity
             android:name=".activities.TaskDetailActivity"
             android:parentActivityName=".MainActivity"

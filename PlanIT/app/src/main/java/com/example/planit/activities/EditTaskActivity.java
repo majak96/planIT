@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -66,7 +65,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     private Date reminderTime;
     private TaskPriority taskPriority;
 
-    private List<Label> labels = new ArrayList<Label>();
+    private List<Label> labels = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +86,9 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         timeTextView = findViewById(R.id.time_create_task);
         locationEditText = findViewById(R.id.location_create_task);
 
+        //set focus to title
+        titleEditText.requestFocus();
+
         //set today's date
         startDate = new Date();
         DateFormat dateFormat = new SimpleDateFormat("E, MMMM dd, YYYY");
@@ -97,7 +99,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         this.getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
 
         //initialize RecyclerView for labels
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.edit_task_recycler_view);
+        RecyclerView recyclerView = findViewById(R.id.edit_task_recycler_view);
 
         //set the adapter and layout manager
         adapter = new EditTaskAdapter(this, labels);
@@ -117,7 +119,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         switch (item.getItemId()) {
             case R.id.menu_save:
                 //check task title field
-                if( TextUtils.isEmpty(titleEditText.getText())){
+                if (TextUtils.isEmpty(titleEditText.getText())) {
                     Toast.makeText(this, R.string.task_title_required, Toast.LENGTH_SHORT).show();
 
                     return false;
@@ -137,6 +139,8 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                 }
 
                 break;
+            default:
+                //do nothing
         }
         return super.onOptionsItemSelected(item);
     }
@@ -257,10 +261,10 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         //set the variable that keeps the priority
         taskPriority = TaskPriority.valueOf(choice.toUpperCase());
 
-        priorityTextView.setText(choice + " priority");
+        priorityTextView.setText(String.format(getResources().getString(R.string.priority), choice));
         priorityTextView.setTextColor(getResources().getColor(R.color.darkGray));
 
-        ImageButton removeImageView = (ImageButton) findViewById(R.id.priority_remove);
+        ImageButton removeImageView = findViewById(R.id.priority_remove);
         removeImageView.setVisibility(View.VISIBLE);
     }
 

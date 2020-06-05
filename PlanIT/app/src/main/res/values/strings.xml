@@ -111,6 +111,7 @@
     <string name="delete">Delete</string>
 
     <string name="reminder">Reminder</string>
+    <string name="priority">%1$s priority</string>
 
     <string name="delete_task_text">Are you sure you want to delete</string>
     <string name="delete_task_title">Delete task</string>

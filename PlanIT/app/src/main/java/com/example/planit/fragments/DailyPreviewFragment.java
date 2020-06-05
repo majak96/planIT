@@ -12,7 +12,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.planit.R;
 import com.example.planit.activities.EditTaskActivity;
@@ -33,11 +32,8 @@ public class DailyPreviewFragment extends Fragment {
 
     private static final String TAG = "DailyPreviewFragment";
 
-    String queryDateString;
-
-    SwipeRefreshLayout refreshLayout;
     private DailyPreviewAdapter adapter;
-    private List<Task> dailyTasks = new ArrayList<Task>();
+    private List<Task> dailyTasks = new ArrayList<>();
 
     public static DailyPreviewFragment newInstance(Long selectedDateInMilliseconds) {
         Bundle args = new Bundle();
@@ -65,31 +61,17 @@ public class DailyPreviewFragment extends Fragment {
 
             //get tasks with this date
             DateFormat queryDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            queryDateString = queryDateFormat.format(date);
+            String queryDateString = queryDateFormat.format(date);
             getDailyTasks(queryDateString);
 
             //initialize RecyclerView
-            RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.daily_preview_recycle_view);
+            RecyclerView recyclerView = view.findViewById(R.id.daily_preview_recycle_view);
             recyclerView.setHasFixedSize(true);
 
             //set the adapter and layout manager
             adapter = new DailyPreviewAdapter(this.getContext(), dailyTasks);
             recyclerView.setAdapter(adapter);
             recyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
-
-            //refresh layout
-            refreshLayout = view.findViewById(R.id.daily_refresh_layout);
-            refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-                @Override
-                public void onRefresh() {
-                    //TODO: change to synchronize with server
-                    dailyTasks.clear();
-                    adapter.notifyDataSetChanged();
-                    getDailyTasks(queryDateString);
-
-                    refreshLayout.setRefreshing(false);
-                }
-            });
         }
 
         //floating action button for creating a new task
@@ -105,7 +87,7 @@ public class DailyPreviewFragment extends Fragment {
         return view;
     }
 
-    public void getDailyTasks(String date) {
+    private void getDailyTasks(String date) {
         String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_START_TIME, Contract.Task.COLUMN_DONE};
 
         String selection = "start_date = ?";
@@ -138,6 +120,8 @@ public class DailyPreviewFragment extends Fragment {
                 dailyTasks.add(task);
             }
         }
+
+        cursor.close();
     }
 
     public void removeTaskFromRecyclerView(Integer position) {
@@ -147,4 +131,5 @@ public class DailyPreviewFragment extends Fragment {
     public void updateTaskStatusInRecyclerView(Integer position) {
         adapter.updateTaskStatus(position);
     }
+
 }

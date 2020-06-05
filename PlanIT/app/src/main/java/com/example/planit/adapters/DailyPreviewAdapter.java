@@ -22,14 +22,13 @@ import com.example.planit.database.Contract;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 import model.Task;
 
 public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapter.ViewHolder> {
 
-    private List<Task> tasks = new ArrayList<Task>();
+    private List<Task> tasks;
     private Context context;
 
     public DailyPreviewAdapter(Context context, List<Task> tasks) {
@@ -43,8 +42,7 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.dailypreview_list_item, parent, false);
 
-        ViewHolder holder = new ViewHolder(view);
-        return holder;
+        return new ViewHolder(view);
     }
 
     @Override
@@ -54,11 +52,6 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
         //set checkbox text and status
         holder.taskTitleTextView.setText(task.getTitle());
         holder.taskCheckBox.setChecked(task.getDone());
-
-        //if task is marked as done
-        if (task.getDone()) {
-            holder.taskTitleTextView.setTextColor(context.getResources().getColor(R.color.gray));
-        }
 
         //if task has set time
         if (task.getStartTime() != null) {
@@ -116,9 +109,7 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
         ContentValues values = new ContentValues();
         values.put(Contract.Task.COLUMN_DONE, isChecked ? 1 : 0);
 
-        int rows = context.getContentResolver().update(taskUri, values, null, null);
-
-        return rows;
+        return context.getContentResolver().update(taskUri, values, null, null);
     }
 
     //remove task from the recycler view
