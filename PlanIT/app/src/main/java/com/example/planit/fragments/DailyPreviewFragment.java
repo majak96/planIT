@@ -32,6 +32,8 @@ public class DailyPreviewFragment extends Fragment {
 
     private static final String TAG = "DailyPreviewFragment";
 
+    private Date date;
+
     private DailyPreviewAdapter adapter;
     private List<Task> dailyTasks = new ArrayList<>();
 
@@ -52,7 +54,7 @@ public class DailyPreviewFragment extends Fragment {
 
         Bundle bundle = getArguments();
         if (bundle != null) {
-            Date date = new Date(bundle.getLong("SELECTED_DATE"));
+             date = new Date(bundle.getLong("SELECTED_DATE"));
 
             //set activity title to date
             DateFormat dateFormat = new SimpleDateFormat("MMMM dd, YYYY");
@@ -80,6 +82,8 @@ public class DailyPreviewFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getActivity(), EditTaskActivity.class);
+                intent.putExtra("date", date.getTime());
+
                 getActivity().startActivityForResult(intent, 1);
             }
         });

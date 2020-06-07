@@ -217,7 +217,7 @@
             <View style="@style/Divider" />
 
             <!-- LABELS -->
-            <LinearLayout
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
@@ -229,12 +229,10 @@
                     android:layout_marginLeft="15dp"
                     android:layout_marginTop="20dp"
                     android:layout_marginBottom="20dp"
-                    android:clickable="true"
                     android:drawableLeft="@drawable/ic_label"
                     android:drawablePadding="5dp"
                     android:drawableTint="@color/gray"
-                    android:onClick="openLabelDialog"
-                    android:text="@string/add_labels"
+                    android:text="@string/no_labels"
                     android:textColor="@color/gray"
                     android:textSize="16dp" />
 
@@ -242,10 +240,30 @@
                     android:id="@+id/edit_task_recycler_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="20dp"
+                    android:layout_toRightOf="@id/label_create_task"
+                    android:layout_toLeftOf="@id/plus_label_create_task"
+                    android:layout_centerVertical="true"
                     android:layout_gravity="center_vertical"
                     android:scrollbars="horizontal" />
 
-            </LinearLayout>
+                <ImageButton
+                    android:id="@+id/plus_label_create_task"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="20dp"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:layout_gravity="right"
+                    android:background="@null"
+                    android:clickable="true"
+                    android:onClick="openLabelDialog"
+                    android:paddingRight="5dp"
+                    android:src="@drawable/ic_add_darkgray"/>
+
+            </RelativeLayout>
 
             <View style="@style/Divider" />
 

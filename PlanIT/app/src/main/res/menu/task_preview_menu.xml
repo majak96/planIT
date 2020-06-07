@@ -3,6 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/menu_edit_task"
+        android:title="@string/edit"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/menu_delete_task"
         android:title="@string/delete"
         app:showAsAction="never" />

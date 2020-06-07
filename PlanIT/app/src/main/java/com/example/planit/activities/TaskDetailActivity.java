@@ -43,12 +43,29 @@ public class TaskDetailActivity extends AppCompatActivity {
     private Task task;
     private Intent intent;
     private int taskPosition;
+
     private CheckBox checkBox;
+    private TextView title;
+    private TextView description;
+    private TextView time;
+    private TextView reminder;
+    private TextView location;
+    private TextView label;
+    private TextView priority;
+
+    private SimpleDateFormat viewDateFormat;
+    private SimpleDateFormat timeFormat;
+    private SimpleDateFormat dbDateFormat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_taskdetail);
+
+        viewDateFormat = new SimpleDateFormat("E, MMMM dd, YYYY");
+        timeFormat = new SimpleDateFormat("HH:mm");
+        dbDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
         intent = new Intent();
 
@@ -67,46 +84,20 @@ public class TaskDetailActivity extends AppCompatActivity {
             task.setLabels(taskLabels);
 
             //set activity title
-            DateFormat dateFormat = new SimpleDateFormat("MMMM dd, YYYY");
-            String dateString = dateFormat.format(task.getStartDate());
+            String dateString = viewDateFormat.format(task.getStartDate());
             setTitle(dateString);
 
-            TextView title = findViewById(R.id.title_task_detail);
-            TextView description = findViewById(R.id.description_task_detail);
-            TextView priority = findViewById(R.id.priority_task_detail);
+            title = findViewById(R.id.title_task_detail);
+            description = findViewById(R.id.description_task_detail);
+            priority = findViewById(R.id.priority_task_detail);
             checkBox = findViewById(R.id.checkbox_task_detail);
-            TextView location = findViewById(R.id.location_task_detail);
-            TextView label = findViewById(R.id.label_task_detail);
-            TextView time = findViewById(R.id.time_task_detail);
-            TextView reminder = findViewById(R.id.reminder_task_detail);
+            location = findViewById(R.id.location_task_detail);
+            label = findViewById(R.id.label_task_detail);
+            time = findViewById(R.id.time_task_detail);
+            reminder = findViewById(R.id.reminder_task_detail);
 
-            title.setText(task.getTitle());
-
-            checkBox.setChecked(task.getDone());
-
-            if (task.getPriority() != null) {
-                priority.setText(task.getPriority().getLabel());
-            }
-
-            if (task.getDescription() != null) {
-                description.setText(task.getDescription());
-            }
-
-            if (task.getAddress() != null) {
-                location.setText(task.getAddress());
-            }
-
-            if (task.getStartTime() != null) {
-                DateFormat timeFormat = new SimpleDateFormat("HH:mm");
-                String timeString = timeFormat.format(task.getStartTime());
-                time.setText(timeString);
-            }
-
-            if (task.getReminderTime() != null) {
-                DateFormat timeFormat = new SimpleDateFormat("HH:mm");
-                String reminderString = timeFormat.format(task.getReminderTime());
-                reminder.setText(reminderString);
-            }
+            //set field values to the values from the task
+            setTaskValues();
 
             //initialize RecyclerView
             RecyclerView recyclerView = findViewById(R.id.task_detail_recycle_view);
@@ -120,22 +111,19 @@ public class TaskDetailActivity extends AppCompatActivity {
             //check if task has labels
             if (task.getLabels().isEmpty()) {
                 recyclerView.setVisibility(View.GONE);
-                label.setVisibility(View.VISIBLE);
             } else {
-                label.setVisibility(View.GONE);
+                label.setText("");
                 recyclerView.setVisibility(View.VISIBLE);
             }
 
-            //checkbox listener
+            //task status checkbox listener
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     //update the state of the task
                     int rows = updateTaskStatusInDatabase(task.getId(), isChecked);
 
-                    if (rows == 1) {
-                        //do nothing
-                    } else {
+                    if (rows < 1) {
                         //revert the checkbox
                         buttonView.setChecked(!isChecked);
                     }
@@ -157,6 +145,12 @@ public class TaskDetailActivity extends AppCompatActivity {
             case R.id.menu_delete_task:
                 openDeleteTaskDialog();
                 break;
+            case R.id.menu_edit_task:
+                Intent intent = new Intent(this, EditTaskActivity.class);
+                intent.putExtra("task", task.getId());
+
+                startActivityForResult(intent, 1);
+                break;
             default:
                 //do nothing
                 break;
@@ -170,17 +164,54 @@ public class TaskDetailActivity extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * Sets field values to the values from the task
+     */
+    public void setTaskValues() {
+        title.setText(task.getTitle());
+
+        checkBox.setChecked(task.getDone());
+
+        if (task.getPriority() != null) {
+            priority.setText(task.getPriority().getSymbol());
+        }
+
+        if (task.getDescription() != null) {
+            description.setText(task.getDescription());
+        }
+
+        if (task.getAddress() != null) {
+            location.setText(task.getAddress());
+        }
+
+        if (task.getStartTime() != null) {
+            String timeString = timeFormat.format(task.getStartTime());
+            time.setText(timeString);
+        }
+
+        if (task.getReminderTime() != null) {
+            String reminderString = timeFormat.format(task.getReminderTime());
+            reminder.setText(reminderString);
+        }
+    }
+
+    /**
+     * Opens delete task dialog
+     */
     void openDeleteTaskDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.delete_task_title);
-        builder.setMessage(getResources().getString(R.string.delete_task_text) + " " + task.getTitle() + "?");
+        builder.setMessage(String.format(getResources().getString(R.string.delete_task_text), task.getTitle()));
         builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
+                //first remove task labels
                 deleteTaskLabelsFromDatabase(task.getId());
+
+                //then delete the task itself
                 int deletedRows = deleteTaskFromDatabase(task.getId());
 
-                if (deletedRows == 1) {
+                if (deletedRows > 0) {
                     intent.putExtra("deleted", true);
                     intent.putExtra("position", taskPosition);
 
@@ -199,14 +230,24 @@ public class TaskDetailActivity extends AppCompatActivity {
         builder.create().show();
     }
 
-    //delete the task
+    /**
+     * Deletes the task from the database
+     *
+     * @param taskId
+     * @return number of deleted rows
+     */
     private int deleteTaskFromDatabase(Integer taskId) {
         Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
 
         return getContentResolver().delete(taskUri, null, null);
     }
 
-    //delete the task labels
+    /**
+     * Deletes the task labels from the database
+     *
+     * @param taskId
+     * @return
+     */
     private int deleteTaskLabelsFromDatabase(Integer taskId) {
         String selection = "task = ?";
         String[] selectionArgs = new String[]{Integer.toString(taskId)};
@@ -214,7 +255,13 @@ public class TaskDetailActivity extends AppCompatActivity {
         return getContentResolver().delete(Contract.TaskLabel.CONTENT_URI_TASK_LABEL, selection, selectionArgs);
     }
 
-    //update the state of the task
+    /**
+     * Updates the status of the task in the database
+     *
+     * @param taskId
+     * @param isChecked
+     * @return number of updated rows
+     */
     private int updateTaskStatusInDatabase(Integer taskId, Boolean isChecked) {
         Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
 
@@ -224,7 +271,12 @@ public class TaskDetailActivity extends AppCompatActivity {
         return getContentResolver().update(taskUri, values, null, null);
     }
 
-    //get task with the id from the database
+    /**
+     * Gets task from the database
+     *
+     * @param taskId
+     * @return the task
+     */
     private Task getTaskFromDatabase(Integer taskId) {
         Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
 
@@ -287,7 +339,12 @@ public class TaskDetailActivity extends AppCompatActivity {
         return task;
     }
 
-    //get labels of the task with the id from the database
+    /**
+     * Get labels of the task from the database
+     *
+     * @param taskId
+     * @return list of labels
+     */
     private List<Label> getTaskLabelsFromDatabase(Integer taskId) {
         List<Label> taskLabels = new ArrayList<>();
 

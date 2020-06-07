@@ -88,6 +88,7 @@
 
     //create task
     <string name="task_created">Task created!</string>
+    <string name="task_updated">Task updated!</string>
     <string name="title">Title</string>
     <string name="description">Description</string>
     <string name="add_reminder">Add reminder</string>
@@ -113,6 +114,6 @@
     <string name="reminder">Reminder</string>
     <string name="priority">%1$s priority</string>
 
-    <string name="delete_task_text">Are you sure you want to delete</string>
+    <string name="delete_task_text">Are you sure you want to delete %1$s?</string>
     <string name="delete_task_title">Delete task</string>
 </resources>
