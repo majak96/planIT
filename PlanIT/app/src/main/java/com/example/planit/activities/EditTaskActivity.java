@@ -3,11 +3,13 @@ package com.example.planit.activities;
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -129,6 +131,12 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                 Uri resultUri = createTask();
 
                 if (resultUri != null) {
+                    //add labels for the task
+                    if(!labels.isEmpty()){
+                        String taskId = resultUri.getLastPathSegment();
+                        createLabels(Integer.parseInt(taskId));
+                    }
+
                     Toast.makeText(this, R.string.task_created, Toast.LENGTH_SHORT).show();
 
                     Intent intent = new Intent();
@@ -269,14 +277,41 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     }
 
     @Override
-    public void addLabel(String label) {
+    public void addNewLabel(String labelString) {
         TextView labelTextView = findViewById((R.id.label_create_task));
         if (labelTextView.getText() != "") {
             labelTextView.setText("");
         }
 
-        Label newLabel = new Label(label, Utils.getRandomColor());
+        //check if label with this name already exists
+        for(Label lab : labels){
+            if(lab.getName().equals(labelString)){
+                return;
+            }
+        }
+
+        Label newLabel = new Label(labelString, Utils.getRandomColor());
         labels.add(newLabel);
+
+        //notify recycler view
+        adapter.notifyItemInserted(labels.size() - 1);
+    }
+
+    @Override
+    public void addExistingLabel(Label label) {
+        TextView labelTextView = findViewById((R.id.label_create_task));
+        if (labelTextView.getText() != "") {
+            labelTextView.setText("");
+        }
+
+        //check if label with this name already exists
+        for(Label lab : labels){
+            if(lab.getName().equals(label.getName())){
+                return;
+            }
+        }
+
+        labels.add(label);
 
         //notify recycler view
         adapter.notifyItemInserted(labels.size() - 1);
@@ -295,7 +330,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
 
     //remove the reminder
     public void clearReminder(View view) {
-        reminderTextView = (TextView) findViewById(R.id.reminder_create_task);
+        reminderTextView = findViewById(R.id.reminder_create_task);
         reminderTextView.setText(R.string.add_reminder);
         reminderTextView.setTextColor(getResources().getColor(R.color.gray));
 
@@ -360,8 +395,45 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
             values.put(Contract.Task.COLUMN_ADDRESS, locationEditText.getText().toString().trim());
         }
 
-        Uri uri = getContentResolver().insert(Contract.Task.CONTENT_URI_TASK, values);
+        return getContentResolver().insert(Contract.Task.CONTENT_URI_TASK, values);
+    }
 
-        return uri;
+    //inserts a new label into the database
+    public void createLabels(Integer taskId) {
+        for(Label label : labels) {
+            if(label.getId() == null){
+                ContentValues labelValues = new ContentValues();
+
+                //set the name and the color
+                labelValues.put(Contract.Label.COLUMN_NAME, label.getName());
+                labelValues.put(Contract.Label.COLUMN_COLOR, label.getColor());
+
+                Uri labelUri = getContentResolver().insert(Contract.Label.CONTENT_URI_LABEL, labelValues);
+
+                if(labelUri != null){
+                    String labelIdString = labelUri.getLastPathSegment();
+                    Integer labelId = Integer.parseInt(labelIdString);
+
+                    ContentValues taskLabelValues = new ContentValues();
+
+                    //set the name and the color
+                    taskLabelValues.put(Contract.TaskLabel.COLUMN_LABEL, labelId);
+                    taskLabelValues.put(Contract.TaskLabel.COLUMN_TASK, taskId);
+
+                    Uri taskLabelUri = getContentResolver().insert(Contract.TaskLabel.CONTENT_URI_TASK_LABEL, taskLabelValues);
+                }
+            }
+            else {
+                Integer labelId = label.getId();
+
+                ContentValues taskLabelValues = new ContentValues();
+
+                //set the name and the color
+                taskLabelValues.put(Contract.TaskLabel.COLUMN_LABEL, labelId);
+                taskLabelValues.put(Contract.TaskLabel.COLUMN_TASK, taskId);
+
+                Uri taskLabelUri = getContentResolver().insert(Contract.TaskLabel.CONTENT_URI_TASK_LABEL, taskLabelValues);
+            }
+        }
     }
 }

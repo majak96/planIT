@@ -66,8 +66,13 @@
 
         <provider
             android:name="com.example.planit.database.TaskContentProvider"
-            android:authorities="com.example.planit"
+            android:authorities="com.example.planit.TaskContentProvider"
             android:exported="false" />
+        <provider
+            android:name="com.example.planit.database.LabelContentProvider"
+            android:authorities="com.example.planit.LabelContentProvider"
+            android:exported="false" />
+
     </application>
 
 </manifest>

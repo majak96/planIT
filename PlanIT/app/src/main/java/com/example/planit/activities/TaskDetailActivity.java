@@ -28,8 +28,11 @@ import com.example.planit.database.Contract;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+import model.Label;
 import model.Task;
 import model.TaskPriority;
 
@@ -59,6 +62,9 @@ public class TaskDetailActivity extends AppCompatActivity {
             //get the task with the id
             task = getTaskFromDatabase(getIntent().getIntExtra("task", -1));
             taskPosition = getIntent().getIntExtra("position", -1);
+
+            List<Label> taskLabels = getTaskLabelsFromDatabase(task.getId());
+            task.setLabels(taskLabels);
 
             //set activity title
             DateFormat dateFormat = new SimpleDateFormat("MMMM dd, YYYY");
@@ -171,6 +177,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
+                deleteTaskLabelsFromDatabase(task.getId());
                 int deletedRows = deleteTaskFromDatabase(task.getId());
 
                 if (deletedRows == 1) {
@@ -197,6 +204,14 @@ public class TaskDetailActivity extends AppCompatActivity {
         Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
 
         return getContentResolver().delete(taskUri, null, null);
+    }
+
+    //delete the task labels
+    private int deleteTaskLabelsFromDatabase(Integer taskId) {
+        String selection = "task = ?";
+        String[] selectionArgs = new String[]{Integer.toString(taskId)};
+
+        return getContentResolver().delete(Contract.TaskLabel.CONTENT_URI_TASK_LABEL, selection, selectionArgs);
     }
 
     //update the state of the task
@@ -270,6 +285,34 @@ public class TaskDetailActivity extends AppCompatActivity {
         cursor.close();
 
         return task;
+    }
+
+    //get labels of the task with the id from the database
+    private List<Label> getTaskLabelsFromDatabase(Integer taskId) {
+        List<Label> taskLabels = new ArrayList<>();
+
+        Uri taskLabelsUri = Uri.parse(Contract.Label.CONTENT_URI_LABEL_TASK + "/" + taskId);
+
+        String[] allColumns = {Contract.Label.COLUMN_ID, Contract.Label.COLUMN_NAME, Contract.Label.COLUMN_COLOR};
+
+        Cursor cursor = getContentResolver().query(taskLabelsUri, allColumns, null, null, null);
+
+        if (cursor.getCount() == 0) {
+            //do nothing I guess
+        } else {
+            while (cursor.moveToNext()) {
+                Label label = new Label();
+                label.setId(cursor.getInt(0));
+                label.setName(cursor.getString(1));
+                label.setColor(cursor.getString(2));
+
+                taskLabels.add(label);
+            }
+        }
+
+        cursor.close();
+
+        return taskLabels;
     }
 
     @Override
