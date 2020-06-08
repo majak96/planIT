@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import com.example.planit.MainActivity;
 import com.example.planit.R;
+import com.example.planit.adapters.TeamDetailAdapter;
 import com.example.planit.adapters.TeamsPreviewAdapter;
 import com.example.planit.database.Contract;
 import com.example.planit.service.ServiceUtils;
@@ -28,6 +29,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import model.Message;
 import model.Team;
@@ -41,22 +44,24 @@ import retrofit2.Response;
 public class TeamMembersActivity extends AppCompatActivity {
 
     private EditText newMember;
+    private TeamDetailAdapter adapter;
+    private ArrayList<User>users;
+    private String tag="TeamMembersActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_team_members);
 
+        String teamId = getIntent().getStringExtra("teamId");
+
         newMember = findViewById(R.id.addMember);
+        users = getUsersFromDatabase(teamId.toString());
 
-        // RecyclerView recyclerView = findViewById(R.id.teams_overview_recycle_view);
-        // recyclerView.setHasFixedSize(true);
-
-        //set the adapter and layout manager
-        //TeamsPreviewAdapter adapter = new TeamsPreviewAdapter(this.teamsList, this);
-        //recyclerView.setAdapter(adapter);
-        //recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
+        RecyclerView recyclerView = findViewById(R.id.team_members_recycle_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        adapter = new TeamDetailAdapter(this, users);
+        recyclerView.setAdapter(adapter);
 
     }
 
@@ -77,9 +82,6 @@ public class TeamMembersActivity extends AppCompatActivity {
                     public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 
                         if (response.code() == 200) {
-                            //clear text from input field
-                            newMember.setText("");
-
                             Team team = getTeamFromDatabase(title);
                             User user = getUserFromDatabase(teamUser);
                             if (user == null) {
@@ -110,8 +112,14 @@ public class TeamMembersActivity extends AppCompatActivity {
                                     user = getUserFromDatabase(teamUser);
 
                                     createUserTeamConnection(user, team);
+
                                 }
                             }
+
+                            newMember.getText().clear();
+                            users.add(user);
+                            adapter.notifyItemInserted(users.size());
+
                         } else {
                             Toast t = Toast.makeText(TeamMembersActivity.this, "Can not add member!", Toast.LENGTH_SHORT);
                             t.show();
@@ -134,7 +142,6 @@ public class TeamMembersActivity extends AppCompatActivity {
 
         ContentValues values = new ContentValues();
 
-        //set the title
         values.put(Contract.UserTeamConnection.COLUMN_TEAM_ID, team.getId());
         values.put(Contract.UserTeamConnection.COLUMN_USER_ID, user.getId());
 
@@ -158,7 +165,7 @@ public class TeamMembersActivity extends AppCompatActivity {
             //TODO: do something when there's no data
         } else {
             while (cursor.moveToNext()) {
-                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1));
+                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4));
             }
         }
 
@@ -200,6 +207,31 @@ public class TeamMembersActivity extends AppCompatActivity {
         Uri uri = getContentResolver().insert(Contract.User.CONTENT_URI_USER, values);
 
         return uri;
+    }
+
+    private ArrayList<User> getUsersFromDatabase(String teamId) {
+
+        users = new ArrayList<>();
+        String[] allColumns = {Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_COLOUR};
+        Uri taskLabelsUri = Uri.parse(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM + "/" + teamId );
+
+        Cursor cursor = getContentResolver().query(taskLabelsUri, allColumns, null, null, null);
+
+        if (cursor.getCount() == 0) {
+            Log.i(tag, "There are no users in team");
+        } else {
+            while (cursor.moveToNext()) {
+                String name = cursor.getString(0);
+                String lastName = cursor.getString(1);
+                String email = cursor.getString(2);
+                String colour = cursor.getString(3);
+                User newUser = new User(name, lastName, email, colour);
+                users.add(newUser);
+            }
+        }
+
+        cursor.close();
+        return users;
     }
 
 }

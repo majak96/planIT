@@ -81,10 +81,12 @@ public class CreateTeamActivity extends AppCompatActivity {
 
                             if (response.code() == 200) {
                                 Uri resultUri = createTeam();
+                                String teamId=resultUri.getLastPathSegment();
                                 Uri resultConncetionUri= createUserTeamConnection(getLoggedUserFromDatabase(), getTeamFromDatabase(teamNameString));
                                 if (resultUri != null && resultConncetionUri!=null) {
                                     Intent intent = new Intent(CreateTeamActivity.this, TeamMembersActivity.class);
                                     intent.putExtra("title", teamName.getText().toString().trim());
+                                    intent.putExtra("teamId", teamId);
                                     startActivity(intent);
                                 }
 

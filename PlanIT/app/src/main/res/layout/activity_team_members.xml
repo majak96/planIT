@@ -53,7 +53,7 @@
             android:textSize="16sp"
             android:text="@string/team_members_description"/>
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/team_detail_recycle_view"
+            android:id="@+id/team_members_recycle_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"

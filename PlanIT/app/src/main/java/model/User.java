@@ -20,6 +20,15 @@ public class User {
         this.email = email;
     }
 
+    public User(Integer id, String email, String name, String lastName, String colour) {
+        this.id = id;
+        this.name = name;
+        this.lastName = lastName;
+        this.colour = colour;
+        this.email = email;
+        this.colour = Utils.getRandomColor();
+    }
+
     public User(String name, String lastName, String password, String username) {
         this.name = name;
         this.lastName = lastName;
