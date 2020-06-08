@@ -1,11 +1,10 @@
 package com.example.planit;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuInflater;
+import android.util.Log;
 import android.view.MenuItem;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -15,25 +14,16 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.example.planit.activities.ChatActivity;
 import com.example.planit.activities.ProfileActivity;
 import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.SignInActivity;
-import com.example.planit.activities.SignUpActivity;
 import com.example.planit.fragments.CalendarFragment;
+import com.example.planit.fragments.DailyPreviewFragment;
 import com.example.planit.fragments.HabitsOverviewFragment;
 import com.example.planit.fragments.TeamsOverviewFragment;
 import com.example.planit.mokaps.Mokap;
@@ -227,6 +217,72 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             return "";
         }
         return SharedPreference.getLoggedLastName(MainActivity.this);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        //opened EditTaskActivity
+        if (requestCode == 1) {
+            if (resultCode == Activity.RESULT_OK) {
+                Long date = data.getLongExtra("date", -1);
+
+                if (date != -1) {
+                    getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+                    //show daily preview for the chosen date
+                    FragmentTransition.replaceFragment(this, DailyPreviewFragment.newInstance(date), R.id.fragment_container, true);
+                }
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                //do nothing
+            }
+        }
+        //opened TaskDetailActivity
+        else if (requestCode == 2) {
+            if (resultCode == Activity.RESULT_OK) {
+                Boolean deleted = data.getBooleanExtra("deleted", false);
+                Boolean changed = data.getBooleanExtra("changed", false);
+                Boolean updated = data.getBooleanExtra("updated", false);
+                Boolean changed_date = data.getBooleanExtra("changed_date", false);
+                Integer position = data.getIntExtra("position", -1);
+                Integer taskId = data.getIntExtra("taskId", -1);
+
+                //if task was deleted
+                if (deleted == true && position != -1) {
+                    Fragment fragment = getCurrentFragment();
+                    if (fragment != null && fragment instanceof DailyPreviewFragment) {
+                        // update the recycler view in the DailyPreviewFragment
+                        DailyPreviewFragment previewFragment = (DailyPreviewFragment) fragment;
+                        previewFragment.removeTaskFromRecyclerView(position);
+                    }
+                }
+                //if task was changed
+                else if (updated == true && position != -1 && taskId != -1) {
+                    Fragment fragment = getCurrentFragment();
+                    if (fragment != null && fragment instanceof DailyPreviewFragment) {
+                        // update the recycler view in the DailyPreviewFragment
+                        DailyPreviewFragment previewFragment = (DailyPreviewFragment) fragment;
+                        if (changed_date) {
+                            previewFragment.removeTaskFromRecyclerView(position);
+                        } else {
+                            previewFragment.updateTaskInRecyclerView(position, taskId);
+                        }
+                    }
+                }
+                //if task status was changed
+                else if (changed == true && position != -1) {
+                    Fragment fragment = getCurrentFragment();
+                    if (fragment != null && fragment instanceof DailyPreviewFragment) {
+                        // update the recycler view in the DailyPreviewFragment
+                        DailyPreviewFragment previewFragment = (DailyPreviewFragment) fragment;
+                        previewFragment.updateTaskStatusInRecyclerView(position);
+                    }
+                }
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                //do nothing
+            }
+        }
     }
 
 }

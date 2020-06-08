@@ -6,18 +6,23 @@ import java.util.Date;
 import java.util.List;
 
 public class Task {
-    private Long id;
+    private Integer id;
     private String title;
     private String description;
     private String address;
     private Date startDate;
     private Date startTime;
+    private Date reminderTime;
     private Boolean done;
     private TaskPriority priority;
 
     private List<Label> labels = new ArrayList<Label>();
 
-    public Task(Long id, String title, String description, Date startDate, Date startTime, Boolean done) {
+    public Task(){
+        this.done = false;
+    }
+
+    public Task(Integer id, String title, String description, Date startDate, Date startTime, Boolean done) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -82,11 +87,11 @@ public class Task {
         this.address = address;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -96,6 +101,14 @@ public class Task {
 
     public void setStartTime(Date startTime) {
         this.startTime = startTime;
+    }
+
+    public Date getReminderTime() {
+        return reminderTime;
+    }
+
+    public void setReminderTime(Date reminderTime) {
+        this.reminderTime = reminderTime;
     }
 
     @Override

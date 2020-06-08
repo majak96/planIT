@@ -45,7 +45,7 @@
             android:name=".activities.ChatActivity"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
-            
+
         <activity android:name=".activities.ChooseModeActivity" />
         <activity android:name=".activities.SignInActivity" />
         <activity android:name=".activities.SignUpActivity" />
@@ -56,7 +56,8 @@
         <activity
             android:name=".activities.EditTaskActivity"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBarWithStatus" />
+            android:theme="@style/AppTheme.NoActionBarWithStatus"
+            android:windowSoftInputMode="stateVisible" />
         <activity
             android:name=".activities.TaskDetailActivity"
             android:parentActivityName=".MainActivity"
@@ -64,7 +65,16 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <provider
+            android:name="com.example.planit.database.TaskContentProvider"
+            android:authorities="com.example.planit.TaskContentProvider"
+            android:exported="false" />
+        <provider
+            android:name="com.example.planit.database.LabelContentProvider"
+            android:authorities="com.example.planit.LabelContentProvider"
+            android:exported="false" />
 
     </application>
 
