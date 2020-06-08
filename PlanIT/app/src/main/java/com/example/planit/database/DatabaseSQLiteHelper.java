@@ -3,7 +3,6 @@ package com.example.planit.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
 
@@ -127,10 +126,5 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    @Override
-    public void onConfigure(SQLiteDatabase db) {
-        super.onConfigure(db);
-        db.setForeignKeyConstraintsEnabled(true);
-    }
 
 }

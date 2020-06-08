@@ -344,6 +344,7 @@
                     android:layout_marginTop="31dp"
                     android:layout_width="22dp"
                     android:layout_height="22dp"
+                    android:layout_marginRight="5dp"
                     android:layout_gravity="center_vertical"
                     android:background="@drawable/ic_close_darkgray"
                     android:onClick="removeReminder"
