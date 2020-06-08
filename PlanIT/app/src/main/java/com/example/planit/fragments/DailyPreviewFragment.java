@@ -2,7 +2,9 @@ package com.example.planit.fragments;
 
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,7 +21,6 @@ import com.example.planit.adapters.DailyPreviewAdapter;
 import com.example.planit.database.Contract;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -36,6 +37,10 @@ public class DailyPreviewFragment extends Fragment {
 
     private DailyPreviewAdapter adapter;
     private List<Task> dailyTasks = new ArrayList<>();
+
+    private SimpleDateFormat viewDateFormat = new SimpleDateFormat("MMMM dd, YYYY");
+    private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+    private SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     public static DailyPreviewFragment newInstance(Long selectedDateInMilliseconds) {
         Bundle args = new Bundle();
@@ -54,16 +59,14 @@ public class DailyPreviewFragment extends Fragment {
 
         Bundle bundle = getArguments();
         if (bundle != null) {
-             date = new Date(bundle.getLong("SELECTED_DATE"));
+            date = new Date(bundle.getLong("SELECTED_DATE"));
 
             //set activity title to date
-            DateFormat dateFormat = new SimpleDateFormat("MMMM dd, YYYY");
-            String dateString = dateFormat.format(date);
+            String dateString = viewDateFormat.format(date);
             getActivity().setTitle(dateString);
 
             //get tasks with this date
-            DateFormat queryDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            String queryDateString = queryDateFormat.format(date);
+            String queryDateString = dbDateFormat.format(date);
             getDailyTasks(queryDateString);
 
             //initialize RecyclerView
@@ -91,17 +94,20 @@ public class DailyPreviewFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Get tasks with the date from the database
+     *
+     * @param date
+     */
     private void getDailyTasks(String date) {
         String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_START_TIME, Contract.Task.COLUMN_DONE};
 
-        String selection = "start_date = ?";
+        String selection = Contract.Task.COLUMN_START_DATE + " = ?";
         String[] selectionArgs = new String[]{date};
 
         Cursor cursor = getActivity().getContentResolver().query(Contract.Task.CONTENT_URI_TASK, allColumns, selection, selectionArgs, null);
 
-        if (cursor.getCount() == 0) {
-            //TODO: do something when there's no data
-        } else {
+        if (cursor.getCount() > 0) {
             while (cursor.moveToNext()) {
                 Task task = new Task();
                 task.setId(cursor.getInt(0));
@@ -111,7 +117,6 @@ public class DailyPreviewFragment extends Fragment {
                     task.setStartTime(null);
                 } else {
                     try {
-                        DateFormat timeFormat = new SimpleDateFormat("HH:mm");
                         Date startTime = timeFormat.parse(cursor.getString(2));
                         task.setStartTime(startTime);
                     } catch (ParseException e) {
@@ -128,10 +133,68 @@ public class DailyPreviewFragment extends Fragment {
         cursor.close();
     }
 
+    /**
+     * Gets task from the database
+     *
+     * @param taskId
+     * @return the task
+     */
+    private Task getTaskFromDatabase(Integer taskId) {
+        Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
+
+        String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_START_TIME, Contract.Task.COLUMN_DONE};
+
+        Cursor cursor = getActivity().getContentResolver().query(taskUri, allColumns, null, null, null);
+        cursor.moveToFirst();
+
+        Task task = new Task();
+        task.setId(cursor.getInt(0));
+        task.setTitle(cursor.getString(1));
+
+
+        if (cursor.getString(2) == null) {
+            task.setStartTime(null);
+        } else {
+            try {
+                Date startTime = timeFormat.parse(cursor.getString(2));
+                task.setStartTime(startTime);
+            } catch (ParseException e) {
+                task.setStartTime(null);
+            }
+        }
+
+        task.setDone(cursor.getInt(3) == 1);
+
+        cursor.close();
+
+        return task;
+    }
+
+    /**
+     * Removes deleted task from the recycler view
+     *
+     * @param position of the task in the recycler view
+     */
     public void removeTaskFromRecyclerView(Integer position) {
         adapter.deleteTask(position);
     }
 
+    /**
+     * Updates the updated task in the recycler view
+     *
+     * @param position of the task in the recycler view
+     * @param id       of the task
+     */
+    public void updateTaskInRecyclerView(Integer position, Integer id) {
+        Task task = getTaskFromDatabase(id);
+        adapter.updateTask(position, task);
+    }
+
+    /**
+     * Updates the status of the task in the recycler view
+     *
+     * @param position of the task in the recycler view
+     */
     public void updateTaskStatusInRecyclerView(Integer position) {
         adapter.updateTaskStatus(position);
     }

@@ -3,6 +3,7 @@ package com.example.planit;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
@@ -243,7 +244,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (resultCode == Activity.RESULT_OK) {
                 Boolean deleted = data.getBooleanExtra("deleted", false);
                 Boolean changed = data.getBooleanExtra("changed", false);
+                Boolean updated = data.getBooleanExtra("updated", false);
+                Boolean changed_date = data.getBooleanExtra("changed_date", false);
                 Integer position = data.getIntExtra("position", -1);
+                Integer taskId = data.getIntExtra("taskId", -1);
 
                 //if task was deleted
                 if (deleted == true && position != -1) {
@@ -252,6 +256,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         // update the recycler view in the DailyPreviewFragment
                         DailyPreviewFragment previewFragment = (DailyPreviewFragment) fragment;
                         previewFragment.removeTaskFromRecyclerView(position);
+                    }
+                }
+                //if task was changed
+                else if (updated == true && position != -1 && taskId != -1) {
+                    Fragment fragment = getCurrentFragment();
+                    if (fragment != null && fragment instanceof DailyPreviewFragment) {
+                        // update the recycler view in the DailyPreviewFragment
+                        DailyPreviewFragment previewFragment = (DailyPreviewFragment) fragment;
+                        if (changed_date) {
+                            previewFragment.removeTaskFromRecyclerView(position);
+                        } else {
+                            previewFragment.updateTaskInRecyclerView(position, taskId);
+                        }
                     }
                 }
                 //if task status was changed

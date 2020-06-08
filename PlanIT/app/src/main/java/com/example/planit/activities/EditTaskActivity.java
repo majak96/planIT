@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -67,15 +68,14 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     private ImageButton removeTimeImageButton;
     private ImageButton removePriorityImageButton;
 
-
     private Date startDate;
     private Date startTime;
     private Date reminderTime;
     private TaskPriority taskPriority;
 
-    private SimpleDateFormat viewDateFormat;
-    private SimpleDateFormat timeFormat;
-    private SimpleDateFormat dbDateFormat;
+    private SimpleDateFormat viewDateFormat = new SimpleDateFormat("E, MMMM dd, YYYY");
+    private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+    private SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     Task task;
     private List<Label> labels = new ArrayList<>();
@@ -85,10 +85,6 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_edittask);
-
-        viewDateFormat = new SimpleDateFormat("E, MMMM dd, YYYY");
-        timeFormat = new SimpleDateFormat("HH:mm");
-        dbDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -126,12 +122,11 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
             setTitle("Create Task");
 
             //set today's date
-            if(getIntent().hasExtra("date")){
+            if (getIntent().hasExtra("date")) {
                 Long dateLong = getIntent().getLongExtra("date", -1);
 
                 startDate = new Date(dateLong);
-            }
-            else{
+            } else {
                 startDate = new Date();
             }
 
@@ -205,6 +200,10 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
 
                         Intent intent = new Intent();
                         intent.putExtra("updated", true);
+
+                        if(!startDate.equals(task.getStartDate())){
+                            intent.putExtra("changed_date", true);
+                        }
 
                         setResult(Activity.RESULT_OK, intent);
                         finish();

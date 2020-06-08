@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +28,8 @@ import java.util.List;
 import model.Task;
 
 public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapter.ViewHolder> {
+
+    private static final String TAG = "DailyPreviewAdapter";
 
     private List<Task> tasks;
     private Context context;
@@ -61,7 +64,7 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
             holder.taskTimeTextView.setText(taskTime);
         }
 
-        // go to TaskDetailsActivity on click
+        //go to TaskDetailsActivity on click
         holder.relativeLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -102,7 +105,13 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
         return tasks.size();
     }
 
-    //update task status in the database
+    /**
+     * Updates the status of the task in the database
+     *
+     * @param taskId
+     * @param isChecked
+     * @return number of updated rows
+     */
     private int updateTask(Integer taskId, Boolean isChecked) {
         Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
 
@@ -112,17 +121,37 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
         return context.getContentResolver().update(taskUri, values, null, null);
     }
 
-    //remove task from the recycler view
+    /**
+     * Removes deleted task from the recycler view
+     *
+     * @param position
+     */
     public void deleteTask(int position) {
         tasks.remove(position);
         notifyItemRemoved(position);
         notifyItemRangeChanged(position, tasks.size());
     }
 
-    //update task in the recycler view
+    /**
+     * Updates the status of the task in the recycler view
+     *
+     * @param position
+     */
     public void updateTaskStatus(int position) {
         Task task = tasks.get(position);
         task.setDone(!task.getDone());
+        notifyItemChanged(position);
+    }
+
+    /**
+     * Updates the updated task in the recycler view
+     *
+     * @param position
+     * @param task
+     */
+    public void updateTask(int position, Task task) {
+        tasks.remove(position);
+        tasks.add(position, task);
         notifyItemChanged(position);
     }
 

@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -41,8 +42,10 @@ public class TaskDetailActivity extends AppCompatActivity {
     private static final String TAG = "TaskDetailActivity";
 
     private Task task;
+    private List<Label> labels;
     private Intent intent;
     private int taskPosition;
+    private Integer taskId;
 
     private CheckBox checkBox;
     private TextView title;
@@ -52,10 +55,11 @@ public class TaskDetailActivity extends AppCompatActivity {
     private TextView location;
     private TextView label;
     private TextView priority;
+    private RecyclerView recyclerView;
 
-    private SimpleDateFormat viewDateFormat;
-    private SimpleDateFormat timeFormat;
-    private SimpleDateFormat dbDateFormat;
+    private SimpleDateFormat viewDateFormat = new SimpleDateFormat("E, MMMM dd, YYYY");
+    private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+    private SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,9 +67,15 @@ public class TaskDetailActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_taskdetail);
 
-        viewDateFormat = new SimpleDateFormat("E, MMMM dd, YYYY");
-        timeFormat = new SimpleDateFormat("HH:mm");
-        dbDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        title = findViewById(R.id.title_task_detail);
+        description = findViewById(R.id.description_task_detail);
+        priority = findViewById(R.id.priority_task_detail);
+        checkBox = findViewById(R.id.checkbox_task_detail);
+        location = findViewById(R.id.location_task_detail);
+        label = findViewById(R.id.label_task_detail);
+        time = findViewById(R.id.time_task_detail);
+        reminder = findViewById(R.id.reminder_task_detail);
+        recyclerView = findViewById(R.id.task_detail_recycle_view);
 
         intent = new Intent();
 
@@ -74,54 +84,21 @@ public class TaskDetailActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        if (getIntent().hasExtra("task")) {
 
-            //get the task with the id
-            task = getTaskFromDatabase(getIntent().getIntExtra("task", -1));
+        if (getIntent().hasExtra("task")) {
+            taskId = getIntent().getIntExtra("task", -1);
             taskPosition = getIntent().getIntExtra("position", -1);
 
-            List<Label> taskLabels = getTaskLabelsFromDatabase(task.getId());
-            task.setLabels(taskLabels);
-
-            //set activity title
-            String dateString = viewDateFormat.format(task.getStartDate());
-            setTitle(dateString);
-
-            title = findViewById(R.id.title_task_detail);
-            description = findViewById(R.id.description_task_detail);
-            priority = findViewById(R.id.priority_task_detail);
-            checkBox = findViewById(R.id.checkbox_task_detail);
-            location = findViewById(R.id.location_task_detail);
-            label = findViewById(R.id.label_task_detail);
-            time = findViewById(R.id.time_task_detail);
-            reminder = findViewById(R.id.reminder_task_detail);
-
-            //set field values to the values from the task
-            setTaskValues();
-
             //initialize RecyclerView
-            RecyclerView recyclerView = findViewById(R.id.task_detail_recycle_view);
             recyclerView.setHasFixedSize(true);
-
-            //set the adapter and layout manager
-            TaskDetailAdapter adapter = new TaskDetailAdapter(this, task.getLabels());
-            recyclerView.setAdapter(adapter);
             recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-
-            //check if task has labels
-            if (task.getLabels().isEmpty()) {
-                recyclerView.setVisibility(View.GONE);
-            } else {
-                label.setText("");
-                recyclerView.setVisibility(View.VISIBLE);
-            }
 
             //task status checkbox listener
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     //update the state of the task
-                    int rows = updateTaskStatusInDatabase(task.getId(), isChecked);
+                    int rows = updateTaskStatusInDatabase(taskId, isChecked);
 
                     if (rows < 1) {
                         //revert the checkbox
@@ -129,6 +106,33 @@ public class TaskDetailActivity extends AppCompatActivity {
                     }
                 }
             });
+
+        } else {
+            Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (taskId != null && taskId != -1) {
+            //get the task from the database
+            task = getTaskFromDatabase(taskId);
+
+            labels = getTaskLabelsFromDatabase(task.getId());
+            task.setLabels(labels);
+
+            //set activity title
+            String dateString = viewDateFormat.format(task.getStartDate());
+            setTitle(dateString);
+
+            //set field values to the values from the task
+            setTaskValues();
+
+            //set the adapter
+            TaskDetailAdapter adapter = new TaskDetailAdapter(this, labels);
+            recyclerView.setAdapter(adapter);
         }
     }
 
@@ -192,6 +196,15 @@ public class TaskDetailActivity extends AppCompatActivity {
         if (task.getReminderTime() != null) {
             String reminderString = timeFormat.format(task.getReminderTime());
             reminder.setText(reminderString);
+        }
+
+        //check if task has labels
+        if (task.getLabels().isEmpty()) {
+            label.setText(R.string.no_labels);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            label.setText("");
+            recyclerView.setVisibility(View.VISIBLE);
         }
     }
 
@@ -295,8 +308,7 @@ public class TaskDetailActivity extends AppCompatActivity {
             task.setStartDate(null);
         } else {
             try {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                Date startDate = dateFormat.parse(cursor.getString(3));
+                Date startDate = dbDateFormat.parse(cursor.getString(3));
                 task.setStartDate(startDate);
             } catch (ParseException e) {
                 task.setStartDate(null);
@@ -307,7 +319,6 @@ public class TaskDetailActivity extends AppCompatActivity {
             task.setStartTime(null);
         } else {
             try {
-                DateFormat timeFormat = new SimpleDateFormat("HH:mm");
                 Date startTime = timeFormat.parse(cursor.getString(4));
                 task.setStartTime(startTime);
             } catch (ParseException e) {
@@ -326,8 +337,7 @@ public class TaskDetailActivity extends AppCompatActivity {
             task.setReminderTime(null);
         } else {
             try {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
-                Date reminderTime = dateFormat.parse(cursor.getString(8));
+                Date reminderTime = timeFormat.parse(cursor.getString(8));
                 task.setReminderTime(reminderTime);
             } catch (ParseException e) {
                 task.setReminderTime(null);
@@ -370,6 +380,28 @@ public class TaskDetailActivity extends AppCompatActivity {
         cursor.close();
 
         return taskLabels;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        //opened EditTaskActivity
+        if (requestCode == 1) {
+            if (resultCode == Activity.RESULT_OK) {
+                Boolean updated = data.getBooleanExtra("updated", false);
+                Boolean changed_date = data.getBooleanExtra("changed_date", false);
+
+                if (updated) {
+                    intent.putExtra("updated", true);
+                    intent.putExtra("position", taskPosition);
+                    intent.putExtra("taskId", task.getId());
+                    intent.putExtra("changed_date", changed_date);
+
+                    setResult(Activity.RESULT_OK, intent);
+                }
+            }
+        }
     }
 
     @Override
