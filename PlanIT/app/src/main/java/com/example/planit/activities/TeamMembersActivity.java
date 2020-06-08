@@ -46,8 +46,8 @@ public class TeamMembersActivity extends AppCompatActivity {
 
     private EditText newMember;
     private TeamMembersAdapter adapter;
-    private ArrayList<User>users;
-    private String tag="TeamMembersActivity";
+    private ArrayList<User> users;
+    private String tag = "TeamMembersActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +61,7 @@ public class TeamMembersActivity extends AppCompatActivity {
 
         RecyclerView recyclerView = findViewById(R.id.team_members_recycle_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        adapter = new TeamMembersAdapter(this, users);
+        adapter = new TeamMembersAdapter(this, users, teamId);
         recyclerView.setAdapter(adapter);
 
     }
@@ -214,7 +214,7 @@ public class TeamMembersActivity extends AppCompatActivity {
 
         users = new ArrayList<>();
         String[] allColumns = {Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_COLOUR};
-        Uri taskLabelsUri = Uri.parse(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM + "/" + teamId );
+        Uri taskLabelsUri = Uri.parse(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM + "/" + teamId);
 
         Cursor cursor = getContentResolver().query(taskLabelsUri, allColumns, null, null, null);
 

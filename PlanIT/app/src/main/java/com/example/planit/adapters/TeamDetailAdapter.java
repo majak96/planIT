@@ -2,14 +2,10 @@ package com.example.planit.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.util.ArraySet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -18,11 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.planit.R;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
-import model.Label;
 import model.User;
 
 public class TeamDetailAdapter extends RecyclerView.Adapter<TeamDetailAdapter.ViewHolder> {

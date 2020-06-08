@@ -33,7 +33,7 @@ public class TeamContentProvider extends ContentProvider {
         sURIMatcher.addURI(Contract.AUTHORITY + ".TeamContentProvider", Contract.User.TABLE_NAME, USER);
         sURIMatcher.addURI(Contract.AUTHORITY + ".TeamContentProvider", Contract.User.TABLE_NAME + "/#", USER_ID);
         sURIMatcher.addURI(Contract.AUTHORITY + ".TeamContentProvider", Contract.UserTeamConnection.TABLE_NAME, USER_TEAM);
-        sURIMatcher.addURI(Contract.AUTHORITY + ".TeamContentProvider", Contract.UserTeamConnection.TABLE_NAME + "/#", USER_TEAM_ID);
+        sURIMatcher.addURI(Contract.AUTHORITY + ".TeamContentProvider", Contract.UserTeamConnection.TABLE_NAME + "/#/#", USER_TEAM_ID);
     }
 
     @Override
