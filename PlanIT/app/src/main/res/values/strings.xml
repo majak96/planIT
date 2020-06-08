@@ -110,8 +110,8 @@
     <string name="cancel">Cancel</string>
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
-
     <string name="error">An error occurred!</string>
+
 
     <string name="reminder">Reminder</string>
     <string name="priority">%1$s priority</string>

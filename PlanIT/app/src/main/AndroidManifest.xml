@@ -65,7 +65,11 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBar"/>
+        <provider
+            android:name="com.example.planit.database.HabitContentProvider"
+            android:authorities="com.example.planit.HabitContentProvider"
+            android:exported="false" />
 
         <provider
             android:name="com.example.planit.database.TaskContentProvider"

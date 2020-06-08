@@ -3,8 +3,10 @@ package com.example.planit;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -15,10 +17,6 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
-import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
 import com.example.planit.activities.ProfileActivity;
 import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.SignInActivity;
@@ -26,17 +24,14 @@ import com.example.planit.fragments.CalendarFragment;
 import com.example.planit.fragments.DailyPreviewFragment;
 import com.example.planit.fragments.HabitsOverviewFragment;
 import com.example.planit.fragments.TeamsOverviewFragment;
-import com.example.planit.mokaps.Mokap;
-import com.example.planit.utils.SharedPreference;
 import com.example.planit.utils.FragmentTransition;
+import com.example.planit.utils.SharedPreference;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
-
-import model.User;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -282,7 +277,56 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             } else if (resultCode == Activity.RESULT_CANCELED) {
                 //do nothing
             }
+        } else if (requestCode == 3) {
+            if (resultCode == Activity.RESULT_OK) {
+                Integer habitId = data.getIntExtra("habitId", -1);
+                Fragment fragment = getCurrentFragment();
+                if (fragment != null && fragment instanceof HabitsOverviewFragment) {
+                    HabitsOverviewFragment previewFragment = (HabitsOverviewFragment) fragment;
+                    previewFragment.addToRecyclerView(habitId);
+                }
+
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+            }
+        } else if (requestCode == 4) {
+            if (resultCode == Activity.RESULT_OK) {
+                Boolean deleted = data.getBooleanExtra("deleted", false);
+                Integer index = data.getIntExtra("index", -1);
+                Boolean updated = data.getBooleanExtra("updated", false);
+                Integer habitId = data.getIntExtra("habitId", -1);
+                Boolean done = data.getBooleanExtra("done", false);
+                Integer totalDays = data.getIntExtra("totalDays", -1);
+
+                //if habit was deleted
+                if (deleted == true && index != -1) {
+                    Fragment fragment = getCurrentFragment();
+                    if (fragment != null && fragment instanceof HabitsOverviewFragment) {
+                        // update the recycler view
+                        HabitsOverviewFragment previewFragment = (HabitsOverviewFragment) fragment;
+                        previewFragment.removeFromRecyclerView(index);
+                    }
+                } else if (updated == true && index != -1 && habitId != -1) {
+                    Fragment fragment = getCurrentFragment();
+                    if (fragment != null && fragment instanceof HabitsOverviewFragment) {
+                        // update the recycler view
+                        HabitsOverviewFragment previewFragment = (HabitsOverviewFragment) fragment;
+                        previewFragment.updateRecyclerView(index, habitId);
+
+                    }
+                } else if (done && index != -1 && totalDays != -1) {
+                    Fragment fragment = getCurrentFragment();
+                    if (fragment != null && fragment instanceof HabitsOverviewFragment) {
+                        // update the recycler view
+                        HabitsOverviewFragment previewFragment = (HabitsOverviewFragment) fragment;
+                        previewFragment.updateTotalDaysInRecyclerView(index, totalDays);
+                    }
+                }
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                //do nothing
+            }
         }
+
     }
+
 
 }

@@ -1,5 +1,6 @@
 package com.example.planit.adapters;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -19,12 +20,12 @@ import java.util.List;
 
 import model.Habit;
 
-public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapter.ViewHolder>{
+public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapter.ViewHolder> {
 
     private List<Habit> habitList = new ArrayList<>();
     private Context context;
 
-    public HabitPreviewAdapter(Context context, List<Habit> habitList){
+    public HabitPreviewAdapter(Context context, List<Habit> habitList) {
         this.context = context;
         this.habitList = habitList;
     }
@@ -42,20 +43,21 @@ public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, final int position) {
-        Habit habit  = this.habitList.get(position);
+        Habit habit = this.habitList.get(position);
 
         //set textviews data
         holder.habitTitleTextView.setText(habit.getTitle());
-        holder.habitNumberOfDaysTextView.setText(habit.getNumberOfDays().toString());
+        holder.habitNumberOfDaysTextView.setText(habit.getTotalNumberOfDays().toString());
 
         // go to HabitDetailsActivity on click
         holder.relativeLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(context, HabitDetailsActivity.class);
-                intent.putExtra("Habit", habitList.get(position));
+                intent.putExtra("habitId", habitList.get(position).getId());
+                intent.putExtra("index", position);
 
-                context.startActivity(intent);
+                ((Activity) context).startActivityForResult(intent, 4);
             }
         });
     }
@@ -78,5 +80,50 @@ public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapte
             relativeLayout = itemView.findViewById(R.id.habits_overview_relative_layout);
 
         }
+    }
+
+    /**
+     * Method for removing habit from recycler view
+     *
+     * @param index habit index in the list
+     */
+    public void deleteHabit(int index) {
+        this.habitList.remove(index);
+        notifyItemRemoved(index);
+        notifyItemRangeChanged(index, this.habitList.size());
+    }
+
+    /**
+     * Method for updating habit in the recycler view
+     *
+     * @param index habit index
+     * @param habit updated habit
+     */
+    public void updateHabit(int index, Habit habit) {
+        this.habitList.remove(index);
+        this.habitList.add(index, habit);
+        notifyItemChanged(index);
+    }
+
+    /**
+     * Method for adding habit to the recycler view
+     *
+     * @param habit new habit
+     */
+    public void addHabit(Habit habit) {
+        this.habitList.add(habit);
+        notifyItemChanged(habitList.size());
+    }
+
+    /**
+     * Method for updating total days number
+     * @param index habit index in the list
+     * @param totalDays new total days number
+     */
+    public void updateTotalDays(Integer index, Integer totalDays) {
+        Habit habit = this.habitList.get(index);
+        habit.setTotalNumberOfDays(totalDays);
+        notifyItemChanged(index);
+
     }
 }
