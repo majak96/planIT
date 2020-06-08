@@ -1,6 +1,8 @@
 package com.example.planit.fragments;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.planit.R;
 import com.example.planit.activities.CreateHabitActivity;
 import com.example.planit.adapters.HabitPreviewAdapter;
+import com.example.planit.database.Contract;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
@@ -31,6 +34,7 @@ public class HabitsOverviewFragment extends Fragment {
     private static final String TAG = "HabitPreviewFragment";
 
     private List<Habit> habitList = new ArrayList<>();
+    private HabitPreviewAdapter adapter;
 
 
     /**
@@ -56,7 +60,7 @@ public class HabitsOverviewFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_habits_overview, container, false);
         this.getActivity().setTitle("Habits");
-        initHabits();
+        getHabitsFromDB();
 
         RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.habits_overview_recycle_view);
         recyclerView.setHasFixedSize(true);
@@ -65,22 +69,48 @@ public class HabitsOverviewFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(getActivity(), CreateHabitActivity.class);
-                startActivity(intent);
+                getActivity().startActivityForResult(intent, 3);
             }
         });
 
         //set the adapter and layout manager
-        HabitPreviewAdapter adapter = new HabitPreviewAdapter(this.getContext(), this.habitList);
+        adapter = new HabitPreviewAdapter(this.getContext(), this.habitList);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
         return view;
     }
 
-    private void initHabits() {
-        this.habitList.add(new Habit("running","Make sure you run every day! Stay healthy", 100, 1));
-        this.habitList.add(new Habit("read a book","Find a good read to amuse yourself. Take a break, you deserve it!", 10, 2));
-        this.habitList.add(new Habit("learn new things","Always is a good time to improve yourself! Start learning something new.", 150, 50));
-        this.habitList.add(new Habit("practice coding","Don't get rusty! Practice your coding skills", 200, 100));
+    private void getHabitsFromDB() {
 
+        Cursor cursor = getActivity().getContentResolver().query(Contract.Habit.CONTENT_URI_HABIT, null, null, null, null);
+
+        if (cursor.getCount() == 0) {
+            //TODO: do something when there's no data
+        } else {
+            while (cursor.moveToNext()) {
+                Integer id = (Integer) cursor.getInt(cursor.getColumnIndex(Contract.Habit.COLUMN_ID));
+                String title = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_TITLE));
+                String description = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_DESCRIPTION));
+                Uri uri = Uri.parse(Contract.HabitFulfillment.CONTENT_HABIT_FULFILLMENT + "/" +Contract.Habit.TABLE_NAME + "/" + id);
+                Cursor cursorFulfillment = getActivity().getContentResolver().query(uri , null, null, null, null);
+                Habit habit = new Habit();
+                habit.setId(id);
+                habit.setTitle(title);
+                habit.setTotalNumberOfDays(cursorFulfillment.getCount());
+                habit.setDescription(description);
+                cursorFulfillment.close();
+                this.habitList.add(habit);
+            }
+        }
+
+        cursor.close();
     }
+
+    public void removeFromRecyclerView(Integer position) {
+        this.adapter.deleteHabit(position);
+    }
+
+    /*public void updateInRecyclerView(Integer position) {
+        adapter.updateTaskStatus(position);
+    }*/
 }

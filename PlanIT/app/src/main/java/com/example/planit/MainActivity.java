@@ -1,11 +1,12 @@
 package com.example.planit;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.Button;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -15,30 +16,16 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import com.example.planit.activities.ChatActivity;
 import com.example.planit.activities.ProfileActivity;
 import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.SignInActivity;
-import com.example.planit.activities.SignUpActivity;
 import com.example.planit.fragments.CalendarFragment;
 import com.example.planit.fragments.HabitsOverviewFragment;
 import com.example.planit.fragments.TeamsOverviewFragment;
 import com.example.planit.mokaps.Mokap;
-import com.example.planit.utils.SharedPreference;
 import com.example.planit.utils.FragmentTransition;
+import com.example.planit.utils.SharedPreference;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -228,6 +215,39 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         }
         return "";
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        //opened CreateHabit
+        if (requestCode == 3) {
+            if (resultCode == Activity.RESULT_OK) {
+                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                FragmentTransition.replaceFragment(this, HabitsOverviewFragment.newInstance(), R.id.fragment_container, true);
+
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+            }
+        } else if (requestCode == 4) {
+            if (resultCode == Activity.RESULT_OK) {
+                Boolean deleted = data.getBooleanExtra("deleted", false);
+                Integer index = data.getIntExtra("index", -1);
+
+                //if habit was deleted
+                if (deleted == true && index != -1) {
+                    Fragment fragment = getCurrentFragment();
+                    if (fragment != null && fragment instanceof HabitsOverviewFragment) {
+                        // update the recycler view
+                        HabitsOverviewFragment previewFragment = (HabitsOverviewFragment) fragment;
+                        previewFragment.removeFromRecyclerView(index);
+                    }
+                }
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                //do nothing
+            }
+        }
+
     }
 
 }

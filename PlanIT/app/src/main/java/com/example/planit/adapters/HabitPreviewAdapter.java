@@ -1,5 +1,6 @@
 package com.example.planit.adapters;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -46,7 +47,7 @@ public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapte
 
         //set textviews data
         holder.habitTitleTextView.setText(habit.getTitle());
-        holder.habitNumberOfDaysTextView.setText(habit.getNumberOfDays().toString());
+        holder.habitNumberOfDaysTextView.setText(habit.getTotalNumberOfDays().toString());
 
         // go to HabitDetailsActivity on click
         holder.relativeLayout.setOnClickListener(new View.OnClickListener() {
@@ -54,8 +55,9 @@ public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapte
             public void onClick(View v) {
                 Intent intent = new Intent(context, HabitDetailsActivity.class);
                 intent.putExtra("Habit", habitList.get(position));
+                intent.putExtra("index", position);
 
-                context.startActivity(intent);
+                ((Activity) context).startActivityForResult(intent, 4);
             }
         });
     }
@@ -78,5 +80,12 @@ public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapte
             relativeLayout = itemView.findViewById(R.id.habits_overview_relative_layout);
 
         }
+    }
+
+    //remove habit from the recycler view
+    public void deleteHabit(int position) {
+        this.habitList.remove(position);
+        notifyItemRemoved(position);
+        notifyItemRangeChanged(position, this.habitList.size());
     }
 }
