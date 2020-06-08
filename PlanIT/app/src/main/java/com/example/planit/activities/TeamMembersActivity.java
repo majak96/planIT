@@ -17,6 +17,7 @@ import android.widget.Toast;
 import com.example.planit.MainActivity;
 import com.example.planit.R;
 import com.example.planit.adapters.TeamDetailAdapter;
+import com.example.planit.adapters.TeamMembersAdapter;
 import com.example.planit.adapters.TeamsPreviewAdapter;
 import com.example.planit.database.Contract;
 import com.example.planit.service.ServiceUtils;
@@ -44,7 +45,7 @@ import retrofit2.Response;
 public class TeamMembersActivity extends AppCompatActivity {
 
     private EditText newMember;
-    private TeamDetailAdapter adapter;
+    private TeamMembersAdapter adapter;
     private ArrayList<User>users;
     private String tag="TeamMembersActivity";
 
@@ -60,7 +61,7 @@ public class TeamMembersActivity extends AppCompatActivity {
 
         RecyclerView recyclerView = findViewById(R.id.team_members_recycle_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        adapter = new TeamDetailAdapter(this, users);
+        adapter = new TeamMembersAdapter(this, users);
         recyclerView.setAdapter(adapter);
 
     }
