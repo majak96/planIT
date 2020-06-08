@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -64,6 +65,8 @@ public class CreateHabitActivity extends AppCompatActivity {
     private RadioButton frequencyWeeksButton;
     private RadioButton goalAllRadio;
     private RadioButton goalAmountRadio;
+
+    private ImageButton removeReminderButton;
     private Button reminderButton;
 
     private CheckBox mondayCheckBox;
@@ -95,6 +98,7 @@ public class CreateHabitActivity extends AppCompatActivity {
 
         // getting buttons
         this.reminderButton = findViewById(R.id.reminder_button);
+        this.removeReminderButton = findViewById(R.id.remove_reminder);
         this.frequencyDaysButton = findViewById(R.id.habit_create_daily);
         this.frequencyWeeksButton = findViewById(R.id.habit_create_weekly);
         this.goalAllRadio = findViewById(R.id.habit_create_goal_all);
@@ -147,6 +151,7 @@ public class CreateHabitActivity extends AppCompatActivity {
                         reminderTime = selectedHour + ":" + selectedMinute;
                         reminderButton.setText(reminderTime);
                         reminderButton.setBackground(ContextCompat.getDrawable(CreateHabitActivity.this, R.drawable.circle_primary));
+                        removeReminderButton.setVisibility(View.VISIBLE);
                     }
                 }, hour, minute, true);//Yes 24 hour time
                 timePickerDialog.setTitle("Select Time");
@@ -253,9 +258,12 @@ public class CreateHabitActivity extends AppCompatActivity {
         }
 
         if (this.habit.getReminder() != null) {
-            reminderButton.setText(this.habit.getReminder().toString());
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+            reminderButton.setText(sdf.format(this.habit.getReminder()));
             reminderButton.setBackground(ContextCompat.getDrawable(CreateHabitActivity.this, R.drawable.circle_primary));
+            removeReminderButton.setVisibility(View.VISIBLE);
         }
+
 
 
     }
@@ -434,6 +442,14 @@ public class CreateHabitActivity extends AppCompatActivity {
                 }
                 break;
         }
+    }
+
+    public void removeReminder(View view) {
+        this.reminderTime = null;
+        this.reminderButton.setText("");
+        this.reminderButton.setBackground(ContextCompat.getDrawable(CreateHabitActivity.this, R.drawable.ic_add));
+        this.removeReminderButton.setVisibility(View.GONE);
+
     }
 
     /**

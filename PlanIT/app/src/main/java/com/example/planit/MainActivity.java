@@ -239,6 +239,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 Integer index = data.getIntExtra("index", -1);
                 Boolean updated = data.getBooleanExtra("updated", false);
                 Integer habitId = data.getIntExtra("habitId", -1);
+                Boolean done = data.getBooleanExtra("done", false);
+                Integer totalDays = data.getIntExtra("totalDays", -1);
 
                 //if habit was deleted
                 if (deleted == true && index != -1) {
@@ -255,6 +257,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         HabitsOverviewFragment previewFragment = (HabitsOverviewFragment) fragment;
                         previewFragment.updateRecyclerView(index, habitId);
 
+                    }
+                } else if (done && index != -1 && totalDays != -1) {
+                    Fragment fragment = getCurrentFragment();
+                    if (fragment != null && fragment instanceof HabitsOverviewFragment) {
+                        // update the recycler view
+                        HabitsOverviewFragment previewFragment = (HabitsOverviewFragment) fragment;
+                        previewFragment.updateTotalDaysInRecyclerView(index, totalDays);
                     }
                 }
             } else if (resultCode == Activity.RESULT_CANCELED) {

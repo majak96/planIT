@@ -20,12 +20,12 @@ import java.util.List;
 
 import model.Habit;
 
-public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapter.ViewHolder>{
+public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapter.ViewHolder> {
 
     private List<Habit> habitList = new ArrayList<>();
     private Context context;
 
-    public HabitPreviewAdapter(Context context, List<Habit> habitList){
+    public HabitPreviewAdapter(Context context, List<Habit> habitList) {
         this.context = context;
         this.habitList = habitList;
     }
@@ -43,7 +43,7 @@ public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, final int position) {
-        Habit habit  = this.habitList.get(position);
+        Habit habit = this.habitList.get(position);
 
         //set textviews data
         holder.habitTitleTextView.setText(habit.getTitle());
@@ -84,6 +84,7 @@ public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapte
 
     /**
      * Method for removing habit from recycler view
+     *
      * @param index habit index in the list
      */
     public void deleteHabit(int index) {
@@ -94,6 +95,7 @@ public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapte
 
     /**
      * Method for updating habit in the recycler view
+     *
      * @param index habit index
      * @param habit updated habit
      */
@@ -105,10 +107,23 @@ public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapte
 
     /**
      * Method for adding habit to the recycler view
+     *
      * @param habit new habit
      */
     public void addHabit(Habit habit) {
         this.habitList.add(habit);
         notifyItemChanged(habitList.size());
+    }
+
+    /**
+     * Method for updating total days number
+     * @param index habit index in the list
+     * @param totalDays new total days number
+     */
+    public void updateTotalDays(Integer index, Integer totalDays) {
+        Habit habit = this.habitList.get(index);
+        habit.setTotalNumberOfDays(totalDays);
+        notifyItemChanged(index);
+
     }
 }

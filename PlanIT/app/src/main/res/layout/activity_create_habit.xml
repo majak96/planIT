@@ -323,10 +323,9 @@
                 android:textColor="@color/black"
                 android:textSize="16dp" />
 
-            <LinearLayout
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content">
 
                 <Button
                     android:id="@+id/reminder_button"
@@ -339,8 +338,18 @@
                     android:textColor="@color/white"
                     android:textSize="16dp" />
 
+                <ImageButton
+                    android:visibility="gone"
+                    android:id="@+id/remove_reminder"
+                    android:layout_marginTop="31dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/ic_close_darkgray"
+                    android:onClick="removeReminder"
+                    android:layout_alignParentRight="true"/>
 
-            </LinearLayout>
+            </RelativeLayout>
 
             <View
                 android:layout_width="match_parent"

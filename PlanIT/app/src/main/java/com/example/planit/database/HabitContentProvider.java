@@ -122,6 +122,10 @@ public class HabitContentProvider extends ContentProvider {
                 id = db.insert(Contract.HabitDayConnection.TABLE_NAME, null, values);
                 resultUri = Uri.parse(Contract.HabitDay.TABLE_NAME + "/" + id);
                 break;
+            case HABIT_FULFILLMENT:
+                id = db.insert(Contract.HabitFulfillment.TABLE_NAME, null, values);
+                resultUri = Uri.parse(Contract.HabitFulfillment.TABLE_NAME + "/" + id);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -151,6 +155,9 @@ public class HabitContentProvider extends ContentProvider {
                 else
                     deletedRows = db.delete(Contract.Habit.TABLE_NAME, Contract.Habit.COLUMN_ID + "=" + idString + " and " + selection, selectionArgs);
 
+                break;
+            case HABIT_FULFILLMENT:
+                deletedRows = db.delete(Contract.HabitFulfillment.TABLE_NAME, selection, selectionArgs);
                 break;
             case HABIT_FULFILLMENT_ID:
                 idString = uri.getLastPathSegment();

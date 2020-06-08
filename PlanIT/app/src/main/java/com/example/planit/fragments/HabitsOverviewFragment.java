@@ -122,6 +122,10 @@ public class HabitsOverviewFragment extends Fragment {
         return habit;
     }
 
+    public void updateTotalDaysInRecyclerView(Integer index, Integer newNumber) {
+        this.adapter.updateTotalDays(index, newNumber);
+    }
+
     public void removeFromRecyclerView(Integer position) {
         this.adapter.deleteHabit(position);
     }
