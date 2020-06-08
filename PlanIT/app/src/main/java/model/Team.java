@@ -11,7 +11,6 @@ public class Team implements Serializable {
     private Long id;
     private String name;
     private String description;
-    private String URLShare;
     private User teamCreator;
     private List<User> users;
 
@@ -19,13 +18,36 @@ public class Team implements Serializable {
         this.users = new ArrayList<>();
     }
 
-    public Team(Long id, String name, String description, String URLShare, User user) {
+    @Override
+    public String toString() {
+        return "Team{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", teamCreator=" + teamCreator +
+                ", users=" + users +
+                '}';
+    }
+
+    public Team(Long id, String name) {
+        this.id = id;
+        this.name = name;
+        this.users = new ArrayList<>();
+    }
+
+    public Team(Long id, String name, String description) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.users = new ArrayList<>();
+    }
+
+    public Team(Long id, String name, String description, User user) {
         this.id = id;
         this.users = new ArrayList<>();
         this.name = name;
         this.description = description;
-        this.URLShare = URLShare;
-        this.teamCreator= user;
+        this.teamCreator = user;
     }
 
     public String getName() {
@@ -42,14 +64,6 @@ public class Team implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public String getURLShare() {
-        return URLShare;
-    }
-
-    public void setURLShare(String URLShare) {
-        this.URLShare = URLShare;
     }
 
     public User getTeamCreator() {

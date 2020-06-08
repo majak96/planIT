@@ -125,17 +125,17 @@ tools:context=".activities.SignUpActivity">
         android:layout_marginRight="20dp" />
 
     <Button
-        android:id="@+id/signUpButton"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:textAllCaps="false"
-        android:textAlignment="center"
-        android:textColor="@color/white"
-        android:text="@string/sign_up"
-        android:layout_marginTop="20dp"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
-        android:background = "@drawable/rounded_button_primary" />
+    android:id="@+id/signUpButton"
+    android:layout_width="match_parent"
+    android:layout_height="40dp"
+    android:textAllCaps="false"
+    android:textAlignment="center"
+    android:textColor="@color/white"
+    android:text="@string/sign_up"
+    android:layout_marginTop="20dp"
+    android:layout_marginLeft="30dp"
+    android:layout_marginRight="30dp"
+    android:background = "@drawable/rounded_button_primary" />
 
     <LinearLayout
         android:layout_width="match_parent"

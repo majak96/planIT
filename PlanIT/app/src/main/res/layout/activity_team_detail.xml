@@ -35,27 +35,6 @@
 
         <View style="@style/Divider" />
 
-        <!-- SHARING LINK -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingLeft="16dp"
-            android:paddingTop="15dp"
-            android:paddingRight="12dp"
-            android:textSize="16sp"
-            android:text="@string/sharing_link_description"/>
-        <TextView
-            android:id="@+id/sharing_link_team_detail"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingLeft="16sp"
-            android:paddingTop="12dp"
-            android:paddingRight="12dp"
-            android:paddingBottom="12dp"
-            android:text="@string/default_link"
-            android:textColor="@color/darkGray"
-            android:textSize="16dp" />
-
         <View style="@style/Divider" />
 
         <!-- MEMBERS -->

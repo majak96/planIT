@@ -1,6 +1,7 @@
 package com.example.planit.fragments;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.planit.R;
 import com.example.planit.activities.CreateTeamActivity;
 import com.example.planit.adapters.TeamsPreviewAdapter;
+import com.example.planit.database.Contract;
 import com.example.planit.mokaps.Mokap;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -54,8 +56,7 @@ public class TeamsOverviewFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_teams_overview, container, false);
         this.getActivity().setTitle("Teams");
 
-        //initTeams();
-        teamsList = Mokap.getTeams();
+        getAllTeams();
 
         RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.teams_overview_recycle_view);
         recyclerView.setHasFixedSize(true);
@@ -75,9 +76,23 @@ public class TeamsOverviewFragment extends Fragment {
         return view;
     }
 
-    public void initTeams() {
-        this.teamsList.add(new Team(1L, "PMA TIM 3", "Programiranje mobilnih aplikacija", "", null));
-        this.teamsList.add(new Team(2L, "UKS TIM 3", "Upravljenje konfiguracijom softvera", "", null));
-        this.teamsList.add(new Team(3L, "MBRS TIM 3", "Metodologije brzog razvoja softvera", "", null));
+    private void getAllTeams() {
+
+        teamsList.clear();
+
+        Cursor cursor = getActivity().getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, null, null, null);
+
+        if (cursor.getCount() == 0) {
+            //TODO: do something when there's no data
+        } else {
+            while (cursor.moveToNext()) {
+                Team newTeam = new Team(Long.parseLong(cursor.getString(0)), cursor.getString(1), cursor.getString(2));
+                this.teamsList.add(newTeam);
+            }
+        }
+
+        cursor.close();
     }
+
+
 }

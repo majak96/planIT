@@ -96,7 +96,7 @@
 
     //dialogs
     <string name="task_reminder_dialog">Task Reminder</string>
-    <string name ="task_date_dialog">Task Date</string>
+    <string name="task_date_dialog">Task Date</string>
     <string name="task_priority_dialog">Task Priority</string>
     <string name="task_label_dialog">New Label</string>
 
@@ -105,4 +105,9 @@
     <string name="edit">Edit</string>
 
     <string name="reminder">Reminder</string>
+
+    <string name="team_no_name">Team name is required!</string>
+    <string name="member_to_add">Member to add</string>
+
+
 </resources>
