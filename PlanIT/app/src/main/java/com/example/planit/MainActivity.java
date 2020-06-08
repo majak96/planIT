@@ -7,6 +7,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -21,6 +22,7 @@ import com.example.planit.activities.ProfileActivity;
 import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.SignInActivity;
 import com.example.planit.fragments.CalendarFragment;
+import com.example.planit.fragments.DailyPreviewFragment;
 import com.example.planit.fragments.HabitsOverviewFragment;
 import com.example.planit.fragments.TeamsOverviewFragment;
 import com.example.planit.mokaps.Mokap;
@@ -85,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             profileLayout = (LinearLayout) header.findViewById(R.id.profileLayout);
 
             loggedEmail.setText(SharedPreference.getLoggedEmail(MainActivity.this));
-            loggedName.setText(SharedPreference.getLoggedName(MainActivity.this));
+            loggedName.setText(SharedPreference.getLoggedName(MainActivity.this).concat(" ").concat(SharedPreference.getLoggedLastName(MainActivity.this)));
             loggedFirstChar.setText(findLoggedUserName().substring(0, 1).concat(findLoggedUserLastName().substring(0, 1)));
 
             profileLayout.setOnClickListener(new View.OnClickListener() {
@@ -188,6 +190,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 SharedPreference.setLoggedEmail(getApplicationContext(), "");
+                SharedPreference.setLoggedName(getApplicationContext(), "");
+                SharedPreference.setLoggedColour(getApplicationContext(), "");
+                SharedPreference.setLoggedLastName(getApplicationContext(), "");
                 Intent intent = new Intent(MainActivity.this, SignInActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
@@ -200,29 +205,83 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public String findLoggedUserName() {
-        for (User u : Mokap.getUsers()) {
-            if (u.getEmail().equals(SharedPreference.getLoggedEmail(MainActivity.this))) {
-                return u.getName();
-            }
+        if (SharedPreference.getLoggedName(MainActivity.this) == null) {
+            return "";
         }
-        return "";
+        return SharedPreference.getLoggedName(MainActivity.this);
     }
 
     public String findLoggedUserLastName() {
-        for (User u : Mokap.getUsers()) {
-            if (u.getEmail().equals(SharedPreference.getLoggedEmail(MainActivity.this))) {
-                return u.getLastName();
-            }
+        if (SharedPreference.getLoggedLastName(MainActivity.this) == null) {
+            return "";
         }
-        return "";
+        return SharedPreference.getLoggedLastName(MainActivity.this);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        //opened CreateHabit
-        if (requestCode == 3) {
+        //opened EditTaskActivity
+        if (requestCode == 1) {
+            if (resultCode == Activity.RESULT_OK) {
+                Long date = data.getLongExtra("date", -1);
+
+                if (date != -1) {
+                    getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+                    //show daily preview for the chosen date
+                    FragmentTransition.replaceFragment(this, DailyPreviewFragment.newInstance(date), R.id.fragment_container, true);
+                }
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                //do nothing
+            }
+        }
+        //opened TaskDetailActivity
+        else if (requestCode == 2) {
+            if (resultCode == Activity.RESULT_OK) {
+                Boolean deleted = data.getBooleanExtra("deleted", false);
+                Boolean changed = data.getBooleanExtra("changed", false);
+                Boolean updated = data.getBooleanExtra("updated", false);
+                Boolean changed_date = data.getBooleanExtra("changed_date", false);
+                Integer position = data.getIntExtra("position", -1);
+                Integer taskId = data.getIntExtra("taskId", -1);
+
+                //if task was deleted
+                if (deleted == true && position != -1) {
+                    Fragment fragment = getCurrentFragment();
+                    if (fragment != null && fragment instanceof DailyPreviewFragment) {
+                        // update the recycler view in the DailyPreviewFragment
+                        DailyPreviewFragment previewFragment = (DailyPreviewFragment) fragment;
+                        previewFragment.removeTaskFromRecyclerView(position);
+                    }
+                }
+                //if task was changed
+                else if (updated == true && position != -1 && taskId != -1) {
+                    Fragment fragment = getCurrentFragment();
+                    if (fragment != null && fragment instanceof DailyPreviewFragment) {
+                        // update the recycler view in the DailyPreviewFragment
+                        DailyPreviewFragment previewFragment = (DailyPreviewFragment) fragment;
+                        if (changed_date) {
+                            previewFragment.removeTaskFromRecyclerView(position);
+                        } else {
+                            previewFragment.updateTaskInRecyclerView(position, taskId);
+                        }
+                    }
+                }
+                //if task status was changed
+                else if (changed == true && position != -1) {
+                    Fragment fragment = getCurrentFragment();
+                    if (fragment != null && fragment instanceof DailyPreviewFragment) {
+                        // update the recycler view in the DailyPreviewFragment
+                        DailyPreviewFragment previewFragment = (DailyPreviewFragment) fragment;
+                        previewFragment.updateTaskStatusInRecyclerView(position);
+                    }
+                }
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                //do nothing
+            }
+        } else if (requestCode == 3) {
             if (resultCode == Activity.RESULT_OK) {
                 Integer habitId = data.getIntExtra("habitId", -1);
                 Fragment fragment = getCurrentFragment();
@@ -272,5 +331,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
 
     }
+
 
 }

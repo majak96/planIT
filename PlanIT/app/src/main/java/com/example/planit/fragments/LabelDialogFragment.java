@@ -4,24 +4,40 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.EditText;
+import android.widget.AdapterView;
+import android.widget.AutoCompleteTextView;
 
 import androidx.appcompat.app.AppCompatDialogFragment;
 
 import com.example.planit.R;
+import com.example.planit.adapters.AutoCompleteLabelAdapter;
+import com.example.planit.database.Contract;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import model.Label;
 
 public class LabelDialogFragment extends AppCompatDialogFragment {
 
+    private static final String TAG = "LabelDialogFragment";
+
     public interface LabelDialogListener {
-        void addLabel(String label);
+        void addNewLabel(String labelString);
+        void addExistingLabel(Label label);
     }
 
     private LabelDialogListener listener;
 
-    private EditText labelTextEdit;
+    private AutoCompleteTextView labelTextEdit;
+    private AutoCompleteLabelAdapter adapter;
+
+    private List<Label> labels;
 
     public static LabelDialogFragment newInstance() {
         LabelDialogFragment fragment = new LabelDialogFragment();
@@ -58,15 +74,68 @@ public class LabelDialogFragment extends AppCompatDialogFragment {
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        String label = labelTextEdit.getText().toString();
+                        String label = labelTextEdit.getText().toString().trim();
 
-                        listener.addLabel(label);
+                        //check if label with this name already exists
+                        Log.d(TAG, "onClick: labels" + labels.size());
+                        for(Label lab : labels) {
+                            if(lab.getName().equals(label)){
+                                //add the existing label
+                                listener.addExistingLabel(lab);
+                                return;
+                            }
+                        }
+
+                        //add a new label
+                        listener.addNewLabel(label);
                     }
                 });
 
+        //TODO: remove labels that are already there somehow
+        labels = getAllLabelsFromDatabase();
+        adapter = new AutoCompleteLabelAdapter(getActivity(), labels);
+
         labelTextEdit = view.findViewById(R.id.label_dialog);
+        labelTextEdit.setAdapter(adapter);
+
+        labelTextEdit.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //check which label is selected
+                Label label = adapter.getItem(position);
+
+                listener.addExistingLabel(label);
+
+                dismiss();
+            }
+        });
 
         return builder.create();
+    }
+
+    private List<Label> getAllLabelsFromDatabase() {
+        List<Label> labels = new ArrayList<>();
+
+        String[] allColumns = {Contract.Label.COLUMN_ID, Contract.Label.COLUMN_NAME, Contract.Label.COLUMN_COLOR};
+
+        Cursor cursor = getActivity().getContentResolver().query(Contract.Label.CONTENT_URI_LABEL, allColumns, null, null, null);
+
+        if (cursor.getCount() == 0) {
+            //do nothing I guess
+        } else {
+            while (cursor.moveToNext()) {
+                Label label = new Label();
+                label.setId(cursor.getInt(0));
+                label.setName(cursor.getString(1));
+                label.setColor(cursor.getString(2));
+
+                labels.add(label);
+            }
+        }
+
+        cursor.close();
+
+        return labels;
     }
 
 }
