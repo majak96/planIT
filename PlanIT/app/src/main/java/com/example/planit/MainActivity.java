@@ -224,8 +224,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         //opened CreateHabit
         if (requestCode == 3) {
             if (resultCode == Activity.RESULT_OK) {
-                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                FragmentTransition.replaceFragment(this, HabitsOverviewFragment.newInstance(), R.id.fragment_container, true);
+                Integer habitId = data.getIntExtra("habitId", -1);
+                Fragment fragment = getCurrentFragment();
+                if (fragment != null && fragment instanceof HabitsOverviewFragment) {
+                    HabitsOverviewFragment previewFragment = (HabitsOverviewFragment) fragment;
+                    previewFragment.addToRecyclerView(habitId);
+                }
 
             } else if (resultCode == Activity.RESULT_CANCELED) {
             }
@@ -233,6 +237,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (resultCode == Activity.RESULT_OK) {
                 Boolean deleted = data.getBooleanExtra("deleted", false);
                 Integer index = data.getIntExtra("index", -1);
+                Boolean updated = data.getBooleanExtra("updated", false);
+                Integer habitId = data.getIntExtra("habitId", -1);
 
                 //if habit was deleted
                 if (deleted == true && index != -1) {
@@ -241,6 +247,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         // update the recycler view
                         HabitsOverviewFragment previewFragment = (HabitsOverviewFragment) fragment;
                         previewFragment.removeFromRecyclerView(index);
+                    }
+                } else if (updated == true && index != -1 && habitId != -1) {
+                    Fragment fragment = getCurrentFragment();
+                    if (fragment != null && fragment instanceof HabitsOverviewFragment) {
+                        // update the recycler view
+                        HabitsOverviewFragment previewFragment = (HabitsOverviewFragment) fragment;
+                        previewFragment.updateRecyclerView(index, habitId);
+
                     }
                 }
             } else if (resultCode == Activity.RESULT_CANCELED) {

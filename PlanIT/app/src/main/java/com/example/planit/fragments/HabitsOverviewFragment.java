@@ -81,7 +81,6 @@ public class HabitsOverviewFragment extends Fragment {
     }
 
     private void getHabitsFromDB() {
-
         Cursor cursor = getActivity().getContentResolver().query(Contract.Habit.CONTENT_URI_HABIT, null, null, null, null);
 
         if (cursor.getCount() == 0) {
@@ -90,14 +89,12 @@ public class HabitsOverviewFragment extends Fragment {
             while (cursor.moveToNext()) {
                 Integer id = (Integer) cursor.getInt(cursor.getColumnIndex(Contract.Habit.COLUMN_ID));
                 String title = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_TITLE));
-                String description = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_DESCRIPTION));
-                Uri uri = Uri.parse(Contract.HabitFulfillment.CONTENT_HABIT_FULFILLMENT + "/" +Contract.Habit.TABLE_NAME + "/" + id);
-                Cursor cursorFulfillment = getActivity().getContentResolver().query(uri , null, null, null, null);
+                Uri uri = Uri.parse(Contract.HabitFulfillment.CONTENT_HABIT_FULFILLMENT + "/" + Contract.Habit.TABLE_NAME + "/" + id);
+                Cursor cursorFulfillment = getActivity().getContentResolver().query(uri, null, null, null, null);
                 Habit habit = new Habit();
                 habit.setId(id);
                 habit.setTitle(title);
                 habit.setTotalNumberOfDays(cursorFulfillment.getCount());
-                habit.setDescription(description);
                 cursorFulfillment.close();
                 this.habitList.add(habit);
             }
@@ -106,11 +103,37 @@ public class HabitsOverviewFragment extends Fragment {
         cursor.close();
     }
 
+    public Habit findHabitById(Integer id) {
+        Uri uri = Uri.parse(Contract.Habit.CONTENT_URI_HABIT + "/" + id);
+        Cursor cursor = getActivity().getContentResolver().query(uri, null, null, null, null);
+        if(cursor.getCount() == 0)
+            return null;
+        Habit habit = new Habit();
+        if(cursor.moveToNext()) {
+            String title = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_TITLE));
+            Uri uriFulfillment = Uri.parse(Contract.HabitFulfillment.CONTENT_HABIT_FULFILLMENT + "/" + Contract.Habit.TABLE_NAME + "/" + id);
+            Cursor cursorFulfillment = getActivity().getContentResolver().query(uriFulfillment, null, null, null, null);
+            habit.setId(id);
+            habit.setTitle(title);
+            habit.setTotalNumberOfDays(cursorFulfillment.getCount());
+            cursorFulfillment.close();
+        }
+        cursor.close();
+        return habit;
+    }
+
     public void removeFromRecyclerView(Integer position) {
         this.adapter.deleteHabit(position);
     }
 
-    /*public void updateInRecyclerView(Integer position) {
-        adapter.updateTaskStatus(position);
-    }*/
+    public void updateRecyclerView(Integer index, Integer id) {
+        Habit habit = this.findHabitById(id);
+        adapter.updateHabit(index, habit);
+    }
+
+    public void addToRecyclerView(Integer id) {
+        Habit habit = this.findHabitById(id);
+        adapter.addHabit(habit);
+    }
+
 }

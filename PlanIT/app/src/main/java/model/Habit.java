@@ -2,6 +2,8 @@ package model;
 
 import java.io.Serializable;
 import java.sql.Time;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Habit implements Serializable {
 
@@ -12,9 +14,10 @@ public class Habit implements Serializable {
     private Integer numberOfDays;
     private Time reminder;
     private Integer totalNumberOfDays;
+    private List<HabitDayConnection> habitDays;
 
     public Habit() {
-
+        this.habitDays = new ArrayList<>();
     }
 
     public Habit(Integer id, String title, String description, Integer goal, Integer numberOfDays) {
@@ -23,6 +26,7 @@ public class Habit implements Serializable {
         this.description = description;
         this.goal = goal;
         this.numberOfDays = numberOfDays;
+        this.habitDays = new ArrayList<>();
     }
 
     public Integer getId() {
@@ -65,11 +69,27 @@ public class Habit implements Serializable {
         this.numberOfDays = numberOfDays;
     }
 
-    public Time getReminder() { return reminder; }
+    public Time getReminder() {
+        return reminder;
+    }
 
-    public void setReminder(Time reminder) { this.reminder = reminder; }
+    public void setReminder(Time reminder) {
+        this.reminder = reminder;
+    }
 
-    public Integer getTotalNumberOfDays() { return totalNumberOfDays; }
+    public Integer getTotalNumberOfDays() {
+        return totalNumberOfDays;
+    }
 
-    public void setTotalNumberOfDays(Integer totalNumberOfDays) { this.totalNumberOfDays = totalNumberOfDays; }
+    public void setTotalNumberOfDays(Integer totalNumberOfDays) {
+        this.totalNumberOfDays = totalNumberOfDays;
+    }
+
+    public List<HabitDayConnection> getHabitDays() {
+        return habitDays;
+    }
+
+    public void setHabitDays(List<HabitDayConnection> habitDays) {
+        this.habitDays = habitDays;
+    }
 }

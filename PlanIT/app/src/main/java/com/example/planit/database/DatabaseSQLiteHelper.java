@@ -14,8 +14,8 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.Habit.COLUMN_ID  + " integer primary key autoincrement , "
             + Contract.Habit.COLUMN_TITLE + " text not null, "
             + Contract.Habit.COLUMN_DESCRIPTION + " text, "
-            + Contract.Habit.COLUMN_GOAL + " integer default 0, "
-            + Contract.Habit.COLUMN_NUMBER_OF_DAYS + " integer default 0 , "
+            + Contract.Habit.COLUMN_GOAL + " integer default -1, "
+            + Contract.Habit.COLUMN_NUMBER_OF_DAYS + " integer default -1 , "
             + Contract.Habit.COLUMN_REMINDER + " text "
             + ");";
 

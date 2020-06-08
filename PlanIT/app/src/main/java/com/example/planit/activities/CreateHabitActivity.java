@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -27,15 +28,22 @@ import androidx.core.content.ContextCompat;
 import com.example.planit.R;
 import com.example.planit.database.Contract;
 
+import java.sql.Time;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+
+import model.Habit;
+import model.HabitDayConnection;
 
 /**
  * Activity for creating and editing habits
  */
 public class CreateHabitActivity extends AppCompatActivity {
 
+    private Habit habit;
+    private Integer habitId;
     private String reminderTime;
     private List<CheckBox> checkBoxesDaysList;
     private List<Integer> selectedDays;
@@ -71,7 +79,7 @@ public class CreateHabitActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.activity_create_habit);
-        this.setTitle("Create Habit");
+
 
         // toolbar settings
         Toolbar toolbar = findViewById(R.id.toolbar_habit_create);
@@ -148,6 +156,108 @@ public class CreateHabitActivity extends AppCompatActivity {
             }
         });
 
+        if (getIntent().hasExtra("habitId")) {
+            this.habitId = getIntent().getIntExtra("habitId", -1);
+            if (this.habitId != -1) {
+                this.setTitle("Edit Habit");
+                this.getHabitInfo();
+                this.initFields();
+            }
+
+
+        } else {
+            this.setTitle("Create Habit");
+        }
+
+    }
+
+    /**
+     * Method for getting habit information from db
+     */
+    private void getHabitInfo() {
+        Uri uri = Uri.parse(Contract.Habit.CONTENT_URI_HABIT + "/" + this.habitId);
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        if (cursor.moveToNext()) {
+            Integer id = (Integer) cursor.getInt(cursor.getColumnIndex(Contract.Habit.COLUMN_ID));
+            String title = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_TITLE));
+            String description = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_DESCRIPTION));
+            habit = new Habit();
+            habit.setId(id);
+            habit.setTitle(title);
+            habit.setGoal(cursor.getInt(cursor.getColumnIndex(Contract.Habit.COLUMN_GOAL)));
+            habit.setNumberOfDays(cursor.getInt(cursor.getColumnIndex(Contract.Habit.COLUMN_NUMBER_OF_DAYS)));
+            habit.setDescription(description);
+            String time = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_REMINDER));
+
+            if (time != null) {
+                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+                try {
+                    habit.setReminder(new Time(sdf.parse(time).getTime()));
+                } catch (Exception e) {
+                    // handle exception
+                }
+            }
+
+            if (this.habit.getNumberOfDays() == -1) {
+                getHabitDays();
+            }
+        }
+        cursor.close();
+    }
+
+    /**
+     * Method for initializing field values
+     */
+    private void initFields() {
+        this.titleHabit.setText(this.habit.getTitle());
+        this.detailsHabit.setText(this.habit.getDescription());
+        // setting the goal
+
+        if (this.habit.getGoal() != -1) {
+            this.goalsNumberOfDays.setText(this.habit.getGoal().toString());
+            this.goalAmountLayout.setVisibility(View.VISIBLE);
+            this.goalAmountRadio.setChecked(true);
+            this.goalAllRadio.setChecked(false);
+            this.goalAmountRadio.setTextColor(Color.rgb(17, 207, 197));
+            this.goalAllRadio.setTextColor(Color.rgb(142, 142, 142));
+        }
+
+        if (this.habit.getNumberOfDays() == -1) {
+            // fill checkboxes
+            for (HabitDayConnection day : this.habit.getHabitDays()) {
+                this.checkBoxesDaysList.get(day.getHabitDayId()).setChecked(true);
+            }
+
+        } else {
+            switch (habit.getNumberOfDays()) {
+                case 1:
+                    ((RadioButton) findViewById(R.id.oneWeek)).setChecked(true);
+                case 2:
+                    ((RadioButton) findViewById(R.id.twoWeeks)).setChecked(true);
+                case 3:
+                    ((RadioButton) findViewById(R.id.threeWeeks)).setChecked(true);
+                case 4:
+                    ((RadioButton) findViewById(R.id.fourWeeks)).setChecked(true);
+                case 5:
+                    ((RadioButton) findViewById(R.id.fiveWeeks)).setChecked(true);
+                case 6:
+                    ((RadioButton) findViewById(R.id.sixWeeks)).setChecked(true);
+            }
+
+            pickDaysLayout.setVisibility(View.GONE);
+            pickWeeksLayout.setVisibility(View.VISIBLE);
+            this.frequencyWeeksButton.setChecked(true);
+            this.frequencyDaysButton.setChecked(false);
+            this.frequencyWeeksButton.setTextColor(Color.rgb(17, 207, 197));
+            frequencyDaysButton.setTextColor(Color.rgb(142, 142, 142));
+        }
+
+        if (this.habit.getReminder() != null) {
+            reminderButton.setText(this.habit.getReminder().toString());
+            reminderButton.setBackground(ContextCompat.getDrawable(CreateHabitActivity.this, R.drawable.circle_primary));
+        }
+
+
     }
 
     @Override
@@ -161,31 +271,102 @@ public class CreateHabitActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_save:
-
-                ContentValues values = createHabit();
+                ContentValues values = getHabitValues();
                 // validation error
                 if (values == null)
                     return false;
 
-                Uri resultUri = getContentResolver().insert(Contract.Habit.CONTENT_URI_HABIT, values);
-
-                if (resultUri != null) {
-                    if (!this.selectedDays.isEmpty()) {
+                if (this.habit == null) {
+                    Uri resultUri = getContentResolver().insert(Contract.Habit.CONTENT_URI_HABIT, values);
+                    if (resultUri != null) {
                         String habitId = resultUri.getLastPathSegment();
-                        addHabitDays(Integer.parseInt(habitId));
+                        if (!this.selectedDays.isEmpty()) {
+                            for (Integer dayId : this.selectedDays) {
+                                addHabitDay(Integer.parseInt(habitId), dayId);
+                            }
+
+                        }
+
+                        Toast.makeText(this, R.string.habit_created, Toast.LENGTH_SHORT).show();
+
+                        Intent intent = new Intent();
+                        intent.putExtra("habitId", Integer.parseInt(habitId));
+                        setResult(Activity.RESULT_OK, intent);
+                        finish();
                     }
+                } else {
+                    int rowsUpdated = updateHabit(values);
 
-                    Toast.makeText(this, R.string.habit_created, Toast.LENGTH_SHORT).show();
+                    if (rowsUpdated > 0) {
+                        if (!this.selectedDays.isEmpty()) {
+                            updateDays();
+                        } else if (!this.habit.getHabitDays().isEmpty()) {
+                            for(HabitDayConnection conn : this.habit.getHabitDays())
+                                this.deleteHabitDay(conn.getId());
+                        }
 
-                    Intent intent = new Intent();
+                        Toast.makeText(this, "Habit updated", Toast.LENGTH_SHORT).show();
 
-                    setResult(Activity.RESULT_OK, intent);
-                    finish();
+                        Intent intent = new Intent();
+                        intent.putExtra("updated", true);
+                        setResult(Activity.RESULT_OK, intent);
+                        finish();
+                    }
                 }
 
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Method for updating selected days
+     */
+    private void updateDays() {
+        for (Integer selectedDay : this.selectedDays) {
+            boolean found = false;
+            for (HabitDayConnection conn : this.habit.getHabitDays()) {
+                if (conn.getHabitDayId() == selectedDay) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                //add
+                this.addHabitDay(habitId, selectedDay);
+            }
+        }
+
+        for (HabitDayConnection conn : this.habit.getHabitDays()) {
+            boolean found = false;
+            for (Integer selectedDay : this.selectedDays) {
+                if (conn.getHabitDayId() == selectedDay) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                //remove
+                deleteHabitDay(conn.getId());
+            }
+        }
+
+    }
+
+    /**
+     * Method for updating habit in database
+     *
+     * @param values
+     * @return number of updated rows
+     */
+    public int updateHabit(ContentValues values) {
+        if (this.habit != null) {
+            Uri uri = Uri.parse(Contract.Habit.CONTENT_URI_HABIT + "/" + this.habitId);
+            return getContentResolver().update(uri, values, null, null);
+        }
+
+        return -1;
     }
 
     @Override
@@ -256,11 +437,11 @@ public class CreateHabitActivity extends AppCompatActivity {
     }
 
     /**
-     * Method for creating a habit based on the user's input
+     * Method for getting habit values based on the user's input
      *
      * @return values of columns
      */
-    private ContentValues createHabit() {
+    private ContentValues getHabitValues() {
         // creating content values <key,value> = <column,value>
         ContentValues values = new ContentValues();
         this.selectedDays = new ArrayList<>();
@@ -268,7 +449,7 @@ public class CreateHabitActivity extends AppCompatActivity {
         if (!this.titleHabit.getText().toString().trim().isEmpty())
             values.put(Contract.Habit.COLUMN_TITLE, this.titleHabit.getText().toString().trim());
         else {
-
+            // TODO: add message
             return null;
         }
 
@@ -279,6 +460,7 @@ public class CreateHabitActivity extends AppCompatActivity {
 
         // checking if user choose specific days
         if (this.frequencyRadioGroup.getCheckedRadioButtonId() == this.frequencyDaysButton.getId()) {
+            values.put(Contract.Habit.COLUMN_NUMBER_OF_DAYS, -1);
             for (int i = 0; i < this.checkBoxesDaysList.size(); i++) {
                 if (this.checkBoxesDaysList.get(i).isChecked())
                     this.selectedDays.add(i + 1);
@@ -319,31 +501,70 @@ public class CreateHabitActivity extends AppCompatActivity {
                 }
 
                 if (value != null)
-                    values.put(Contract.Habit.COLUMN_NUMBER_OF_DAYS, value);
+                    values.put(Contract.Habit.COLUMN_GOAL, value);
 
             } else {
                 return null;
             }
+        } else {
+            values.put(Contract.Habit.COLUMN_GOAL, -1);
         }
 
         // setting reminder
-        if (!this.reminderTime.trim().isEmpty()) {
+        if (this.reminderTime == null || !this.reminderTime.trim().isEmpty()) {
             values.put(Contract.Habit.COLUMN_REMINDER, this.reminderTime);
+        } else {
+            values.putNull(Contract.Habit.COLUMN_REMINDER);
         }
 
         return values;
     }
 
-    private void addHabitDays(Integer habitId) {
-        for (Integer dayId : this.selectedDays) {
-            ContentValues contentValues = new ContentValues();
+    /**
+     * Adding selected habit days
+     *
+     * @param habitId
+     */
+    private void addHabitDay(Integer habitId, Integer dayId) {
+        ContentValues contentValues = new ContentValues();
 
-            // setting habit and day ids
-            contentValues.put(Contract.HabitDayConnection.COLUMN_HABIT_ID, habitId);
-            contentValues.put(Contract.HabitDayConnection.COLUMN_HABIT_DAY_ID, dayId);
+        // setting habit and day ids
+        contentValues.put(Contract.HabitDayConnection.COLUMN_HABIT_ID, habitId);
+        contentValues.put(Contract.HabitDayConnection.COLUMN_HABIT_DAY_ID, dayId);
 
-            Uri uri = getContentResolver().insert(Contract.HabitDayConnection.CONTENT_URI_HABIT_DAY_CONN, contentValues);
+        Uri uri = getContentResolver().insert(Contract.HabitDayConnection.CONTENT_URI_HABIT_DAY_CONN, contentValues);
+
+    }
+
+    /**
+     * Method for getting habit days from db
+     */
+    private void getHabitDays() {
+        Uri uri = Uri.parse(Contract.HabitDayConnection.CONTENT_URI_HABIT_DAY_CONN + "/" + Contract.Habit.TABLE_NAME + "/" + this.habitId);
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        if (cursor.getCount() > 0) {
+            this.habit.setHabitDays(new ArrayList<HabitDayConnection>());
+            HabitDayConnection habitDayConnection = null;
+            while (cursor.moveToNext()) {
+                habitDayConnection = new HabitDayConnection();
+                habitDayConnection.setId(cursor.getInt(cursor.getColumnIndex(Contract.HabitDayConnection.COLUMN_ID)));
+                habitDayConnection.setHabitDayId(cursor.getInt(cursor.getColumnIndex(Contract.HabitDayConnection.COLUMN_HABIT_DAY_ID)));
+                habitDayConnection.setHabitId(cursor.getInt(cursor.getColumnIndex(Contract.HabitDayConnection.COLUMN_HABIT_ID)));
+                this.habit.getHabitDays().add(habitDayConnection);
+            }
         }
+        cursor.close();
+    }
+
+    /**
+     * Method for deleting habit day
+     *
+     * @param habitConnectionId habit connection id
+     * @return number of deleted rows
+     */
+    public int deleteHabitDay(Integer habitConnectionId) {
+        Uri uri = Uri.parse(Contract.HabitDayConnection.CONTENT_URI_HABIT_DAY_CONN + "/" + habitConnectionId);
+        return getContentResolver().delete(uri, null, null);
     }
 
 }

@@ -81,6 +81,11 @@ public class HabitContentProvider extends ContentProvider {
                 //setting the list of tables to query
                 queryBuilder.setTables(Contract.HabitFulfillment.TABLE_NAME);
                 break;
+            case HABIT_DAY_CONNECTION_HABIT_ID:
+                queryBuilder.appendWhere(Contract.HabitDayConnection.COLUMN_HABIT_ID + "=" + uri.getLastPathSegment());
+                queryBuilder.setTables(Contract.HabitDayConnection.TABLE_NAME);
+                break;
+
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }

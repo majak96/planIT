@@ -54,7 +54,7 @@ public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapte
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(context, HabitDetailsActivity.class);
-                intent.putExtra("Habit", habitList.get(position));
+                intent.putExtra("habitId", habitList.get(position).getId());
                 intent.putExtra("index", position);
 
                 ((Activity) context).startActivityForResult(intent, 4);
@@ -82,10 +82,33 @@ public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapte
         }
     }
 
-    //remove habit from the recycler view
-    public void deleteHabit(int position) {
-        this.habitList.remove(position);
-        notifyItemRemoved(position);
-        notifyItemRangeChanged(position, this.habitList.size());
+    /**
+     * Method for removing habit from recycler view
+     * @param index habit index in the list
+     */
+    public void deleteHabit(int index) {
+        this.habitList.remove(index);
+        notifyItemRemoved(index);
+        notifyItemRangeChanged(index, this.habitList.size());
+    }
+
+    /**
+     * Method for updating habit in the recycler view
+     * @param index habit index
+     * @param habit updated habit
+     */
+    public void updateHabit(int index, Habit habit) {
+        this.habitList.remove(index);
+        this.habitList.add(index, habit);
+        notifyItemChanged(index);
+    }
+
+    /**
+     * Method for adding habit to the recycler view
+     * @param habit new habit
+     */
+    public void addHabit(Habit habit) {
+        this.habitList.add(habit);
+        notifyItemChanged(habitList.size());
     }
 }
