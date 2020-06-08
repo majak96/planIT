@@ -5,6 +5,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -14,10 +15,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.planit.R;
-import com.example.planit.mokaps.Mokap;
+import com.example.planit.service.AuthService;
+import com.example.planit.service.ServiceUtils;
 import com.example.planit.utils.SharedPreference;
 
-import model.User;
+import model.ChangeProfileDTO;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -46,7 +52,6 @@ public class ProfileActivity extends AppCompatActivity {
         loggedEmail = findViewById(R.id.loggedEmail);
         editName = findViewById(R.id.editName);
         editLastName = findViewById(R.id.editLastName);
-
         name.setText(findLoggedUserName());
         lastName.setText(findLoggedUserLastName());
         loggedCredential.setText(name.getText().toString().substring(0, 1).concat(lastName.getText().toString().substring(0, 1)));
@@ -65,6 +70,7 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+
             case R.id.changeProfile:
                 lastName.setVisibility(View.GONE);
                 name.setVisibility(View.GONE);
@@ -75,38 +81,61 @@ public class ProfileActivity extends AppCompatActivity {
                 editLastName.setText(lastName.getText().toString());
                 editName.setText(name.getText().toString());
                 break;
+
             case R.id.saveChanges:
-                lastName.setVisibility(View.VISIBLE);
-                name.setVisibility(View.VISIBLE);
-                saveChanges.setVisible(false);
-                editItem.setVisible(true);
-                editLastName.setVisibility(View.GONE);
-                editName.setVisibility(View.GONE);
-                lastName.setText(editLastName.getText().toString());
-                name.setText(editName.getText().toString());
-                InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(name.getWindowToken(), 0);
+                String email = SharedPreference.getLoggedEmail(ProfileActivity.this);
+                ChangeProfileDTO changeProfileDTO = new ChangeProfileDTO(email, editName.getText().toString(), editLastName.getText().toString());
+
+                AuthService apiService = ServiceUtils.getClient().create(AuthService.class);
+                Call<ResponseBody> call = apiService.changeUser(changeProfileDTO);
+                call.enqueue(new Callback<ResponseBody>() {
+
+                    @Override
+                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        if (response.code() == 200) {
+                            lastName.setVisibility(View.VISIBLE);
+                            name.setVisibility(View.VISIBLE);
+                            saveChanges.setVisible(false);
+                            editItem.setVisible(true);
+                            editLastName.setVisibility(View.GONE);
+                            editName.setVisibility(View.GONE);
+                            lastName.setText(editLastName.getText().toString());
+                            name.setText(editName.getText().toString());
+                            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                            imm.hideSoftInputFromWindow(name.getWindowToken(), 0);
+
+                            SharedPreference.setLoggedName(ProfileActivity.this, editName.getText().toString());
+                            SharedPreference.setLoggedLastName(ProfileActivity.this, editLastName.getText().toString());
+
+                        } else {
+                            Toast t = Toast.makeText(ProfileActivity.this, "An error occured!", Toast.LENGTH_SHORT);
+                            t.show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        Log.e("tag", "Failed");
+                    }
+                });
                 break;
+
         }
         return super.onOptionsItemSelected(item);
     }
 
     public String findLoggedUserName() {
-        for (User u : Mokap.getUsers()) {
-            if (u.getEmail().equals(SharedPreference.getLoggedEmail(ProfileActivity.this))) {
-                return u.getName();
-            }
+        if (SharedPreference.getLoggedName(ProfileActivity.this) == null) {
+            return "";
         }
-        return "";
+        return SharedPreference.getLoggedName(ProfileActivity.this);
     }
 
     public String findLoggedUserLastName() {
-        for (User u : Mokap.getUsers()) {
-            if (u.getEmail().equals(SharedPreference.getLoggedEmail(ProfileActivity.this))) {
-                return u.getLastName();
-            }
+        if (SharedPreference.getLoggedLastName(ProfileActivity.this) == null) {
+            return "";
         }
-        return "";
+        return SharedPreference.getLoggedLastName(ProfileActivity.this);
     }
 
 }

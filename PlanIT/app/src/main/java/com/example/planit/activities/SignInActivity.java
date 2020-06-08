@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -16,8 +17,10 @@ import android.widget.Toast;
 
 import com.example.planit.MainActivity;
 import com.example.planit.R;
-import com.example.planit.mokaps.Mokap;
+import com.example.planit.service.AuthService;
+import com.example.planit.service.ServiceUtils;
 import com.example.planit.utils.SharedPreference;
+import com.example.planit.utils.Utils;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -25,11 +28,19 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.SignInButton;
 
-import java.util.List;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import model.User;
+import java.io.IOException;
 
-public class SignInActivity extends AppCompatActivity  {
+import model.LoginDTO;
+import model.RegisterDTO;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class SignInActivity extends AppCompatActivity {
 
     private TextView signUpLink;
     private Button signInBtn;
@@ -57,7 +68,6 @@ public class SignInActivity extends AppCompatActivity  {
                 .build();
         googleSignInClient = GoogleSignIn.getClient(this, gso);
 
-
         googleSignInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -74,7 +84,6 @@ public class SignInActivity extends AppCompatActivity  {
             }
         });
 
-        //login button
         signInBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 hideKeyboard();
@@ -84,40 +93,63 @@ public class SignInActivity extends AppCompatActivity  {
                 } else if (!isValidEmail(email.getText().toString())) {
                     Toast t = Toast.makeText(SignInActivity.this, "You must enter valid email address!", Toast.LENGTH_SHORT);
                     t.show();
-                } else if (checkCredentials() == false) {
-                    Toast t = Toast.makeText(SignInActivity.this, "Credentials does not match!", Toast.LENGTH_SHORT);
-                    t.show();
                 } else {
-                    SharedPreference.setLoggedEmail(getApplicationContext(), email.getText().toString());
-                    SharedPreference.setLoggedName(getApplicationContext(), findCredentials());
+                    LoginDTO loginDTO = new LoginDTO();
+                    loginDTO.setEmail(email.getText().toString());
+                    loginDTO.setPassword(password.getText().toString());
 
-                    Intent intent = new Intent(SignInActivity.this, MainActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
+                    AuthService apiService = ServiceUtils.getClient().create(AuthService.class);
+                    Call<ResponseBody> call = apiService.login(loginDTO);
+                    call.enqueue(new Callback<ResponseBody>() {
+
+                        @Override
+                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+
+                            String name = "";
+                            String lastName = "";
+                            String colour = "";
+                            if (response.code() == 200) {
+                                String resStr = null;
+                                try {
+                                    resStr = response.body().string().toString();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                try {
+                                    JSONObject json = new JSONObject(resStr);
+                                    name = json.get("firstName").toString();
+                                    lastName = json.get("lastName").toString();
+                                    colour = json.get("colour").toString();
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+
+                                SharedPreference.setLoggedEmail(getApplicationContext(), email.getText().toString());
+                                SharedPreference.setLoggedName(getApplicationContext(), name);
+                                SharedPreference.setLoggedLastName(getApplicationContext(), lastName);
+                                SharedPreference.setLoggedColour(getApplicationContext(), colour);
+
+                                Intent intent = new Intent(SignInActivity.this, MainActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(intent);
+
+                            } else {
+                                Toast t = Toast.makeText(SignInActivity.this, "Credentials does not match!", Toast.LENGTH_SHORT);
+                                t.show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<ResponseBody> call, Throwable t) {
+                            Log.e("tag", "Error in login");
+                        }
+                    });
                 }
             }
         });
 
     }
 
-    public boolean checkCredentials() {
-        List<User> users = Mokap.getUsers();
-        for (User u : users) {
-            if (u.getEmail().equals(email.getText().toString()) && u.getPassword().equals(password.getText().toString()))
-                return true;
-        }
-        return false;
-    }
-
-    public String findCredentials() {
-        List<User> users = Mokap.getUsers();
-        for (User u : users) {
-            if (u.getEmail().equals(email.getText().toString())){
-               return u.getName().concat(" ").concat(u.getLastName());
-            }
-        }
-        return "";
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -130,9 +162,42 @@ public class SignInActivity extends AppCompatActivity  {
 
     private void handleSignInResult(GoogleSignInResult result) {
         if (result.isSuccess()) {
-            SharedPreference.setLoggedEmail(SignInActivity.this, result.getSignInAccount().getEmail());
-            SharedPreference.setLoggedName(SignInActivity.this, result.getSignInAccount().getDisplayName());
-            gotoHomePage();
+            String firstNameLastName= result.getSignInAccount().getDisplayName();
+            String email=result.getSignInAccount().getEmail();
+            String[]parts=firstNameLastName.split(" ");
+            String colour=Utils.getRandomColor();
+            String firstName=parts[0];
+            String lastName=parts[1];
+
+            RegisterDTO googleRegisterDTO = new RegisterDTO(email, null, firstName, lastName, colour);
+            AuthService apiService = ServiceUtils.getClient().create(AuthService.class);
+            Call<ResponseBody> call = apiService.googleLogin(googleRegisterDTO);
+            call.enqueue(new Callback<ResponseBody>() {
+
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+
+                    if (response.code() == 200) {
+                        Log.e("tag", "Failed");
+
+                        SharedPreference.setLoggedEmail(SignInActivity.this, email);
+                        SharedPreference.setLoggedColour(SignInActivity.this, colour);
+                        SharedPreference.setLoggedName(SignInActivity.this, firstName);
+                        SharedPreference.setLoggedLastName(SignInActivity.this, lastName);
+                        gotoHomePage();
+                    } else {
+                        Toast t = Toast.makeText(SignInActivity.this, "An error occured!", Toast.LENGTH_SHORT);
+                        t.show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    Log.e("tag", "Failed");
+                }
+
+            });
+
         } else {
             Toast.makeText(getApplicationContext(), "Sign in cancel", Toast.LENGTH_LONG).show();
         }

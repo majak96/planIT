@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             profileLayout = (LinearLayout) header.findViewById(R.id.profileLayout);
 
             loggedEmail.setText(SharedPreference.getLoggedEmail(MainActivity.this));
-            loggedName.setText(SharedPreference.getLoggedName(MainActivity.this));
+            loggedName.setText(SharedPreference.getLoggedName(MainActivity.this).concat(" ").concat(SharedPreference.getLoggedLastName(MainActivity.this)));
             loggedFirstChar.setText(findLoggedUserName().substring(0, 1).concat(findLoggedUserLastName().substring(0, 1)));
 
             profileLayout.setOnClickListener(new View.OnClickListener() {
@@ -191,6 +191,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 SharedPreference.setLoggedEmail(getApplicationContext(), "");
+                SharedPreference.setLoggedName(getApplicationContext(), "");
+                SharedPreference.setLoggedColour(getApplicationContext(), "");
+                SharedPreference.setLoggedLastName(getApplicationContext(), "");
                 Intent intent = new Intent(MainActivity.this, SignInActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
@@ -203,21 +206,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public String findLoggedUserName() {
-        for (User u : Mokap.getUsers()) {
-            if (u.getEmail().equals(SharedPreference.getLoggedEmail(MainActivity.this))) {
-                return u.getName();
-            }
+        if (SharedPreference.getLoggedName(MainActivity.this) == null) {
+            return "";
         }
-        return "";
+        return SharedPreference.getLoggedName(MainActivity.this);
     }
 
     public String findLoggedUserLastName() {
-        for (User u : Mokap.getUsers()) {
-            if (u.getEmail().equals(SharedPreference.getLoggedEmail(MainActivity.this))) {
-                return u.getLastName();
-            }
+        if (SharedPreference.getLoggedLastName(MainActivity.this) == null) {
+            return "";
         }
-        return "";
+        return SharedPreference.getLoggedLastName(MainActivity.this);
     }
 
     @Override
