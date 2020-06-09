@@ -1,5 +1,6 @@
 package com.example.planit.activities;
 
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
@@ -33,21 +34,36 @@ public class CreateTeamActivity extends AppCompatActivity {
 
     private EditText teamName;
     private EditText teamDescription;
-    private String tag="CreateTeamActivity";
+    private String tag = "CreateTeamActivity";
+    private Team team;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.activity_create_team);
-        this.setTitle("Create Team");
+
         // toolbar settings
         Toolbar toolbar = findViewById(R.id.toolbar_team_create);
         this.setSupportActionBar(toolbar);
         this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         this.getSupportActionBar().setDisplayShowHomeEnabled(true);
         this.getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
-        this.teamName=findViewById(R.id.team_name);
-        this.teamDescription=findViewById(R.id.team_description);
+        this.teamName = findViewById(R.id.team_name);
+        this.teamDescription = findViewById(R.id.team_description);
+
+        //if this is edit - get the team
+        if (getIntent().hasExtra("team")) {
+            setTitle("Edit Team");
+
+            //get the team with the id
+            team = getTeamFromDatabase(getIntent().getLongExtra("team", -1));
+
+            //set field values to the values from the existing task
+            setExistingTeamValues();
+        } else {
+            setTitle("Create Team");
+        }
     }
 
     @Override
@@ -61,50 +77,64 @@ public class CreateTeamActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_save:
-                if(teamName.getText().toString().equals("")){
+                if (teamName.getText().toString().equals("")) {
                     Toast.makeText(this, R.string.team_no_name, Toast.LENGTH_SHORT).show();
-                }
-                else{
+                } else {
+                    if (team == null) {
+                        String teamNameString = teamName.getText().toString().trim();
+                        String teamDescriptionString = teamDescription.getText().toString().trim();
+                        String loggedEmail = SharedPreference.getLoggedEmail(getApplicationContext());
 
-                    String teamNameString=teamName.getText().toString().trim();
-                    String teamDescriptionString=teamDescription.getText().toString().trim();
-                    String loggedEmail=SharedPreference.getLoggedEmail(getApplicationContext());
+                        CreateTeamDTO createTeamDTO = new CreateTeamDTO(teamNameString, teamDescriptionString, loggedEmail);
 
-                    CreateTeamDTO createTeamDTO=new CreateTeamDTO(teamNameString, teamDescriptionString, loggedEmail);
+                        TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
+                        Call<ResponseBody> call = apiService.createTeam(createTeamDTO);
+                        call.enqueue(new Callback<ResponseBody>() {
 
-                    TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
-                    Call<ResponseBody> call = apiService.createTeam(createTeamDTO);
-                    call.enqueue(new Callback<ResponseBody>() {
+                            @Override
+                            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 
-                        @Override
-                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                                if (response.code() == 200) {
+                                    Uri resultUri = createTeam();
+                                    String teamId = resultUri.getLastPathSegment();
+                                    Uri resultConncetionUri = createUserTeamConnection(getLoggedUserFromDatabase(), getTeamFromDatabase(teamNameString));
+                                    if (resultUri != null && resultConncetionUri != null) {
+                                        Intent intent = new Intent(CreateTeamActivity.this, TeamMembersActivity.class);
+                                        intent.putExtra("title", teamName.getText().toString().trim());
+                                        intent.putExtra("teamId", teamId);
+                                        startActivity(intent);
+                                    }
 
-                            if (response.code() == 200) {
-                                Uri resultUri = createTeam();
-                                String teamId=resultUri.getLastPathSegment();
-                                Uri resultConncetionUri= createUserTeamConnection(getLoggedUserFromDatabase(), getTeamFromDatabase(teamNameString));
-                                if (resultUri != null && resultConncetionUri!=null) {
-                                    Intent intent = new Intent(CreateTeamActivity.this, TeamMembersActivity.class);
-                                    intent.putExtra("title", teamName.getText().toString().trim());
-                                    intent.putExtra("teamId", teamId);
-                                    startActivity(intent);
+                                } else {
+                                    Toast t = Toast.makeText(CreateTeamActivity.this, "Can not create team!", Toast.LENGTH_SHORT);
+                                    t.show();
                                 }
-
-                            } else {
-                                Toast t = Toast.makeText(CreateTeamActivity.this, "Can not create team!", Toast.LENGTH_SHORT);
-                                t.show();
                             }
-                        }
 
-                        @Override
-                        public void onFailure(Call<ResponseBody> call, Throwable t) {
-                            Log.e("tag", "Error in creating team");
-                        }
-                    });
+                            @Override
+                            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                                Log.e("tag", "Error in creating team");
+                            }
+                        });
 
+                    } else {
+                        //update the existing team
+                        ContentValues values = getTeamValues();
+                        int rowsUpdated = updateTeam(values);
+
+                        if (rowsUpdated > 0) {
+                            Toast.makeText(this, R.string.team_updated, Toast.LENGTH_SHORT).show();
+
+                            Intent intent = new Intent();
+                            intent.putExtra("updated", true);
+
+                            setResult(Activity.RESULT_OK, intent);
+                            finish();
+                        }
+                    }
 
                 }
-            //    onBackPressed();
+                //    onBackPressed();
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -114,6 +144,11 @@ public class CreateTeamActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
+    }
+
+    public void setExistingTeamValues() {
+        teamName.setText(team.getName());
+        teamDescription.setText(team.getDescription());
     }
 
     //inserts a new team into the database
@@ -139,11 +174,11 @@ public class CreateTeamActivity extends AppCompatActivity {
 
     //get logged user with the id from the database
     private User getLoggedUserFromDatabase() {
-        User newUser=null;
+        User newUser = null;
         String email = SharedPreference.getLoggedEmail(getApplicationContext());
 
         String whereClause = "email = ? ";
-        String[] whereArgs = new String[] {
+        String[] whereArgs = new String[]{
                 email
         };
         Cursor cursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, whereClause, whereArgs, null);
@@ -194,5 +229,47 @@ public class CreateTeamActivity extends AppCompatActivity {
 
         cursor.close();
         return newTeam;
+    }
+
+    private Team getTeamFromDatabase(Long teamId) {
+        Uri teamUri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamId);
+
+        String[] allColumns = {Contract.Team.COLUMN_ID, Contract.Team.COLUMN_TITLE, Contract.Team.COLUMN_DESCRIPTION};
+
+        Cursor cursor = getContentResolver().query(teamUri, allColumns, null, null, null);
+        cursor.moveToFirst();
+
+        Team team = new Team();
+        team.setId(Long.valueOf(cursor.getInt(0)));
+        team.setName(cursor.getString(1));
+        team.setDescription(cursor.getString(2));
+
+        cursor.close();
+
+        return team;
+    }
+
+    public int updateTeam(ContentValues values) {
+        if (team != null) {
+            Uri taskUri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + team.getId());
+
+            return getContentResolver().update(taskUri, values, null, null);
+        }
+
+        return -1;
+    }
+
+    public ContentValues getTeamValues() {
+        ContentValues values = new ContentValues();
+
+        //set the title
+        values.put(Contract.Team.COLUMN_TITLE, teamName.getText().toString().trim());
+        if (!teamDescription.getText().toString().trim().isEmpty()) {
+            values.put(Contract.Team.COLUMN_DESCRIPTION, teamDescription.getText().toString().trim());
+        } else {
+            values.putNull(Contract.Team.COLUMN_DESCRIPTION);
+        }
+
+        return values;
     }
 }

@@ -5,10 +5,15 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.example.planit.R;
@@ -24,6 +29,8 @@ public class TeamDetailActivity extends AppCompatActivity {
     private Team team;
     private TextView teamDescription;
     private String tag = "TeamDetailActivity";
+    private Long teamId;
+    private RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,31 +43,66 @@ public class TeamDetailActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         teamDescription = findViewById(R.id.description_team_detail);
+        recyclerView = findViewById(R.id.team_detail_recycle_view);
 
         if (getIntent().hasExtra("team")) {
 
-            Long teamId = getIntent().getLongExtra("team", 1);
-            team = getTeamFromDatabase(teamId);
-            setTitle(team.getName());
+            teamId = getIntent().getLongExtra("team", 1);
 
-            teamDescription.setText(team.getDescription());
-
-            ArrayList<User> users = getUsersFromDatabase(teamId.toString());
-
-            RecyclerView recyclerView = findViewById(R.id.team_detail_recycle_view);
             recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
             recyclerView.setHasFixedSize(true);
 
-            TeamDetailAdapter adapter = new TeamDetailAdapter(TeamDetailActivity.this, users);
-            recyclerView.setAdapter(adapter);
-
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        team = getTeamFromDatabase(teamId);
+        setTitle(team.getName());
+
+        teamDescription.setText(team.getDescription());
+
+        ArrayList<User> users = getUsersFromDatabase(teamId.toString());
+
+        TeamDetailAdapter adapter = new TeamDetailAdapter(TeamDetailActivity.this, users);
+        recyclerView.setAdapter(adapter);
     }
 
     @Override
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.team_preview_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_delete_team:
+                //TODO: delete team
+                break;
+            case R.id.menu_edit_team:
+                Intent intent = new Intent(this, CreateTeamActivity.class);
+                intent.putExtra("team", team.getId());
+
+                startActivityForResult(intent, 1);
+                break;
+            case R.id.menu_edit_team_members:
+                //TODO: edit team members
+                break;
+            default:
+                //do nothing
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     //get team with the id from the database
@@ -105,6 +147,27 @@ public class TeamDetailActivity extends AppCompatActivity {
 
         cursor.close();
         return users;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        //opened CreateTeamActivity
+        if (requestCode == 1) {
+            if (resultCode == Activity.RESULT_OK) {
+                Boolean updated = data.getBooleanExtra("updated", false);
+
+                if (updated) {
+                    //Intent intent = new Intent();
+                    //intent.putExtra("updated", true);
+                    //intent.putExtra("position", taskPosition);
+                    //intent.putExtra("taskId", task.getId());
+
+                    //setResult(Activity.RESULT_OK, intent);
+                }
+            }
+        }
     }
 
 }

@@ -54,6 +54,7 @@ public class TeamMembersActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_team_members);
 
+        //TODO proveriti d ali postoji
         String teamId = getIntent().getStringExtra("teamId");
 
         newMember = findViewById(R.id.addMember);
@@ -83,6 +84,7 @@ public class TeamMembersActivity extends AppCompatActivity {
                     public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 
                         if (response.code() == 200) {
+                            Log.i("200", "200");
                             Team team = getTeamFromDatabase(title);
                             User user = getUserFromDatabase(teamUser);
                             if (user == null) {
@@ -90,38 +92,42 @@ public class TeamMembersActivity extends AppCompatActivity {
                                 String name = "";
                                 String lastName = "";
                                 String colour = "";
-                                if (response.code() == 200) {
-                                    String resStr = null;
-                                    try {
-                                        resStr = response.body().string();
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-                                    try {
-                                        JSONObject json = new JSONObject(resStr);
-                                        name = json.get("name").toString();
-                                        lastName = json.get("lastName").toString();
-                                        colour = json.get("colour").toString();
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
 
-                                    user = new User(name, lastName, colour);
-                                    user.setEmail(teamUser);
-
-                                    createUser(user);
-                                    user = getUserFromDatabase(teamUser);
-
-                                    createUserTeamConnection(user, team);
-
+                                String resStr = null;
+                                try {
+                                    resStr = response.body().string();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
                                 }
+                                try {
+                                    JSONObject json = new JSONObject(resStr);
+                                    name = json.get("name").toString();
+                                    lastName = json.get("lastName").toString();
+                                    colour = json.get("colour").toString();
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+
+                                user = new User(name, lastName, colour);
+                                user.setEmail(teamUser);
+
+                                Uri userUri = createUser(user);
+                                String id = userUri.getLastPathSegment();
+
+                                user.setId(Integer.parseInt(id));
+
                             }
 
-                            newMember.getText().clear();
-                            users.add(user);
-                            adapter.notifyItemInserted(users.size());
+                            Uri uri = createUserTeamConnection(user.getId().toString(), team.getId());
+                            if(uri!=null){
+                                newMember.getText().clear();
+                                users.add(user);
+                                adapter.notifyItemInserted(users.size());
+                            }
 
                         } else {
+                            Log.i("400", "400");
+
                             Toast t = Toast.makeText(TeamMembersActivity.this, "Can not add member!", Toast.LENGTH_SHORT);
                             t.show();
                         }
@@ -139,12 +145,12 @@ public class TeamMembersActivity extends AppCompatActivity {
     }
 
     //inserts a new user_team_connection into the database
-    public Uri createUserTeamConnection(User user, Team team) {
+    public Uri createUserTeamConnection(String userId, Long teamId) {
 
         ContentValues values = new ContentValues();
 
-        values.put(Contract.UserTeamConnection.COLUMN_TEAM_ID, team.getId());
-        values.put(Contract.UserTeamConnection.COLUMN_USER_ID, user.getId());
+        values.put(Contract.UserTeamConnection.COLUMN_TEAM_ID, teamId.intValue());
+        values.put(Contract.UserTeamConnection.COLUMN_USER_ID, Integer.parseInt(userId));
 
         Uri uri = getContentResolver().insert(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM, values);
 

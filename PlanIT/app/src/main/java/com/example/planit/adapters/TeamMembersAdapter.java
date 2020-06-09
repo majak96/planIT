@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.planit.R;
 import com.example.planit.database.Contract;
+import com.google.android.gms.common.util.Strings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,10 +98,19 @@ public class TeamMembersAdapter extends RecyclerView.Adapter<TeamMembersAdapter.
             public void onClick(DialogInterface dialog, int which) {
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
-                        members.remove(position);
-                        notifyItemRemoved(position);
+                        if(deleteUserTeamConnection(members.get(position).getId().toString(), teamId)>0){
+                            Log.e("aaaaaaaaaaaa","aaaaaaaaaa");
+
+                            members.remove(position);
+                            notifyItemRemoved(position);
+                            Log.e("asasdsad","asdasd");
+                        }else{
+                            Log.e("bbbbbbbbbbbb","bbbbbbbbbb");
+
+                        }
+
                         //TODO delete from db
-                        //deleteUserTeamConnection(members.get(position).getId().toString(), teamId);
+
                         break;
                     case DialogInterface.BUTTON_NEGATIVE:
                         break;
@@ -115,9 +125,10 @@ public class TeamMembersAdapter extends RecyclerView.Adapter<TeamMembersAdapter.
                 .show();
     }
 
-   /* private void deleteUserTeamConnection(String userId, String teamId) {
-        Uri uri = Uri.parse(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM + "/" + userId + "/" + teamId);
-        context.getContentResolver().delete(uri, null, null);
+    private int deleteUserTeamConnection(String userId, String teamId) {
+        String selection = Contract.UserTeamConnection.COLUMN_USER_ID+" = ? and "+Contract.UserTeamConnection.COLUMN_TEAM_ID + " = ? ";
+        String[] selectionArgs = new String[]{userId, teamId};
+        return context.getContentResolver().delete(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM , selection, selectionArgs);
     }
-    */
+
 }
