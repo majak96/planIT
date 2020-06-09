@@ -1,11 +1,13 @@
 package com.example.planit.activities;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -16,11 +18,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import com.example.planit.MainActivity;
 import com.example.planit.R;
 import com.example.planit.adapters.TeamDetailAdapter;
 import com.example.planit.database.Contract;
 
 import java.util.ArrayList;
+
 import model.Team;
 import model.User;
 
@@ -31,6 +35,7 @@ public class TeamDetailActivity extends AppCompatActivity {
     private String tag = "TeamDetailActivity";
     private Long teamId;
     private RecyclerView recyclerView;
+    private ArrayList<User> users;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +69,7 @@ public class TeamDetailActivity extends AppCompatActivity {
 
         teamDescription.setText(team.getDescription());
 
-        ArrayList<User> users = getUsersFromDatabase(teamId.toString());
+        users = getUsersFromDatabase(teamId.toString());
 
         TeamDetailAdapter adapter = new TeamDetailAdapter(TeamDetailActivity.this, users);
         recyclerView.setAdapter(adapter);
@@ -87,6 +92,7 @@ public class TeamDetailActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_delete_team:
+                deleteDialog();
                 //TODO: delete team
                 break;
             case R.id.menu_edit_team:
@@ -127,8 +133,8 @@ public class TeamDetailActivity extends AppCompatActivity {
     private ArrayList<User> getUsersFromDatabase(String teamId) {
 
         ArrayList<User> users = new ArrayList<>();
-        String[] allColumns = {Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_COLOUR};
-        Uri taskLabelsUri = Uri.parse(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM + "/" + teamId );
+        String[] allColumns = {Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_COLOUR, Contract.User.COLUMN_ID};
+        Uri taskLabelsUri = Uri.parse(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM + "/" + teamId);
 
         Cursor cursor = getContentResolver().query(taskLabelsUri, allColumns, null, null, null);
 
@@ -140,7 +146,9 @@ public class TeamDetailActivity extends AppCompatActivity {
                 String lastName = cursor.getString(1);
                 String email = cursor.getString(2);
                 String colour = cursor.getString(3);
-                User newUser = new User(name, lastName, email, colour);
+                String id = cursor.getString(4);
+                User newUser = new User(Integer.parseInt(id), email, name, lastName, colour);
+                // User newUser = new User(name, lastName, email, colour);
                 users.add(newUser);
             }
         }
@@ -168,6 +176,58 @@ public class TeamDetailActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    private void deleteDialog() {
+        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case DialogInterface.BUTTON_POSITIVE:
+                        if (deleteTeam(teamId.toString()) > 0) {
+                            Intent newIntent = new Intent(TeamDetailActivity.this, MainActivity.class);
+                            startActivity(newIntent);
+                            //TODO delete from server db
+                        } else {
+
+                        }
+                        break;
+                    case DialogInterface.BUTTON_NEGATIVE:
+                        break;
+                }
+            }
+        };
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Are you sure?")
+                .setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener)
+                .show();
+    }
+
+    private int deleteTeam(String teamId) {
+        if (deleteConnections() > 0) {
+            Uri uri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamId);
+            return getContentResolver().delete(uri, null, null);
+        } else {
+            Log.i(tag, "Error in deleting");
+            return 0;
+        }
+    }
+
+    private int deleteConnections() {
+        int counter = 0;
+        for (User u : users) {
+            deleteUserTeamConnection(u.getId().toString(), teamId.toString());
+            counter++;
+        }
+        return counter;
+    }
+
+    private int deleteUserTeamConnection(String userId, String teamId) {
+        String selection = Contract.UserTeamConnection.COLUMN_USER_ID + " = ? and " + Contract.UserTeamConnection.COLUMN_TEAM_ID + " = ? ";
+        String[] selectionArgs = new String[]{userId, teamId};
+        return getContentResolver().delete(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM, selection, selectionArgs);
     }
 
 }

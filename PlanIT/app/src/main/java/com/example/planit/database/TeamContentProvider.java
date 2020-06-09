@@ -74,6 +74,7 @@ public class TeamContentProvider extends ContentProvider {
                         + " , u." + Contract.User.COLUMN_LAST_NAME
                         + " , u." + Contract.User.COLUMN_EMAIL
                         + " , u." + Contract.User.COLUMN_COLOUR
+                        + " , u." + Contract.User.COLUMN_ID
                         + " FROM "
                         + Contract.User.TABLE_NAME + " u, "
                         + Contract.Team.TABLE_NAME + " t, "

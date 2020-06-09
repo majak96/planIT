@@ -99,14 +99,10 @@ public class TeamMembersAdapter extends RecyclerView.Adapter<TeamMembersAdapter.
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
                         if(deleteUserTeamConnection(members.get(position).getId().toString(), teamId)>0){
-                            Log.e("aaaaaaaaaaaa","aaaaaaaaaa");
-
                             members.remove(position);
                             notifyItemRemoved(position);
-                            Log.e("asasdsad","asdasd");
                         }else{
-                            Log.e("bbbbbbbbbbbb","bbbbbbbbbb");
-
+                            //TODO error message
                         }
 
                         //TODO delete from db
