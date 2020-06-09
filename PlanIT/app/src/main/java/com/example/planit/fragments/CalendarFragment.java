@@ -73,7 +73,7 @@ public class CalendarFragment extends Fragment {
             Long teamId = getArguments().getLong("SELECTED_TEAM");
             Team team = Mokap.getTeam(teamId);
 
-            getActivity().setTitle(team.getName());
+            getActivity().setTitle("Team");
 
             setHasOptionsMenu(true);
         } else {

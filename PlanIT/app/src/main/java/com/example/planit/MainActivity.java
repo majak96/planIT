@@ -282,8 +282,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 Integer habitId = data.getIntExtra("habitId", -1);
                 Fragment fragment = getCurrentFragment();
                 if (fragment != null && fragment instanceof HabitsOverviewFragment) {
-                    HabitsOverviewFragment previewFragment = (HabitsOverviewFragment) fragment;
-                    previewFragment.addToRecyclerView(habitId);
+                    getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+                    //show daily preview for the chosen date
+                    FragmentTransition.replaceFragment(this, HabitsOverviewFragment.newInstance(), R.id.fragment_container, true);
                 }
 
             } else if (resultCode == Activity.RESULT_CANCELED) {
