@@ -64,7 +64,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="15dp"
                 android:layout_marginTop="15dp"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:id="@+id/frequency_radio_group">
 
                 <RadioButton
                     android:id="@+id/habit_create_daily"
@@ -72,6 +73,7 @@
                     android:layout_height="wrap_content"
                     android:onClick="onRadioButtonFrequencyClicked"
                     android:text="@string/daily"
+                    android:checked="true"
                     android:textColor="@color/gray"
                     android:textSize="16dp" />
 
@@ -89,10 +91,9 @@
             <LinearLayout
                 android:id="@+id/habit_create_daily_pick_days"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_marginLeft="15dp"
-                android:orientation="vertical"
-                android:visibility="gone">
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="match_parent"
@@ -102,9 +103,7 @@
                     android:textColor="@color/black"
                     android:textSize="16dp" />
 
-                <ScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -113,56 +112,65 @@
                         android:orientation="horizontal">
 
                         <CheckBox
+                            android:id="@+id/monday"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="M"
+                            android:text="MON"
                             android:textColor="@color/black"
-                            android:textSize="16dp" />
+                            android:textSize="12dp"
+                            />
 
                         <CheckBox
+                            android:id="@+id/tuesday"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="T"
+                            android:text="TUE"
                             android:textColor="@color/black"
-                            android:textSize="16dp" />
+                            android:textSize="12dp"/>
 
                         <CheckBox
+                            android:id="@+id/wednesday"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="W"
+                            android:text="WED"
                             android:textColor="@color/black"
-                            android:textSize="16dp" />
+                            android:textSize="12dp"/>
 
                         <CheckBox
+                            android:id="@+id/thursday"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="T"
+                            android:text="THR"
                             android:textColor="@color/black"
-                            android:textSize="16dp" />
+                            android:textSize="12dp"
+                            />
 
                         <CheckBox
+                            android:id="@+id/friday"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="F"
+                            android:text="FRI"
                             android:textColor="@color/black"
-                            android:textSize="16dp" />
+                            android:textSize="12dp"/>
 
                         <CheckBox
+                            android:id="@+id/saturday"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="S"
+                            android:text="SAT"
                             android:textColor="@color/black"
-                            android:textSize="16dp" />
+                            android:textSize="12dp"/>
 
                         <CheckBox
+                            android:id="@+id/sunday"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="S"
+                            android:text="SUN"
                             android:textColor="@color/black"
-                            android:textSize="16dp" />
+                            android:textSize="12dp"/>
 
                     </LinearLayout>
-                </ScrollView>
+
             </LinearLayout>
 
 
@@ -183,42 +191,49 @@
                     android:textSize="16dp" />
 
                 <RadioGroup
+                    android:id="@+id/number_of_days_a_week"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="15dp"
                     android:orientation="horizontal">
 
                     <RadioButton
+                        android:id="@+id/oneWeek"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="1"
                         android:textSize="16dp" />
 
                     <RadioButton
+                        android:id="@+id/twoWeeks"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="2"
                         android:textSize="16dp" />
 
                     <RadioButton
+                        android:id="@+id/threeWeeks"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="3"
                         android:textSize="16dp" />
 
                     <RadioButton
+                        android:id="@+id/fourWeeks"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="4"
                         android:textSize="16dp" />
 
                     <RadioButton
+                        android:id="@+id/fiveWeeks"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="5"
                         android:textSize="16dp" />
 
                     <RadioButton
+                        android:id="@+id/sixWeeks"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="6"
@@ -243,6 +258,7 @@
                 android:textSize="16dp" />
 
             <RadioGroup xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/goal_radio_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="15dp"
@@ -256,6 +272,7 @@
                     android:onClick="onRadioButtonGoalClicked"
                     android:text="@string/achieve_all"
                     android:textColor="@color/gray"
+                    android:checked="true"
                     android:textSize="16dp" />
 
                 <RadioButton
@@ -284,6 +301,7 @@
                     android:textSize="16dp" />
 
                 <EditText
+                    android:id="@+id/goal_number_of_days"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="5dp" />
@@ -305,10 +323,9 @@
                 android:textColor="@color/black"
                 android:textSize="16dp" />
 
-            <LinearLayout
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content">
 
                 <Button
                     android:id="@+id/reminder_button"
@@ -321,8 +338,19 @@
                     android:textColor="@color/white"
                     android:textSize="16dp" />
 
+                <ImageButton
+                    android:visibility="gone"
+                    android:id="@+id/remove_reminder"
+                    android:layout_marginTop="31dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginRight="5dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/ic_close_darkgray"
+                    android:onClick="removeReminder"
+                    android:layout_alignParentRight="true"/>
 
-            </LinearLayout>
+            </RelativeLayout>
 
             <View
                 android:layout_width="match_parent"

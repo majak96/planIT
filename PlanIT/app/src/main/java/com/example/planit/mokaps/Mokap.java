@@ -71,10 +71,10 @@ public class Mokap {
         cal2.set(Calendar.MINUTE, 0);
         cal2.set(Calendar.SECOND, 0);
 
-        Task task1 = new Task(1L, "buy milk", "", date, null, true);
-        Task task2 = new Task(2L, "jogging", "", date, null, false);
-        Task task3 = new Task(3L, "meeting", "", date, cal1.getTime(), false);
-        Task task4 = new Task(4L, "dinner with Vesna", "", date, cal2.getTime(), false);
+        Task task1 = new Task(1, "buy milk", "", date, null, true);
+        Task task2 = new Task(2, "jogging", "", date, null, false);
+        Task task3 = new Task(3, "meeting", "", date, cal1.getTime(), false);
+        Task task4 = new Task(4, "dinner with Vesna", "", date, cal2.getTime(), false);
 
         tasks.add(task1);
         tasks.add(task2);
@@ -84,7 +84,7 @@ public class Mokap {
         return tasks;
     }
 
-    public static Task getTask(Long id) {
+    public static Task getTask(Integer id) {
         Date date = new Date();
 
         Calendar cal1 = Calendar.getInstance();
@@ -102,28 +102,28 @@ public class Mokap {
         Task task;
         switch (id.intValue()) {
             case 1:
-                task = new Task(1L, "buy milk", null, date, null, true);
+                task = new Task(1, "buy milk", null, date, null, true);
                 task.getLabels().add(new Label("shop", "#99ff66"));
                 task.setPriority(TaskPriority.MEDIUM);
                 break;
             case 2:
-                task = new Task(2L, "jogging", "5km", date, null, false);
+                task = new Task(2, "jogging", "5km", date, null, false);
                 task.getLabels().add(new Label("exercising", "#6699ff"));
                 task.setPriority(TaskPriority.LOW);
                 break;
             case 3:
-                task = new Task(3L, "meeting", null, date, cal1.getTime(), false);
+                task = new Task(3, "meeting", null, date, cal1.getTime(), false);
                 task.setPriority(TaskPriority.HIGH);
                 break;
             case 4:
-                task = new Task(4L, "dinner with Vesna", null, date, cal2.getTime(), false);
+                task = new Task(4, "dinner with Vesna", null, date, cal2.getTime(), false);
                 task.setPriority(TaskPriority.HIGH);
                 task.getLabels().add(new Label("label 1", "#99b4f4"));
                 task.getLabels().add(new Label("label 2", "#f3b1e9"));
                 task.setAddress("Bulevar Despota Stefana 5a, Novi Sad");
                 break;
             default:
-                task = new Task(0L, "Example task", "This is an example description.", date, null, true);
+                task = new Task(0, "Example task", "This is an example description.", date, null, true);
                 task.getLabels().add(new Label("label 1", "#99b4f4"));
                 task.getLabels().add(new Label("label 2", "#f3b1e9"));
                 task.setPriority(TaskPriority.HIGH);

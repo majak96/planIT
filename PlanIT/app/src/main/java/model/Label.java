@@ -1,20 +1,24 @@
 package model;
 
 public class Label {
-    Long id;
+    Integer id;
     String name;
     String color;
+
+    public Label() {
+
+    }
 
     public Label(String name, String color) {
         this.name = name;
         this.color = color;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -32,5 +36,10 @@ public class Label {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }
