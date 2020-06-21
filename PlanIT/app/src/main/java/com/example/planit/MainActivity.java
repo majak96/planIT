@@ -3,6 +3,7 @@ package com.example.planit;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -96,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             //if we enter the activity for the first time (not after rotating etc)
             if (savedInstanceState == null) {
                 if (page == null) {
-                    FragmentTransition.replaceFragment(this, CalendarFragment.newInstance(null), R.id.fragment_container, false);
+                    FragmentTransition.replaceFragment(this, CalendarFragment.newInstance(null, null, null), R.id.fragment_container, false);
                     navigationView.setCheckedItem(R.id.nav_calendar);
                     currentMenuItem = R.id.nav_calendar;
                 }
@@ -137,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         switch (id) {
             case R.id.nav_calendar:
-                FragmentTransition.replaceFragment(this, CalendarFragment.newInstance(null), R.id.fragment_container, false);
+                FragmentTransition.replaceFragment(this, CalendarFragment.newInstance(null, null, null), R.id.fragment_container, false);
                 break;
             case R.id.nav_habits:
                 FragmentTransition.replaceFragment(this, HabitsOverviewFragment.newInstance(), R.id.fragment_container, false);
@@ -172,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else {
             if (getCurrentFragment() instanceof TeamsOverviewFragment || getCurrentFragment() instanceof HabitsOverviewFragment) {
                 getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                FragmentTransition.replaceFragment(this, CalendarFragment.newInstance(null), R.id.fragment_container, false);
+                FragmentTransition.replaceFragment(this, CalendarFragment.newInstance(null, null, null), R.id.fragment_container, false);
                 navigationView.setCheckedItem(R.id.nav_calendar);
                 currentMenuItem = R.id.nav_calendar;
             } else {
@@ -321,6 +322,29 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         previewFragment.updateTotalDaysInRecyclerView(index, totalDays);
                     }
                 }
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                //do nothing
+            }
+        }
+        if (requestCode == 5) {
+            if (resultCode == Activity.RESULT_OK) {
+                Fragment fragment = getCurrentFragment();
+                TeamsOverviewFragment previewFragment = (TeamsOverviewFragment) fragment;
+                Integer teamId = data.getIntExtra("teamId", -1);
+                previewFragment.updateRecycler(teamId);
+
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                //do nothing
+            }
+        }
+        if (requestCode == 6) {
+            if (resultCode == Activity.RESULT_OK) {
+                Boolean deleted=data.getBooleanExtra("deleted", false);
+                if(deleted){
+                    getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                    FragmentTransition.replaceFragment(this, TeamsOverviewFragment.newInstance(), R.id.fragment_container, true);
+                }
+
             } else if (resultCode == Activity.RESULT_CANCELED) {
                 //do nothing
             }

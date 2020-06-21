@@ -3,7 +3,9 @@ package com.example.planit.activities;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -17,6 +19,7 @@ import android.widget.Toast;
 
 import com.example.planit.MainActivity;
 import com.example.planit.R;
+import com.example.planit.database.Contract;
 import com.example.planit.service.AuthService;
 import com.example.planit.service.ServiceUtils;
 import com.example.planit.utils.SharedPreference;
@@ -35,6 +38,7 @@ import java.io.IOException;
 
 import model.LoginDTO;
 import model.RegisterDTO;
+import model.User;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -108,6 +112,7 @@ public class SignInActivity extends AppCompatActivity {
                             String name = "";
                             String lastName = "";
                             String colour = "";
+                            String emailString = email.getText().toString();
                             if (response.code() == 200) {
                                 String resStr = null;
                                 try {
@@ -124,7 +129,11 @@ public class SignInActivity extends AppCompatActivity {
                                     e.printStackTrace();
                                 }
 
-                                SharedPreference.setLoggedEmail(getApplicationContext(), email.getText().toString());
+                                User newUser = new User(name, lastName, emailString);
+                                newUser.setColour(colour);
+                                createUser(newUser);
+
+                                SharedPreference.setLoggedEmail(getApplicationContext(), emailString);
                                 SharedPreference.setLoggedName(getApplicationContext(), name);
                                 SharedPreference.setLoggedLastName(getApplicationContext(), lastName);
                                 SharedPreference.setLoggedColour(getApplicationContext(), colour);
@@ -162,12 +171,12 @@ public class SignInActivity extends AppCompatActivity {
 
     private void handleSignInResult(GoogleSignInResult result) {
         if (result.isSuccess()) {
-            String firstNameLastName= result.getSignInAccount().getDisplayName();
-            String email=result.getSignInAccount().getEmail();
-            String[]parts=firstNameLastName.split(" ");
-            String colour=Utils.getRandomColor();
-            String firstName=parts[0];
-            String lastName=parts[1];
+            String firstNameLastName = result.getSignInAccount().getDisplayName();
+            String email = result.getSignInAccount().getEmail();
+            String[] parts = firstNameLastName.split(" ");
+            String colour = Utils.getRandomColor();
+            String firstName = parts[0];
+            String lastName = parts[1];
 
             RegisterDTO googleRegisterDTO = new RegisterDTO(email, null, firstName, lastName, colour);
             AuthService apiService = ServiceUtils.getClient().create(AuthService.class);
@@ -178,7 +187,10 @@ public class SignInActivity extends AppCompatActivity {
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 
                     if (response.code() == 200) {
-                        Log.e("tag", "Failed");
+
+                        User newUser = new User(firstName, lastName, email);
+                        newUser.setColour(colour);
+                        createUser(newUser);
 
                         SharedPreference.setLoggedEmail(SignInActivity.this, email);
                         SharedPreference.setLoggedColour(SignInActivity.this, colour);
@@ -226,6 +238,22 @@ public class SignInActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         finishAffinity();
+    }
+
+    //inserts a new user into the database
+    public Uri createUser(User user) {
+
+        ContentValues values = new ContentValues();
+
+        values.put(Contract.User.COLUMN_EMAIL, user.getEmail());
+        values.put(Contract.User.COLUMN_NAME, user.getName());
+        values.put(Contract.User.COLUMN_LAST_NAME, user.getLastName());
+        values.put(Contract.User.COLUMN_COLOUR, user.getColour());
+
+        Uri uri = getContentResolver().insert(Contract.User.CONTENT_URI_USER, values);
+
+        return uri;
+
     }
 
 }

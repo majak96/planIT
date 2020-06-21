@@ -2,19 +2,47 @@ package model;
 
 import com.example.planit.utils.Utils;
 
+import java.util.Objects;
+
 public class User {
 
+    private Integer id;
     private String name;
     private String lastName;
     private String password;
     private String email;
     private String colour;
 
+    public User(String email) {
+        this.email = email;
+    }
+
+    public User(Integer id, String email) {
+        this.id = id;
+        this.email = email;
+    }
+
+    public User(Integer id, String email, String name, String lastName, String colour) {
+        this.id = id;
+        this.name = name;
+        this.lastName = lastName;
+        this.colour = colour;
+        this.email = email;
+        this.colour = Utils.getRandomColor();
+    }
+
     public User(String name, String lastName, String password, String username) {
         this.name = name;
         this.lastName = lastName;
         this.password = password;
         this.email = username;
+        this.colour = Utils.getRandomColor();
+    }
+
+    public User(String name, String lastName, String email) {
+        this.name = name;
+        this.lastName = lastName;
+        this.email = email;
         this.colour = Utils.getRandomColor();
     }
 
@@ -57,4 +85,38 @@ public class User {
     public void setColour(String colour) {
         this.colour = colour;
     }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(email, user.email);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, lastName, password, email, colour);
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", password='" + password + '\'' +
+                ", email='" + email + '\'' +
+                ", colour='" + colour + '\'' +
+                '}';
+    }
+
 }

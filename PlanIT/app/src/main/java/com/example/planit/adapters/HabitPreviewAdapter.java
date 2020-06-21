@@ -112,8 +112,7 @@ public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapte
      */
     public void addHabit(Habit habit) {
         this.habitList.add(habit);
-        notifyItemChanged(habitList.size());
-    }
+        notifyItemChanged(habitList.size()-1);    }
 
     /**
      * Method for updating total days number

@@ -8,10 +8,9 @@ import java.util.Set;
 
 public class Team implements Serializable {
 
-    private Long id;
+    private Integer id;
     private String name;
     private String description;
-    private String URLShare;
     private User teamCreator;
     private List<User> users;
 
@@ -19,13 +18,25 @@ public class Team implements Serializable {
         this.users = new ArrayList<>();
     }
 
-    public Team(Long id, String name, String description, String URLShare, User user) {
+    public Team(Integer id, String name, String description, User user) {
         this.id = id;
         this.users = new ArrayList<>();
         this.name = name;
         this.description = description;
-        this.URLShare = URLShare;
-        this.teamCreator= user;
+        this.teamCreator = user;
+    }
+
+    public Team(Integer id, String name, String description) {
+        this.id = id;
+        this.users = new ArrayList<>();
+        this.name = name;
+        this.description = description;
+    }
+
+    public Team(Integer id, String name) {
+        this.id = id;
+        this.name = name;
+        this.users = new ArrayList<>();
     }
 
     public String getName() {
@@ -44,14 +55,6 @@ public class Team implements Serializable {
         this.description = description;
     }
 
-    public String getURLShare() {
-        return URLShare;
-    }
-
-    public void setURLShare(String URLShare) {
-        this.URLShare = URLShare;
-    }
-
     public User getTeamCreator() {
         return teamCreator;
     }
@@ -64,15 +67,26 @@ public class Team implements Serializable {
         return users;
     }
 
+    @Override
+    public String toString() {
+        return "Team{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", teamCreator=" + teamCreator +
+                ", users=" + users +
+                '}';
+    }
+
     public void setUsers(List<User> users) {
         this.users = users;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 }

@@ -140,11 +140,11 @@ public class Mokap {
         User u2 = new User("Marijana", "Kolosnjaji", "majak", "majak@gmail.com");
         User u3 = new User("Marijana", "Matkovski", "majam", "majam@gmail.com");
 
-        Team team1 = new Team(1L, "DSL Tim 3", "Jezici specifični za domen", "http://nekiLink.com", u3);
-        Team team2 = new Team(2L, "PMA Tim 3", "Programiranje mobilnih aplikacija", "http://nekiLink2.com", u1);
+        //Team team1 = new Team(1L, "DSL Tim 3", "Jezici specifični za domen", u3);
+     //   Team team2 = new Team(2L, "PMA Tim 3", "Programiranje mobilnih aplikacija",  u1);
 
-        teams.add(team1);
-        teams.add(team2);
+       // teams.add(team1);
+       // teams.add(team2);
 
         return teams;
     }
@@ -158,21 +158,22 @@ public class Mokap {
 
         switch (id.intValue()) {
             case 1:
-                team = new Team(1L, "DSL Tim 3", "Jezici specifični za domen", "http://nekiLink.com", u3);
+             //   team = new Team(1L, "DSL Tim 3", "Jezici specifični za domen", u3);
                 List<User>users=new ArrayList<>();
                 users.add(u1);
                 users.add(u2);
-                team.setUsers(users);
+             //   team.setUsers(users);
                 break;
             case 2:
-                team = new Team(2L, "PMA Tim 3", "Programiranje mobilnih aplikacija", "http://nekiLink2.com", u1);
+              //  team = new Team(2L, "PMA Tim 3", "Programiranje mobilnih aplikacija", u1);
                 break;
             default:
-                team = new Team(3L, "UKS Tim 3", "Upravljanje konfiguracijom softvera!", "http://nekiLink.com", u3);
+              //  team = new Team(3L, "UKS Tim 3", "Upravljanje konfiguracijom softvera!", u3);
                 break;
         }
 
-        return team;
+        //return team;
+        return null;
     }
 
 }

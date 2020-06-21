@@ -114,8 +114,17 @@
 
 
     <string name="reminder">Reminder</string>
+  
+    <string name="team_no_name">Team name is required!</string>
+    <string name="member_to_add">Member to add</string>
+
+    <string name="team_updated">Team updated!</string>
+    <string name="edit_team">Edit team</string>
+    <string name="edit_team_members">Edit members</string>
+
     <string name="priority">%1$s priority</string>
 
     <string name="delete_task_text">Are you sure you want to delete %1$s?</string>
     <string name="delete_task_title">Delete task</string>
+
 </resources>

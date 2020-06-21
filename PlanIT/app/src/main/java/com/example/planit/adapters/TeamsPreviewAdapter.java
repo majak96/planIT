@@ -9,12 +9,10 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.planit.R;
 import com.example.planit.fragments.CalendarFragment;
-import com.example.planit.fragments.DailyPreviewFragment;
 import com.example.planit.utils.FragmentTransition;
 
 import java.util.ArrayList;
@@ -51,7 +49,7 @@ public class TeamsPreviewAdapter extends RecyclerView.Adapter<TeamsPreviewAdapte
         holder.relativeLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FragmentTransition.replaceFragment((FragmentActivity) context, CalendarFragment.newInstance(teamsList.get(position).getId()), R.id.fragment_container, true);
+                FragmentTransition.replaceFragment((FragmentActivity) context, CalendarFragment.newInstance(teamsList.get(position).getId(), position, teamsList.get(position).getName()), R.id.fragment_container, true);
             }
         });
 
@@ -73,4 +71,10 @@ public class TeamsPreviewAdapter extends RecyclerView.Adapter<TeamsPreviewAdapte
             relativeLayout = itemView.findViewById(R.id.team_item_relative_layout);
         }
     }
+
+    public void addTeam(Team team) {
+        this.teamsList.add(team);
+        notifyItemChanged(teamsList.size() - 1);
+    }
+
 }
