@@ -2,6 +2,8 @@ package model;
 
 import com.example.planit.utils.Utils;
 
+import java.util.Objects;
+
 public class User {
 
     private Integer id;
@@ -88,6 +90,23 @@ public class User {
         return id;
     }
 
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(email, user.email);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, lastName, password, email, colour);
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -100,7 +119,4 @@ public class User {
                 '}';
     }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
 }

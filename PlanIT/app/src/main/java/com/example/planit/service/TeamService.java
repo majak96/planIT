@@ -1,16 +1,16 @@
 package com.example.planit.service;
 
-import model.ChangeProfileDTO;
-import model.CreateTeamDTO;
-import model.LoginDTO;
-import model.RegisterDTO;
-import model.TeamMemberDTO;
+import model.TeamDTO;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
+import retrofit2.http.GET;
 import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface TeamService {
 
@@ -20,9 +20,18 @@ public interface TeamService {
     })
 
     @POST("team/create")
-    Call<ResponseBody> createTeam(@Body CreateTeamDTO createTeamDTO);
+    Call<ResponseBody> createTeam(@Body TeamDTO teamDTO);
 
-    @POST("team/addMember")
-    Call<ResponseBody> addMember(@Body TeamMemberDTO teamMemberDTO);
+    @GET("team/checkMember")
+    Call<ResponseBody> checkMember(@Query("email") String email);
+
+    @DELETE("team/{teamId}")
+    Call<ResponseBody> deleteTeam(@Path("teamId") Integer teamId);
+
+    @PUT("team/{teamId}")
+    Call<ResponseBody> updateTeam(@Path("teamId") Integer teamId, @Body TeamDTO teamDTO);
+
+    @PUT("team/members/{teamId}")
+    Call<ResponseBody> updateTeamMembers(@Path("teamId") Integer teamId, @Body TeamDTO teamDTO);
 
 }

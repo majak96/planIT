@@ -17,23 +17,31 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.example.planit.MainActivity;
 import com.example.planit.R;
 import com.example.planit.adapters.TeamDetailAdapter;
 import com.example.planit.database.Contract;
+import com.example.planit.service.ServiceUtils;
+import com.example.planit.service.TeamService;
+import com.example.planit.utils.SharedPreference;
 
 import java.util.ArrayList;
 
 import model.Team;
 import model.User;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class TeamDetailActivity extends AppCompatActivity {
 
     private Team team;
     private TextView teamDescription;
     private String tag = "TeamDetailActivity";
-    private Long teamId;
+    private Integer teamId;
+    private Integer position;
     private RecyclerView recyclerView;
     private ArrayList<User> users;
 
@@ -52,7 +60,8 @@ public class TeamDetailActivity extends AppCompatActivity {
 
         if (getIntent().hasExtra("team")) {
 
-            teamId = getIntent().getLongExtra("team", 1);
+            teamId = getIntent().getIntExtra("team", 1);
+            position = getIntent().getIntExtra("position", -1);
 
             recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
             recyclerView.setHasFixedSize(true);
@@ -83,8 +92,12 @@ public class TeamDetailActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        String loggedEmail = SharedPreference.getLoggedEmail(TeamDetailActivity.this);
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.team_preview_menu, menu);
+        if (!loggedEmail.equals(team.getTeamCreator().getEmail())) {
+            menu.findItem(R.id.menu_edit_team_members).setVisible(false);
+        }
         return true;
     }
 
@@ -102,7 +115,11 @@ public class TeamDetailActivity extends AppCompatActivity {
                 startActivityForResult(intent, 1);
                 break;
             case R.id.menu_edit_team_members:
-                //TODO: edit team members
+                Intent teamMembersIntent = new Intent(this, TeamMembersActivity.class);
+                teamMembersIntent.putExtra("teamId", team.getId());
+                teamMembersIntent.putExtra("title", team.getName().trim());
+
+                startActivityForResult(teamMembersIntent, 1);
                 break;
             default:
                 //do nothing
@@ -112,15 +129,15 @@ public class TeamDetailActivity extends AppCompatActivity {
     }
 
     //get team with the id from the database
-    private Team getTeamFromDatabase(Long teamId) {
+    private Team getTeamFromDatabase(Integer teamId) {
         Uri taskUri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamId);
 
         Cursor cursor = getContentResolver().query(taskUri, null, null, null, null);
         cursor.moveToFirst();
 
-        Team team = new Team();
-        team.setId(Long.parseLong(cursor.getString(0)));
-        team.setName(cursor.getString(1));
+        User creator = getUserFromDB(cursor.getInt(3));
+        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator);
+
         if (cursor.getString(2) != null) {
             team.setDescription(cursor.getString(2));
         }
@@ -128,6 +145,19 @@ public class TeamDetailActivity extends AppCompatActivity {
         cursor.close();
 
         return team;
+    }
+
+    private User getUserFromDB(Integer userId) {
+
+        Uri uri = Uri.parse(Contract.User.CONTENT_URI_USER + "/" + userId);
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        if (cursor.moveToNext()) {
+            User user = new User(cursor.getInt(cursor.getColumnIndex(Contract.User.COLUMN_ID)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_EMAIL)));
+            cursor.close();
+            return user;
+        }
+        cursor.close();
+        return null;
     }
 
     private ArrayList<User> getUsersFromDatabase(String teamId) {
@@ -146,9 +176,8 @@ public class TeamDetailActivity extends AppCompatActivity {
                 String lastName = cursor.getString(1);
                 String email = cursor.getString(2);
                 String colour = cursor.getString(3);
-                String id = cursor.getString(4);
-                User newUser = new User(Integer.parseInt(id), email, name, lastName, colour);
-                // User newUser = new User(name, lastName, email, colour);
+                Integer id = cursor.getInt(4);
+                User newUser = new User(id, email, name, lastName, colour);
                 users.add(newUser);
             }
         }
@@ -185,9 +214,35 @@ public class TeamDetailActivity extends AppCompatActivity {
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
                         if (deleteTeam(teamId.toString()) > 0) {
-                            Intent newIntent = new Intent(TeamDetailActivity.this, MainActivity.class);
-                            startActivity(newIntent);
-                            //TODO delete from server db
+
+                            TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
+                            Call<ResponseBody> call = apiService.deleteTeam(teamId);
+                            call.enqueue(new Callback<ResponseBody>() {
+                                @Override
+                                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+
+                                    if (response.code() == 200) {
+
+                                        Intent newIntent = new Intent();
+                                        newIntent.putExtra("position", position);
+                                        newIntent.putExtra("deleted", true);
+                                        setResult(Activity.RESULT_OK, newIntent);
+                                        finish();
+
+                                    } else {
+                                        Log.i("400", "400");
+                                        Toast t = Toast.makeText(TeamDetailActivity.this, "Can not delete team!", Toast.LENGTH_SHORT);
+                                        t.show();
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                                    Log.e("tag", "Connection error");
+                                }
+                            });
+
+
                         } else {
 
                         }

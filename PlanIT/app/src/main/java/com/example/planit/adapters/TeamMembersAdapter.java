@@ -1,18 +1,17 @@
 package com.example.planit.adapters;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AlertDialog;
 
 
@@ -21,7 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.planit.R;
 import com.example.planit.database.Contract;
-import com.google.android.gms.common.util.Strings;
+import com.example.planit.utils.SharedPreference;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,12 +31,12 @@ public class TeamMembersAdapter extends RecyclerView.Adapter<TeamMembersAdapter.
 
     private List<User> members = new ArrayList<>();
     private Context context;
-    private String teamId;
+    private Integer teamId;
 
-    public TeamMembersAdapter(Context context, ArrayList<User> members, String teamId) {
+    public TeamMembersAdapter(Context context, ArrayList<User> members, Integer teamId) {
         this.context = context;
         this.members = members;
-        this.teamId=teamId;
+        this.teamId = teamId;
     }
 
     @NonNull
@@ -63,6 +62,13 @@ public class TeamMembersAdapter extends RecyclerView.Adapter<TeamMembersAdapter.
                 openDialog(position);
             }
         });
+
+        String userCreator = getTeamCreator();
+        if (member.getEmail().equals(userCreator)) {
+            holder.imageButton.setVisibility(View.GONE);
+        }
+
+
         holder.colour.invalidateSelf();
     }
 
@@ -86,7 +92,7 @@ public class TeamMembersAdapter extends RecyclerView.Adapter<TeamMembersAdapter.
             super(itemView);
             memberCredentialTextView = itemView.findViewById(R.id.member_credential_edit);
             memberNameTextView = itemView.findViewById(R.id.member_name_edit);
-            imageButton=itemView.findViewById(R.id.remove_member_from_team);
+            imageButton = itemView.findViewById(R.id.remove_member_from_team);
             colour = (GradientDrawable) memberCredentialTextView.getBackground().mutate();
         }
 
@@ -98,10 +104,10 @@ public class TeamMembersAdapter extends RecyclerView.Adapter<TeamMembersAdapter.
             public void onClick(DialogInterface dialog, int which) {
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
-                        if(deleteUserTeamConnection(members.get(position).getId().toString(), teamId)>0){
+                        if (deleteUserTeamConnection(members.get(position).getId(), teamId) > 0) {
                             members.remove(position);
                             notifyItemRemoved(position);
-                        }else{
+                        } else {
                             //TODO error message
                         }
 
@@ -121,10 +127,32 @@ public class TeamMembersAdapter extends RecyclerView.Adapter<TeamMembersAdapter.
                 .show();
     }
 
-    private int deleteUserTeamConnection(String userId, String teamId) {
-        String selection = Contract.UserTeamConnection.COLUMN_USER_ID+" = ? and "+Contract.UserTeamConnection.COLUMN_TEAM_ID + " = ? ";
-        String[] selectionArgs = new String[]{userId, teamId};
-        return context.getContentResolver().delete(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM , selection, selectionArgs);
+    private int deleteUserTeamConnection(Integer userId, Integer teamId) {
+        String selection = Contract.UserTeamConnection.COLUMN_USER_ID + " = ? and " + Contract.UserTeamConnection.COLUMN_TEAM_ID + " = ? ";
+        String[] selectionArgs = new String[]{userId.toString(), teamId.toString()};
+        return context.getContentResolver().delete(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM, selection, selectionArgs);
+    }
+
+    public String getTeamCreator() {
+        Uri uri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamId);
+
+        Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+        if (cursor.moveToNext()) {
+            Integer id = cursor.getInt(cursor.getColumnIndex(Contract.Team.COLUMN_CREATOR));
+            Uri userUri = Uri.parse(Contract.User.CONTENT_URI_USER + "/" + id);
+            Cursor userCursor = context.getContentResolver().query(userUri, null, null, null, null);
+            if (userCursor.moveToNext()) {
+                String email = userCursor.getString(userCursor.getColumnIndex(Contract.User.COLUMN_EMAIL));
+                userCursor.close();
+                cursor.close();
+                return email;
+            }
+            userCursor.close();
+        }
+
+        cursor.close();
+        return null;
+
     }
 
 }

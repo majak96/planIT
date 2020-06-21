@@ -61,7 +61,6 @@ public class TeamContentProvider extends ContentProvider {
                 break;
             case USER_ID:
                 queryBuilder.appendWhere(Contract.User.COLUMN_ID + "=" + uri.getLastPathSegment());
-                break;
             case USER:
                 //set the table
                 queryBuilder.setTables(Contract.User.TABLE_NAME);

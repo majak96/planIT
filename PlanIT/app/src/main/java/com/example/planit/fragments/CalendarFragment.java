@@ -49,12 +49,14 @@ public class CalendarFragment extends Fragment {
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    public static CalendarFragment newInstance(Long team) {
+    public static CalendarFragment newInstance(Integer team, Integer position, String teamName) {
         CalendarFragment fragment = new CalendarFragment();
 
         if (team != null) {
             Bundle args = new Bundle();
-            args.putLong("SELECTED_TEAM", team);
+            args.putInt("SELECTED_TEAM", team);
+            args.putInt("POSITION", position);
+            args.putString("TEAM_NAME", teamName);
 
             fragment.setArguments(args);
         }
@@ -70,10 +72,11 @@ public class CalendarFragment extends Fragment {
         //set activity title
         if (getArguments() != null) {
 
-            Long teamId = getArguments().getLong("SELECTED_TEAM");
-            Team team = Mokap.getTeam(teamId);
+            Integer teamId = getArguments().getInt("SELECTED_TEAM");
+            String teamName = getArguments().getString("TEAM_NAME");
+            //Team team = Mokap.getTeam(teamId);
 
-            getActivity().setTitle("Team");
+            getActivity().setTitle(teamName);
 
             setHasOptionsMenu(true);
         } else {
@@ -150,21 +153,24 @@ public class CalendarFragment extends Fragment {
                 intent = new Intent(getActivity(), ChatActivity.class);
 
                 if (getArguments() != null) {
-                    Long teamId = getArguments().getLong("SELECTED_TEAM");
+                    Integer teamId = getArguments().getInt("SELECTED_TEAM");
                     intent.putExtra("team", teamId);
                 }
 
-                this.startActivity(intent);
+                getActivity().startActivity(intent);
                 break;
             case R.id.menu_team_details:
                 intent = new Intent(getActivity(), TeamDetailActivity.class);
 
                 if (getArguments() != null) {
-                    Long teamId = getArguments().getLong("SELECTED_TEAM");
+                    Integer teamId = getArguments().getInt("SELECTED_TEAM");
+                    Integer position = getArguments().getInt("POSITION");
+
                     intent.putExtra("team", teamId);
+                    intent.putExtra("position", position);
                 }
 
-                this.startActivity(intent);
+                getActivity().startActivityForResult(intent, 6);
                 break;
         }
 
@@ -175,7 +181,7 @@ public class CalendarFragment extends Fragment {
      * Get dates with tasks for the specific month of the specific year
      *
      * @param month shown in the calendar
-     * @param year shown in the calendar
+     * @param year  shown in the calendar
      */
     private void getTaskDates(int month, int year) {
         String monthString = Integer.toString(month);

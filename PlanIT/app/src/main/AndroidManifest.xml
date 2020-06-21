@@ -16,6 +16,7 @@
         android:usesCleartextTraffic="true">
         <activity
             android:name=".activities.TeamMembersActivity"
+            android:theme="@style/AppTheme.NoActionBarWithStatus"
             android:parentActivityName=".MainActivity" />
         <activity
             android:name=".activities.ProfileActivity"
