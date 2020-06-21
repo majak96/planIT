@@ -63,11 +63,17 @@ public class TeamMembersAdapter extends RecyclerView.Adapter<TeamMembersAdapter.
             }
         });
 
-        String userCreator = getTeamCreator();
-        if (member.getEmail().equals(userCreator)) {
-            holder.imageButton.setVisibility(View.GONE);
+        if( teamId != null) {
+            String userCreator = getTeamCreator();
+            if (member.getEmail().equals(userCreator)) {
+                holder.imageButton.setVisibility(View.GONE);
+            }
+        } else{
+            String loggedUser= SharedPreference.getLoggedEmail(context);
+            if (member.getEmail().equals(loggedUser)) {
+                holder.imageButton.setVisibility(View.GONE);
+            }
         }
-
 
         holder.colour.invalidateSelf();
     }
