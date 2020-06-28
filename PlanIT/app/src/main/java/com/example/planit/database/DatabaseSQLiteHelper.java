@@ -38,6 +38,17 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + " foreign key (" + Contract.UserTeamConnection.COLUMN_TEAM_ID+ " ) references "+ Contract.Team.TABLE_NAME + " ( " + Contract.Team.COLUMN_ID + " ) "
             + " ); ";
 
+    private static final String TABLE_MESSAGE_CREATE = "create table "
+            + Contract.Message.TABLE_NAME + "("
+            + Contract.Message.COLUMN_ID  + " integer primary key autoincrement , "
+            + Contract.Message.COLUMN_MESSAGE + " text , "
+            + Contract.Message.COLUMN_CREATED_AT + " integer , "
+            + Contract.Message.COLUMN_SENDER_ID + " integer , "
+            + Contract.Message.COLUMN_TEAM_ID + " integer , "
+            + " foreign key (" + Contract.Message.COLUMN_SENDER_ID + " ) references "+ Contract.User.TABLE_NAME + " ( " + Contract.User.COLUMN_ID + " ) ,"
+            + " foreign key (" + Contract.Message.COLUMN_TEAM_ID+ " ) references "+ Contract.Team.TABLE_NAME + " ( " + Contract.Team.COLUMN_ID + " ) "
+            + ")";
+
     private static final String TABLE_HABIT_CREATE = "create table "
             + Contract.Habit.TABLE_NAME + "("
             + Contract.Habit.COLUMN_ID  + " integer primary key autoincrement , "
@@ -111,7 +122,8 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
         db.execSQL(TABLE_TEAM_CREATE);
         db.execSQL(TABLE_USER_CREATE);
         db.execSQL(TABLE_USER_TEAM_CONNECTION_CREATE);
-    
+        db.execSQL(TABLE_MESSAGE_CREATE);
+
         // executing create create table statement for habits
         db.execSQL(TABLE_HABIT_CREATE);
         db.execSQL(TABLE_HABIT_FULFILLMENT_CREATE);
@@ -130,7 +142,6 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
         db.execSQL("insert into " + Contract.HabitDay.TABLE_NAME + " ( " + Contract.HabitDay.COLUMN_DAY + " ) " + "values( \"SAT\") ;");
         db.execSQL("insert into " + Contract.HabitDay.TABLE_NAME + " ( " + Contract.HabitDay.COLUMN_DAY + " ) " + "values( \"SUN\") ;");
 
-        
     }
 
     @Override
@@ -139,6 +150,7 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + Contract.Team.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + Contract.User.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + Contract.UserTeamConnection.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + Contract.Message.TABLE_NAME);
 
         // drop table queries for habits
         db.execSQL("DROP TABLE IF EXISTS " + Contract.HabitDayConnection.TABLE_NAME);

@@ -23,7 +23,6 @@ import com.example.planit.service.TeamService;
 
 import model.Team;
 import model.TeamDTO;
-import model.User;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;

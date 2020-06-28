@@ -386,9 +386,9 @@ public class TeamMembersActivity extends AppCompatActivity {
 
         users = new ArrayList<>();
         String[] allColumns = {Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_COLOUR};
-        Uri taskLabelsUri = Uri.parse(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM + "/" + teamId);
+        Uri teamMembersUri = Uri.parse(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM + "/" + teamId);
 
-        Cursor cursor = getContentResolver().query(taskLabelsUri, allColumns, null, null, null);
+        Cursor cursor = getContentResolver().query(teamMembersUri, allColumns, null, null, null);
 
         if (cursor.getCount() == 0) {
             Log.i(tag, "There are no users in team");

@@ -2,9 +2,7 @@ package model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class Team implements Serializable {
 
@@ -65,17 +63,6 @@ public class Team implements Serializable {
 
     public List<User> getUsers() {
         return users;
-    }
-
-    @Override
-    public String toString() {
-        return "Team{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", teamCreator=" + teamCreator +
-                ", users=" + users +
-                '}';
     }
 
     public void setUsers(List<User> users) {

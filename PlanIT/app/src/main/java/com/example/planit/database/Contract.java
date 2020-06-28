@@ -100,6 +100,20 @@ public final class Contract {
         public static final String COLUMN_TEAM_ID = "team_id";
 
     }
+
+    public static class Message {
+
+        public static final String TABLE_NAME = "message";
+
+        public static final Uri CONTENT_URI_MESSAGE = Uri.parse("content://" + AUTHORITY + ".TeamContentProvider" + "/" + TABLE_NAME);
+
+        public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_MESSAGE = "message";
+        public static final String COLUMN_CREATED_AT = "created_at";
+        public static final String COLUMN_SENDER_ID = "sender";
+        public static final String COLUMN_TEAM_ID = "team_id";
+
+    }
   
     public static class Task {
 
