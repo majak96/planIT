@@ -46,6 +46,7 @@ public class CalendarFragment extends Fragment {
 
     private ArrayList<CalendarDay> eventDates = new ArrayList<>();
     private MaterialCalendarView calendarView;
+    private Integer teamId;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -72,9 +73,8 @@ public class CalendarFragment extends Fragment {
         //set activity title
         if (getArguments() != null) {
 
-            Integer teamId = getArguments().getInt("SELECTED_TEAM");
+            teamId = getArguments().getInt("SELECTED_TEAM");
             String teamName = getArguments().getString("TEAM_NAME");
-            //Team team = Mokap.getTeam(teamId);
 
             getActivity().setTitle(teamName);
 
@@ -94,7 +94,7 @@ public class CalendarFragment extends Fragment {
         //get dates with tasks for the current month
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
-        getTaskDates(calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.YEAR));
+        getTaskDates(calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.YEAR), teamId);
 
         //decorator for marking dates with events
         calendarView.addDecorator(new EventDecorator(getResources().getColor(R.color.colorPrimary), eventDates));
@@ -112,14 +112,14 @@ public class CalendarFragment extends Fragment {
                 Long dateInMilliseconds = cal.getTimeInMillis();
 
                 //go to DailyPreviewFragment for the selected date
-                FragmentTransition.replaceFragment(getActivity(), DailyPreviewFragment.newInstance(dateInMilliseconds), R.id.fragment_container, true);
+                FragmentTransition.replaceFragment(getActivity(), DailyPreviewFragment.newInstance(dateInMilliseconds, teamId), R.id.fragment_container, true);
             }
         });
 
         calendarView.setOnMonthChangedListener(new OnMonthChangedListener() {
             @Override
             public void onMonthChanged(MaterialCalendarView widget, CalendarDay date) {
-                getTaskDates(date.getMonth(), date.getYear());
+                getTaskDates(date.getMonth(), date.getYear(), teamId);
 
                 calendarView.removeDecorators();
                 calendarView.addDecorator(new EventDecorator(getResources().getColor(R.color.colorPrimary), eventDates));
@@ -132,6 +132,7 @@ public class CalendarFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getActivity(), EditTaskActivity.class);
+                intent.putExtra("team", teamId);
                 getActivity().startActivityForResult(intent, 1);
             }
         });
@@ -183,7 +184,7 @@ public class CalendarFragment extends Fragment {
      * @param month shown in the calendar
      * @param year  shown in the calendar
      */
-    private void getTaskDates(int month, int year) {
+    private void getTaskDates(int month, int year, Integer teamId) {
         String monthString = Integer.toString(month);
         if (monthString.length() < 2) {
             monthString = "0" + monthString;
@@ -193,7 +194,14 @@ public class CalendarFragment extends Fragment {
         String[] allColumns = {"distinct " + Contract.Task.COLUMN_START_DATE};
 
         String selection = Contract.Task.COLUMN_START_DATE + " between date(?) and date(?, '+1 month', '-1 day')";
-        String[] selectionArgs = new String[]{date, date};
+        String[] selectionArgs;
+        if (teamId == null) {
+            selection += " and " + Contract.Task.COLUMN_TEAM + " is null";
+            selectionArgs = new String[]{date, date};
+        } else {
+            selection += " and " + Contract.Task.COLUMN_TEAM + " = ?";
+            selectionArgs = new String[]{date, date, Integer.toString(teamId)};
+        }
 
         Cursor cursor = getActivity().getContentResolver().query(Contract.Task.CONTENT_URI_TASK, allColumns, selection, selectionArgs, null);
 

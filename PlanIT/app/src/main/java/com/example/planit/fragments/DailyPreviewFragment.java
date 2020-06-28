@@ -34,6 +34,7 @@ public class DailyPreviewFragment extends Fragment {
     private static final String TAG = "DailyPreviewFragment";
 
     private Date date;
+    private Integer teamId;
 
     private DailyPreviewAdapter adapter;
     private List<Task> dailyTasks = new ArrayList<>();
@@ -42,9 +43,14 @@ public class DailyPreviewFragment extends Fragment {
     private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
     private SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    public static DailyPreviewFragment newInstance(Long selectedDateInMilliseconds) {
+    public static DailyPreviewFragment newInstance(Long selectedDateInMilliseconds, Integer teamId) {
         Bundle args = new Bundle();
+
         args.putLong("SELECTED_DATE", selectedDateInMilliseconds);
+
+        if (teamId != null) {
+            args.putInt("SELECTED_TEAM", teamId);
+        }
 
         DailyPreviewFragment fragment = new DailyPreviewFragment();
         fragment.setArguments(args);
@@ -60,6 +66,10 @@ public class DailyPreviewFragment extends Fragment {
         Bundle bundle = getArguments();
         if (bundle != null) {
             date = new Date(bundle.getLong("SELECTED_DATE"));
+            teamId = bundle.getInt("SELECTED_TEAM", -1);
+            if (teamId == -1) {
+                teamId = null;
+            }
 
             //set activity title to date
             String dateString = viewDateFormat.format(date);
@@ -67,7 +77,7 @@ public class DailyPreviewFragment extends Fragment {
 
             //get tasks with this date
             String queryDateString = dbDateFormat.format(date);
-            getDailyTasks(queryDateString);
+            getDailyTasks(queryDateString, teamId);
 
             //initialize RecyclerView
             RecyclerView recyclerView = view.findViewById(R.id.daily_preview_recycle_view);
@@ -86,6 +96,7 @@ public class DailyPreviewFragment extends Fragment {
             public void onClick(View v) {
                 Intent intent = new Intent(getActivity(), EditTaskActivity.class);
                 intent.putExtra("date", date.getTime());
+                intent.putExtra("team", teamId);
 
                 getActivity().startActivityForResult(intent, 1);
             }
@@ -99,11 +110,19 @@ public class DailyPreviewFragment extends Fragment {
      *
      * @param date
      */
-    private void getDailyTasks(String date) {
+    private void getDailyTasks(String date, Integer teamId) {
         String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_START_TIME, Contract.Task.COLUMN_DONE};
 
         String selection = Contract.Task.COLUMN_START_DATE + " = ?";
-        String[] selectionArgs = new String[]{date};
+        String[] selectionArgs;
+        if (teamId == null) {
+            selection += " and " + Contract.Task.COLUMN_TEAM + " is null";
+            selectionArgs = new String[]{date};
+        } else {
+            selection += " and " + Contract.Task.COLUMN_TEAM + " = ?";
+            selectionArgs = new String[]{date, Integer.toString(teamId)};
+        }
+
 
         Cursor cursor = getActivity().getContentResolver().query(Contract.Task.CONTENT_URI_TASK, allColumns, selection, selectionArgs, null);
 

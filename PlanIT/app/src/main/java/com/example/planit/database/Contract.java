@@ -118,6 +118,8 @@ public final class Contract {
         public static final String COLUMN_ADDRESS = "address";
         public static final String COLUMN_DONE = "done";
         public static final String COLUMN_REMINDER = "reminder";
+        public static final String COLUMN_TEAM = "team";
+        public static final String COLUMN_USER = "user";
 
     }
 

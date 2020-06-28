@@ -147,6 +147,32 @@
 
             <View style="@style/Divider" />
 
+            <!-- ASSIGNED MEMBER -->
+            <RelativeLayout
+                android:id="@+id/assigned_member_layout_detail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/assigned_member_task_detail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:drawableLeft="@drawable/ic_person"
+                    android:drawablePadding="5dp"
+                    android:paddingLeft="4dp"
+                    android:drawableTint="@color/gray"
+                    android:onClick="openAssignDialog"
+                    android:text="@string/no_assigned_member"
+                    android:textColor="@color/darkGray"
+                    android:textSize="16dp" />
+
+            </RelativeLayout>
+
+            <View style="@style/Divider" />
+
             <!-- LABELS -->
             <LinearLayout
                 android:layout_width="match_parent"
