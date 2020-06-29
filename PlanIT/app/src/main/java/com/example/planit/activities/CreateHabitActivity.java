@@ -16,7 +16,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -28,16 +27,23 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.planit.R;
+import com.example.planit.adapters.WeekDaysAdapter;
 import com.example.planit.broadcastReceivers.ReminderBroadcastReceiver;
 import com.example.planit.database.Contract;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import model.DayOfWeek;
 import model.Habit;
+import model.HabitDay;
 import model.HabitDayConnection;
 
 /**
@@ -48,8 +54,9 @@ public class CreateHabitActivity extends AppCompatActivity {
     private Habit habit;
     private Integer habitId;
     private String reminderTime;
-    private List<CheckBox> checkBoxesDaysList;
-    private List<Integer> selectedDays;
+    private WeekDaysAdapter adapter;
+    private RecyclerView recyclerView;
+    private List<HabitDay> days;
 
     private LinearLayout pickDaysLayout;
     private LinearLayout pickWeeksLayout;
@@ -61,7 +68,6 @@ public class CreateHabitActivity extends AppCompatActivity {
 
     private RadioGroup frequencyRadioGroup;
     private RadioGroup goalRadioGroup;
-    private RadioGroup numberOfDaysAWeekGroup;
 
     private RadioButton frequencyDaysButton;
     private RadioButton frequencyWeeksButton;
@@ -70,6 +76,7 @@ public class CreateHabitActivity extends AppCompatActivity {
 
     private ImageButton removeReminderButton;
     private Button reminderButton;
+    private Button chosenNumberOfWeeks;
 
 
     @Override
@@ -102,33 +109,16 @@ public class CreateHabitActivity extends AppCompatActivity {
         //getting groups
         this.frequencyRadioGroup = findViewById(R.id.frequency_radio_group);
         this.goalRadioGroup = findViewById(R.id.goal_radio_group);
-        this.numberOfDaysAWeekGroup = findViewById(R.id.number_of_days_a_week);
 
         //getting text fields
         this.titleHabit = findViewById(R.id.title_habit);
         this.detailsHabit = findViewById(R.id.details_habit);
         this.goalsNumberOfDays = findViewById(R.id.goal_number_of_days);
 
-        this.selectedDays = new ArrayList<>();
-        this.checkBoxesDaysList = new ArrayList<>();
-
-        // getting checkboxes
-        CheckBox mondayCheckBox = findViewById(R.id.monday);
-        CheckBox tuesdayCheckBox = findViewById(R.id.tuesday);
-        CheckBox wednesdayCheckBox = findViewById(R.id.wednesday);
-        CheckBox thursdayCheckBox = findViewById(R.id.thursday);
-        CheckBox fridayCheckBox= findViewById(R.id.friday);
-        CheckBox saturdayCheckBox= findViewById(R.id.saturday);
-        CheckBox sundayCheckBox= findViewById(R.id.sunday);
-
-        this.checkBoxesDaysList.add(mondayCheckBox);
-        this.checkBoxesDaysList.add(tuesdayCheckBox);
-        this.checkBoxesDaysList.add(wednesdayCheckBox);
-        this.checkBoxesDaysList.add(thursdayCheckBox);
-        this.checkBoxesDaysList.add(fridayCheckBox);
-        this.checkBoxesDaysList.add(saturdayCheckBox);
-        this.checkBoxesDaysList.add(sundayCheckBox);
-
+        //initialize RecyclerView
+        this.recyclerView = findViewById(R.id.chosen_days_recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        getDaysFromDB();
         // Reminder Button Click Listener for opening TimePickerDialog
         this.reminderButton.setOnClickListener(new View.OnClickListener() {
 
@@ -145,7 +135,6 @@ public class CreateHabitActivity extends AppCompatActivity {
                     hour = currentTime.get(Calendar.HOUR_OF_DAY);
                     minute = currentTime.get(Calendar.MINUTE);
                 }
-                Log.e("TIME IS" , reminderTime);
                 TimePickerDialog timePickerDialog;
                 timePickerDialog = new TimePickerDialog(CreateHabitActivity.this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
@@ -173,9 +162,24 @@ public class CreateHabitActivity extends AppCompatActivity {
 
 
         } else {
+            adapter = new WeekDaysAdapter(this, this.days, new HashSet<>());
+            recyclerView.setAdapter(adapter);
             this.setTitle("Create Habit");
         }
 
+    }
+
+    public void getDaysFromDB() {
+        Cursor cursor = this.getContentResolver().query(Contract.HabitDay.CONTENT_URI_HABIT_DAY, null, null, null, null);
+        this.days = new ArrayList<>();
+        if (cursor.getCount() > 0) {
+            while (cursor.moveToNext()) {
+                HabitDay habitDay = new HabitDay();
+                habitDay.setId(cursor.getInt(cursor.getColumnIndex(Contract.HabitDay.COLUMN_ID)));
+                habitDay.setDay(DayOfWeek.valueOf(cursor.getInt(cursor.getColumnIndex(Contract.HabitDay.COLUMN_ID))));
+                this.days.add(habitDay);
+            }
+        }
     }
 
     /**
@@ -219,28 +223,38 @@ public class CreateHabitActivity extends AppCompatActivity {
             this.goalAllRadio.setTextColor(Color.rgb(142, 142, 142));
         }
 
-        if (this.habit.getNumberOfDays() == -1) {
+        if (this.habit.getNumberOfDays() == null || this.habit.getNumberOfDays() == -1) {
             // fill checkboxes
+            Set<Integer> chosenDays = new HashSet<>();
             for (HabitDayConnection day : this.habit.getHabitDays()) {
-                this.checkBoxesDaysList.get(day.getHabitDayId()).setChecked(true);
+                chosenDays.add(day.getHabitDayId());
             }
-
+            adapter = new WeekDaysAdapter(this, this.days, chosenDays);
         } else {
+            adapter = new WeekDaysAdapter(this, this.days, new HashSet<>());
+            Log.e("NUMB OF DAYS", habit.getNumberOfDays().toString());
             switch (habit.getNumberOfDays()) {
                 case 1:
-                    ((RadioButton) findViewById(R.id.oneWeek)).setChecked(true);
+                    this.chosenNumberOfWeeks = (Button) findViewById(R.id.one_week);
+                    break;
                 case 2:
-                    ((RadioButton) findViewById(R.id.twoWeeks)).setChecked(true);
+                    this.chosenNumberOfWeeks = (Button) findViewById(R.id.two_weeks);
+                    break;
                 case 3:
-                    ((RadioButton) findViewById(R.id.threeWeeks)).setChecked(true);
+                    this.chosenNumberOfWeeks = (Button) findViewById(R.id.three_weeks);
+                    break;
                 case 4:
-                    ((RadioButton) findViewById(R.id.fourWeeks)).setChecked(true);
+                    this.chosenNumberOfWeeks = (Button) findViewById(R.id.four_weeks);
+                    break;
                 case 5:
-                    ((RadioButton) findViewById(R.id.fiveWeeks)).setChecked(true);
+                    this.chosenNumberOfWeeks = (Button) findViewById(R.id.five_weeks);
+                    break;
                 case 6:
-                    ((RadioButton) findViewById(R.id.sixWeeks)).setChecked(true);
+                    this.chosenNumberOfWeeks = (Button) findViewById(R.id.six_weeks);
+                    break;
             }
 
+            this.chosenNumberOfWeeks.setBackground(ContextCompat.getDrawable(this, R.drawable.circle_primary));
             pickDaysLayout.setVisibility(View.GONE);
             pickWeeksLayout.setVisibility(View.VISIBLE);
             this.frequencyWeeksButton.setChecked(true);
@@ -248,6 +262,8 @@ public class CreateHabitActivity extends AppCompatActivity {
             this.frequencyWeeksButton.setTextColor(Color.rgb(17, 207, 197));
             frequencyDaysButton.setTextColor(Color.rgb(142, 142, 142));
         }
+
+        recyclerView.setAdapter(adapter);
 
 
         Uri uriReminders = Uri.parse(Contract.HabitReminderConnection.CONTENT_URI_HABIT_REMINDER_CONN + "/" + Contract.Habit.TABLE_NAME + "/" + this.habitId);
@@ -291,8 +307,8 @@ public class CreateHabitActivity extends AppCompatActivity {
                     Uri resultUri = getContentResolver().insert(Contract.Habit.CONTENT_URI_HABIT, values);
                     if (resultUri != null) {
                         this.habitId = Integer.parseInt(resultUri.getLastPathSegment());
-                        if (!this.selectedDays.isEmpty()) {
-                            for (Integer dayId : this.selectedDays) {
+                        if (!this.adapter.getChosenDays().isEmpty()) {
+                            for (Integer dayId : this.adapter.getChosenDays()) {
                                 addHabitDay(habitId, dayId);
                             }
                         }
@@ -311,9 +327,10 @@ public class CreateHabitActivity extends AppCompatActivity {
                             // cancel alarm for reminder
                             if (deletedRowsReminder > 0) {
                                 Intent alarmIntent = new Intent(this, ReminderBroadcastReceiver.class);
-                                PendingIntent pendingIntent = PendingIntent.getBroadcast(this, cursor.getColumnIndex(Contract.HabitReminderConnection.COLUMN_REMINDER_ID), alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                                PendingIntent pendingIntent = PendingIntent.getBroadcast(this, cursor.getInt(cursor.getColumnIndex(Contract.HabitReminderConnection.COLUMN_REMINDER_ID)), alarmIntent, PendingIntent.FLAG_NO_CREATE);
                                 AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                                alarmManager.cancel(pendingIntent);
+                                if (alarmManager != null)
+                                    alarmManager.cancel(pendingIntent);
                             }
                         }
 
@@ -323,7 +340,7 @@ public class CreateHabitActivity extends AppCompatActivity {
                     int rowsUpdated = updateHabit(values);
 
                     if (rowsUpdated > 0) {
-                        if (!this.selectedDays.isEmpty()) {
+                        if (!this.adapter.getChosenDays().isEmpty()) {
                             updateDays();
                         } else if (!this.habit.getHabitDays().isEmpty()) {
                             for (HabitDayConnection conn : this.habit.getHabitDays())
@@ -336,7 +353,7 @@ public class CreateHabitActivity extends AppCompatActivity {
                 }
 
                 // if reminder exists
-                if (this.reminderTime != null || !this.reminderTime.trim().isEmpty()) {
+                if (this.reminderTime != null && !this.reminderTime.trim().isEmpty()) {
                     createReminder();
                 }
 
@@ -395,7 +412,7 @@ public class CreateHabitActivity extends AppCompatActivity {
      * Method for updating selected days
      */
     private void updateDays() {
-        for (Integer selectedDay : this.selectedDays) {
+        for (Integer selectedDay : this.adapter.getChosenDays()) {
             boolean found = false;
             for (HabitDayConnection conn : this.habit.getHabitDays()) {
                 if (conn.getHabitDayId() == selectedDay) {
@@ -411,7 +428,7 @@ public class CreateHabitActivity extends AppCompatActivity {
 
         for (HabitDayConnection conn : this.habit.getHabitDays()) {
             boolean found = false;
-            for (Integer selectedDay : this.selectedDays) {
+            for (Integer selectedDay : this.adapter.getChosenDays()) {
                 if (conn.getHabitDayId() == selectedDay) {
                     found = true;
                     break;
@@ -529,7 +546,6 @@ public class CreateHabitActivity extends AppCompatActivity {
     private ContentValues getHabitValues() {
         // creating content values <key,value> = <column,value>
         ContentValues values = new ContentValues();
-        this.selectedDays = new ArrayList<>();
         // setting habit title
         if (!this.titleHabit.getText().toString().trim().isEmpty())
             values.put(Contract.Habit.COLUMN_TITLE, this.titleHabit.getText().toString().trim());
@@ -544,36 +560,20 @@ public class CreateHabitActivity extends AppCompatActivity {
         }
 
         // checking if user choose specific days
-        if (this.frequencyRadioGroup.getCheckedRadioButtonId() == this.frequencyDaysButton.getId()) {
-            values.put(Contract.Habit.COLUMN_NUMBER_OF_DAYS, -1);
-            for (int i = 0; i < this.checkBoxesDaysList.size(); i++) {
-                if (this.checkBoxesDaysList.get(i).isChecked())
-                    this.selectedDays.add(i + 1);
+        if (this.frequencyRadioGroup.getCheckedRadioButtonId() == this.frequencyWeeksButton.getId()) {
+            if (this.chosenNumberOfWeeks != null) {
+                values.put(Contract.Habit.COLUMN_NUMBER_OF_DAYS, Integer.parseInt(this.chosenNumberOfWeeks.getText().toString().trim()));
+            } else {
+                // TODO: add message
+                return null;
+            }
+        } else {
+            if (this.adapter.getChosenDays().isEmpty()) {
+                return null;
+            } else {
+                values.put(Contract.Habit.COLUMN_NUMBER_OF_DAYS, -1);
             }
 
-        } else {
-            switch (this.numberOfDaysAWeekGroup.getCheckedRadioButtonId()) {
-                case R.id.oneWeek:
-                    values.put(Contract.Habit.COLUMN_NUMBER_OF_DAYS, 1);
-                    break;
-                case R.id.twoWeeks:
-                    values.put(Contract.Habit.COLUMN_NUMBER_OF_DAYS, 2);
-                    break;
-                case R.id.threeWeeks:
-                    values.put(Contract.Habit.COLUMN_NUMBER_OF_DAYS, 3);
-                    break;
-                case R.id.fourWeeks:
-                    values.put(Contract.Habit.COLUMN_NUMBER_OF_DAYS, 4);
-                    break;
-                case R.id.fiveWeeks:
-                    values.put(Contract.Habit.COLUMN_NUMBER_OF_DAYS, 5);
-                    break;
-                case R.id.sixWeeks:
-                    values.put(Contract.Habit.COLUMN_NUMBER_OF_DAYS, 6);
-                    break;
-                default:
-                    return null;
-            }
         }
 
         if (this.goalRadioGroup.getCheckedRadioButtonId() == this.goalAmountRadio.getId()) {
@@ -653,18 +653,21 @@ public class CreateHabitActivity extends AppCompatActivity {
      */
     public void createReminder() {
 
-        if (this.selectedDays.isEmpty()) {
+        String title = this.titleHabit.getText().toString().trim();
+        String description = (this.detailsHabit.getText() != null) ? this.detailsHabit.getText().toString().trim() : "Make sure you don't forget to let us know when you fulfill the habit";
+
+        if (this.adapter.getChosenDays().isEmpty()) {
             // TODO: add validation to check if reminder is really added to the db
             Uri uri = saveReminderDB();
             saveHabitReminderConnectionDB(Integer.parseInt(uri.getLastPathSegment()));
-            setAlarm(Integer.parseInt(uri.getLastPathSegment()), this.titleHabit.getText().toString().trim(), "Reminder", null);
+            setAlarm(Integer.parseInt(uri.getLastPathSegment()), description, title, null);
         } else {
             // create reminder for specific days
-            for (Integer day : this.selectedDays) {
+            for (Integer day : this.adapter.getChosenDays()) {
                 //set alarm
                 Uri uri = saveReminderDB();
                 saveHabitReminderConnectionDB(Integer.parseInt(uri.getLastPathSegment()));
-                setAlarm(Integer.parseInt(uri.getLastPathSegment()), this.titleHabit.getText().toString().trim(), "Reminder", day);
+                setAlarm(Integer.parseInt(uri.getLastPathSegment()), description, title, day);
             }
         }
     }
@@ -711,10 +714,19 @@ public class CreateHabitActivity extends AppCompatActivity {
 
             alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), 24 * 7 * 60 * 60 * 1000, pendingIntent);
         } else {
-            alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
+            alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, pendingIntent);
         }
 
 
+    }
+
+    public void setSelectedNumberOfWeeks(View view) {
+        if (this.chosenNumberOfWeeks != null) {
+            this.chosenNumberOfWeeks.setBackground(ContextCompat.getDrawable(this, R.drawable.circle_grey));
+        }
+
+        this.chosenNumberOfWeeks = (Button) view;
+        this.chosenNumberOfWeeks.setBackground(ContextCompat.getDrawable(this, R.drawable.circle_primary));
     }
 
 

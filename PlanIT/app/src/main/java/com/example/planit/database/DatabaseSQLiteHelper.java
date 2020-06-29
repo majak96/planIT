@@ -50,9 +50,7 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.Habit.COLUMN_TITLE + " text not null, "
             + Contract.Habit.COLUMN_DESCRIPTION + " text, "
             + Contract.Habit.COLUMN_GOAL + " integer default -1, "
-            + Contract.Habit.COLUMN_NUMBER_OF_DAYS + " integer default -1 , "
-            + Contract.Habit.COLUMN_REMINDER + " integer ,"
-            + " foreign key (" + Contract.Habit.COLUMN_REMINDER + ") references  "+ Contract.Reminder.TABLE_NAME + "(" + Contract.Reminder.COLUMN_ID + ") "
+            + Contract.Habit.COLUMN_NUMBER_OF_DAYS + " integer default -1 "
             + ");";
 
     private static final String TABLE_HABIT_DAY_CREATE = "create table "

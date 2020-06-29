@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -40,6 +41,7 @@ public class HabitDetailsActivity extends AppCompatActivity {
     private TextView titleView;
     private TextView descriptionView;
     private TextView habitNumberOfDaysTextView;
+    private TextView reminderTextView;
     private Switch switchDone;
     private Boolean changed;
 
@@ -59,6 +61,7 @@ public class HabitDetailsActivity extends AppCompatActivity {
         this.descriptionView = findViewById(R.id.habit_details_description);
         this.habitNumberOfDaysTextView = findViewById(R.id.habits_overview_recycle_view_num_days);
         this.switchDone = findViewById(R.id.habit_done);
+        this.reminderTextView = findViewById(R.id.reminder_habit_detail_time);
 
 
         this.intent = new Intent();
@@ -66,6 +69,7 @@ public class HabitDetailsActivity extends AppCompatActivity {
         // check if habit exists
         if (getIntent().hasExtra("habitId")) {
             this.habitId = getIntent().getIntExtra("habitId", -1);
+            Log.e("HABIT ID ", this.habitId.toString());
             this.index = getIntent().getIntExtra("index", -1);
             if (this.habitId != null && this.habitId != -1) {
                 // switch on checked listener
@@ -103,6 +107,21 @@ public class HabitDetailsActivity extends AppCompatActivity {
             this.titleView.setText(habit.getTitle());
             this.descriptionView.setText(habit.getDescription());
             this.habitNumberOfDaysTextView.setText(habit.getTotalNumberOfDays().toString());
+            Uri uriReminders = Uri.parse(Contract.HabitReminderConnection.CONTENT_URI_HABIT_REMINDER_CONN + "/" + Contract.Habit.TABLE_NAME + "/" + this.habitId);
+            Cursor cursorRemindersConnections = this.getContentResolver().query(uriReminders, null, null, null, null);
+            // check if a least one reminder is set for this habit
+            if (cursorRemindersConnections.moveToNext()) {
+                Uri uriReminder = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + cursorRemindersConnections.getInt(cursorRemindersConnections.getColumnIndex(Contract.HabitReminderConnection.COLUMN_REMINDER_ID)));
+                Cursor cursorReminder = this.getContentResolver().query(uriReminder, null, null, null, null);
+                // all reminders have the same time (only difference if a day) so one time is enough to set
+                if (cursorReminder.moveToNext()) {
+                    String reminderTime = cursorReminder.getString(cursorReminder.getColumnIndex(Contract.Reminder.COLUMN_DATE));
+                    reminderTextView.setText(reminderTime);
+                }
+                cursorReminder.close();
+            }
+            cursorRemindersConnections.close();
+
             this.switchDone.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
@@ -240,9 +259,11 @@ public class HabitDetailsActivity extends AppCompatActivity {
                 // cancel alarm for reminder
                 if (deletedRowsReminder > 0) {
                     Intent alarmIntent = new Intent(this, ReminderBroadcastReceiver.class);
-                    PendingIntent pendingIntent = PendingIntent.getBroadcast(this, cursor.getColumnIndex(Contract.HabitReminderConnection.COLUMN_REMINDER_ID), alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    PendingIntent pendingIntent = PendingIntent.getBroadcast(this, cursor.getInt(cursor.getColumnIndex(Contract.HabitReminderConnection.COLUMN_REMINDER_ID)), alarmIntent, PendingIntent.FLAG_NO_CREATE);
                     AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                    alarmManager.cancel(pendingIntent);
+                    Log.e("TAGIC", alarmIntent.toString());
+                    if(alarmManager!= null)
+                        alarmManager.cancel(pendingIntent);
                 }
             }
 

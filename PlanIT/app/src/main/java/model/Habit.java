@@ -11,20 +11,10 @@ public class Habit implements Serializable {
     private String description;
     private Integer goal;
     private Integer numberOfDays;
-    private Integer reminder;
     private Integer totalNumberOfDays;
     private List<HabitDayConnection> habitDays;
 
     public Habit() {
-        this.habitDays = new ArrayList<>();
-    }
-
-    public Habit(Integer id, String title, String description, Integer goal, Integer numberOfDays) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.goal = goal;
-        this.numberOfDays = numberOfDays;
         this.habitDays = new ArrayList<>();
     }
 
@@ -68,21 +58,11 @@ public class Habit implements Serializable {
         this.numberOfDays = numberOfDays;
     }
 
-    public Integer getReminder() {
-        return reminder;
-    }
-
-    public void setReminder(Integer reminder) {
-        this.reminder = reminder;
-    }
-
     public Integer getTotalNumberOfDays() {
         return totalNumberOfDays;
     }
 
-    public void setTotalNumberOfDays(Integer totalNumberOfDays) {
-        this.totalNumberOfDays = totalNumberOfDays;
-    }
+    public void setTotalNumberOfDays(Integer totalNumberOfDays) {this.totalNumberOfDays = totalNumberOfDays;}
 
     public List<HabitDayConnection> getHabitDays() {
         return habitDays;

@@ -60,20 +60,20 @@
                 android:textSize="16dp" />
 
             <RadioGroup xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/frequency_radio_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="15dp"
                 android:layout_marginTop="15dp"
-                android:orientation="vertical"
-                android:id="@+id/frequency_radio_group">
+                android:orientation="vertical">
 
                 <RadioButton
                     android:id="@+id/habit_create_daily"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:checked="true"
                     android:onClick="onRadioButtonFrequencyClicked"
                     android:text="@string/daily"
-                    android:checked="true"
                     android:textColor="@color/gray"
                     android:textSize="16dp" />
 
@@ -103,82 +103,24 @@
                     android:textColor="@color/black"
                     android:textSize="16dp" />
 
-
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_marginTop="15dp"
-                        android:orientation="horizontal">
-
-                        <CheckBox
-                            android:id="@+id/monday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="MON"
-                            android:textColor="@color/black"
-                            android:textSize="8dp"
-                            />
-
-                        <CheckBox
-                            android:id="@+id/tuesday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="TUE"
-                            android:textColor="@color/black"
-                            android:textSize="8dp"/>
-
-                        <CheckBox
-                            android:id="@+id/wednesday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="WED"
-                            android:textColor="@color/black"
-                            android:textSize="10dp"/>
-
-                        <CheckBox
-                            android:id="@+id/thursday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="THR"
-                            android:textColor="@color/black"
-                            android:textSize="8dp"
-                            />
-
-                        <CheckBox
-                            android:id="@+id/friday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="FRI"
-                            android:textColor="@color/black"
-                            android:textSize="8dp"/>
-
-                        <CheckBox
-                            android:id="@+id/saturday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="SAT"
-                            android:textColor="@color/black"
-                            android:textSize="8dp"/>
-
-                        <CheckBox
-                            android:id="@+id/sunday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="SUN"
-                            android:textColor="@color/black"
-                            android:textSize="8dp"/>
-
-                    </LinearLayout>
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/chosen_days_recycler_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginRight="6dp"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="6dp"
+                    android:scrollbars="horizontal" />
 
             </LinearLayout>
 
-
             <LinearLayout
                 android:id="@+id/habit_create_daily_pick_weeks"
+                android:layout_marginLeft="15dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="15dp"
                 android:orientation="vertical"
                 android:visibility="gone">
 
@@ -190,57 +132,83 @@
                     android:textColor="@color/black"
                     android:textSize="16dp" />
 
-                <RadioGroup
-                    android:id="@+id/number_of_days_a_week"
+                <GridLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
+                    android:layout_marginRight="6dp"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="6dp"
+                    android:columnCount="6"
+                    android:rowCount="1"
                     android:orientation="horizontal">
 
-                    <RadioButton
-                        android:id="@+id/oneWeek"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                    <Button
+                        android:id="@+id/one_week"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:layout_marginRight="7dp"
+                        android:background="@drawable/circle_grey"
+                        android:textColor="@color/white"
                         android:text="1"
-                        android:textSize="16dp" />
+                        android:onClick="setSelectedNumberOfWeeks"/>
 
-                    <RadioButton
-                        android:id="@+id/twoWeeks"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                    <Button
+                        android:id="@+id/two_weeks"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:layout_marginRight="7dp"
+                        android:background="@drawable/circle_grey"
+                        android:textColor="@color/white"
+                        android:layout_marginLeft="3dp"
                         android:text="2"
-                        android:textSize="16dp" />
+                        android:onClick="setSelectedNumberOfWeeks"/>
 
-                    <RadioButton
-                        android:id="@+id/threeWeeks"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                    <Button
+                        android:id="@+id/three_weeks"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:layout_marginRight="7dp"
+                        android:background="@drawable/circle_grey"
+                        android:textColor="@color/white"
+                        android:layout_marginLeft="3dp"
                         android:text="3"
-                        android:textSize="16dp" />
+                        android:onClick="setSelectedNumberOfWeeks"/>
 
-                    <RadioButton
-                        android:id="@+id/fourWeeks"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                    <Button
+                        android:id="@+id/four_weeks"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:layout_marginRight="7dp"
+                        android:background="@drawable/circle_grey"
+                        android:textColor="@color/white"
+                        android:layout_marginLeft="3dp"
                         android:text="4"
-                        android:textSize="16dp" />
+                        android:onClick="setSelectedNumberOfWeeks"/>
 
-                    <RadioButton
-                        android:id="@+id/fiveWeeks"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                    <Button
+                        android:id="@+id/five_weeks"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:layout_marginRight="7dp"
+                        android:background="@drawable/circle_grey"
+                        android:textColor="@color/white"
+                        android:layout_marginLeft="3dp"
                         android:text="5"
-                        android:textSize="16dp" />
+                        android:onClick="setSelectedNumberOfWeeks"/>
 
-                    <RadioButton
-                        android:id="@+id/sixWeeks"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                    <Button
+                        android:id="@+id/six_weeks"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:layout_marginRight="7dp"
+                        android:background="@drawable/circle_grey"
+                        android:textColor="@color/white"
+                        android:layout_marginLeft="3dp"
                         android:text="6"
-                        android:textSize="16dp" />
-                </RadioGroup>
-
+                        android:onClick="setSelectedNumberOfWeeks"/>
+                </GridLayout>
             </LinearLayout>
+
 
             <View
                 android:layout_width="match_parent"
@@ -269,10 +237,10 @@
                     android:id="@+id/habit_create_goal_all"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:checked="true"
                     android:onClick="onRadioButtonGoalClicked"
                     android:text="@string/achieve_all"
                     android:textColor="@color/gray"
-                    android:checked="true"
                     android:textSize="16dp" />
 
                 <RadioButton
@@ -329,26 +297,26 @@
 
                 <Button
                     android:id="@+id/reminder_button"
-                    android:layout_width="52dp"
-                    android:layout_height="52dp"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
                     android:layout_marginLeft="15dp"
                     android:layout_marginTop="15dp"
                     android:background="@drawable/ic_add"
                     android:backgroundTint="@color/colorPrimary"
                     android:textColor="@color/white"
-                    android:textSize="16dp" />
+                    android:textSize="14dp" />
 
                 <ImageButton
-                    android:visibility="gone"
                     android:id="@+id/remove_reminder"
-                    android:layout_marginTop="31dp"
                     android:layout_width="22dp"
                     android:layout_height="22dp"
-                    android:layout_marginRight="5dp"
+                    android:layout_alignParentRight="true"
                     android:layout_gravity="center_vertical"
+                    android:layout_marginTop="31dp"
+                    android:layout_marginRight="5dp"
                     android:background="@drawable/ic_close_darkgray"
                     android:onClick="removeReminder"
-                    android:layout_alignParentRight="true"/>
+                    android:visibility="gone" />
 
             </RelativeLayout>
 

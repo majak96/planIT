@@ -20,7 +20,6 @@ public final class Contract {
         public static final String COLUMN_DESCRIPTION = "description";
         public static final String COLUMN_GOAL = "goal";
         public static final String COLUMN_NUMBER_OF_DAYS = "number_of_days";
-        public static final String COLUMN_REMINDER = "reminder";
 
     }
 
