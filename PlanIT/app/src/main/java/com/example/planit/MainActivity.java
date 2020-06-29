@@ -26,12 +26,10 @@ import com.example.planit.fragments.HabitsOverviewFragment;
 import com.example.planit.fragments.TeamsOverviewFragment;
 import com.example.planit.utils.FragmentTransition;
 import com.example.planit.utils.SharedPreference;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -39,13 +37,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private static final String TAG = "MainActivity";
 
     private DrawerLayout drawer;
-    private GoogleSignInClient googleSignInClient;
     private NavigationView navigationView;
     private int currentMenuItem;
     private TextView loggedEmail;
     private TextView loggedName;
     private TextView loggedFirstChar;
     private LinearLayout profileLayout;
+    private FirebaseUser currentUser;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,11 +65,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         String page = getIntent().getStringExtra("page");
 
-        //google sign out
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
-        googleSignInClient = GoogleSignIn.getClient(this, gso);
+        mAuth = FirebaseAuth.getInstance();
+        currentUser = mAuth.getCurrentUser();
 
         if (SharedPreference.getLoggedEmail(MainActivity.this) == "") {
             startActivity(new Intent(MainActivity.this, SignInActivity.class));
@@ -122,6 +118,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     }
                 });
         */
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        if (currentUser == null) {
+            SharedPreference.setLoggedLastName(MainActivity.this, "");
+            SharedPreference.setLoggedColour(MainActivity.this, "");
+            SharedPreference.setLoggedName(MainActivity.this, "");
+            SharedPreference.setLoggedEmail(MainActivity.this, "");
+            startActivity(new Intent(MainActivity.this, SignInActivity.class));
+        }
     }
 
     @Override
@@ -182,18 +191,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void signOut() {
-        googleSignInClient.signOut().addOnCompleteListener(this, new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                SharedPreference.setLoggedEmail(getApplicationContext(), "");
-                SharedPreference.setLoggedName(getApplicationContext(), "");
-                SharedPreference.setLoggedColour(getApplicationContext(), "");
-                SharedPreference.setLoggedLastName(getApplicationContext(), "");
-                Intent intent = new Intent(MainActivity.this, SignInActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
-            }
-        });
+        SharedPreference.setLoggedEmail(getApplicationContext(), "");
+        SharedPreference.setLoggedName(getApplicationContext(), "");
+        SharedPreference.setLoggedColour(getApplicationContext(), "");
+        SharedPreference.setLoggedLastName(getApplicationContext(), "");
+        Intent intent = new Intent(MainActivity.this, SignInActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        FirebaseAuth.getInstance().signOut();
     }
 
     public Fragment getCurrentFragment() {
@@ -338,8 +343,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         if (requestCode == 6) {
             if (resultCode == Activity.RESULT_OK) {
-                Boolean deleted=data.getBooleanExtra("deleted", false);
-                if(deleted){
+                Boolean deleted = data.getBooleanExtra("deleted", false);
+                if (deleted) {
                     getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                     FragmentTransition.replaceFragment(this, TeamsOverviewFragment.newInstance(), R.id.fragment_container, true);
                 }

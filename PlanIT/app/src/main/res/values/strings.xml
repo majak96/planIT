@@ -15,6 +15,8 @@
     <string name="new_to_planit">New to PlanIT?</string>
     <string name="btn_logout_from_google">Logout from Google</string>
     <string name="sign_up_now">Sign up now</string>
+    <string name="client_id">91577892135-p36qm4qd9fcekf4s34uj1216bbspk873.apps.googleusercontent.com</string>
+    <string name="api_key">AIzaSyBlbKkcbMIjq7MfITxHbPxTt6TYCCUIFc8</string>
 
     <string name="sign_up">Sign up</string>
     <string name="sign_up_description">Hi there! Welcome to PlanIT.</string>

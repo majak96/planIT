@@ -1,8 +1,10 @@
 package com.example.planit.activities;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
@@ -26,10 +28,19 @@ import com.example.planit.utils.SharedPreference;
 import com.example.planit.utils.Utils;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.SignInButton;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -51,8 +62,11 @@ public class SignInActivity extends AppCompatActivity {
     private EditText email;
     private EditText password;
     private SignInButton googleSignInButton;
+    private FirebaseAuth mAuth;
     private GoogleSignInClient googleSignInClient;
     private static final int RC_SIGN_IN = 1;
+    private String tag = "SignInActivity";
+    private ProgressDialog loadingBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,12 +78,15 @@ public class SignInActivity extends AppCompatActivity {
         signUpLink = findViewById(R.id.signInLink);
         signInBtn = findViewById(R.id.signInButton);
 
-        //google sign in
+        loadingBar = new ProgressDialog(this);
+        mAuth = FirebaseAuth.getInstance();
         googleSignInButton = findViewById(R.id.googleSignInButton);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
+
         googleSignInClient = GoogleSignIn.getClient(this, gso);
 
         googleSignInButton.setOnClickListener(new View.OnClickListener() {
@@ -98,61 +115,85 @@ public class SignInActivity extends AppCompatActivity {
                     Toast t = Toast.makeText(SignInActivity.this, "You must enter valid email address!", Toast.LENGTH_SHORT);
                     t.show();
                 } else {
-                    LoginDTO loginDTO = new LoginDTO();
-                    loginDTO.setEmail(email.getText().toString());
-                    loginDTO.setPassword(password.getText().toString());
 
-                    AuthService apiService = ServiceUtils.getClient().create(AuthService.class);
-                    Call<ResponseBody> call = apiService.login(loginDTO);
-                    call.enqueue(new Callback<ResponseBody>() {
+                    loadingBar.setTitle("Sing in");
+                    loadingBar.setMessage("Pleas wait...");
+                    loadingBar.setCanceledOnTouchOutside(true);
+                    loadingBar.show();
 
-                        @Override
-                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    mAuth.signInWithEmailAndPassword(email.getText().toString(), password.getText().toString())
+                            .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                                @Override
+                                public void onComplete(@NonNull Task<AuthResult> task) {
+                                    if (task.isSuccessful()) {
+                                        LoginDTO loginDTO = new LoginDTO();
+                                        loginDTO.setEmail(email.getText().toString());
+                                        loginDTO.setPassword(password.getText().toString());
 
-                            String name = "";
-                            String lastName = "";
-                            String colour = "";
-                            String emailString = email.getText().toString();
-                            if (response.code() == 200) {
-                                String resStr = null;
-                                try {
-                                    resStr = response.body().string().toString();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
+                                        AuthService apiService = ServiceUtils.getClient().create(AuthService.class);
+                                        Call<ResponseBody> call = apiService.login(loginDTO);
+                                        call.enqueue(new Callback<ResponseBody>() {
+
+                                            @Override
+                                            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+
+                                                String name = "";
+                                                String lastName = "";
+                                                String colour = "";
+                                                String emailString = email.getText().toString();
+                                                if (response.code() == 200) {
+                                                    String resStr = null;
+                                                    try {
+                                                        resStr = response.body().string().toString();
+                                                    } catch (IOException e) {
+                                                        e.printStackTrace();
+                                                    }
+                                                    try {
+                                                        JSONObject json = new JSONObject(resStr);
+                                                        name = json.get("firstName").toString();
+                                                        lastName = json.get("lastName").toString();
+                                                        colour = json.get("colour").toString();
+                                                    } catch (JSONException e) {
+                                                        e.printStackTrace();
+                                                    }
+
+                                                    User newUser = new User(name, lastName, emailString);
+                                                    newUser.setColour(colour);
+                                                    createUser(newUser);
+
+                                                    SharedPreference.setLoggedEmail(getApplicationContext(), emailString);
+                                                    SharedPreference.setLoggedName(getApplicationContext(), name);
+                                                    SharedPreference.setLoggedLastName(getApplicationContext(), lastName);
+                                                    SharedPreference.setLoggedColour(getApplicationContext(), colour);
+
+                                                    Intent intent = new Intent(SignInActivity.this, MainActivity.class);
+
+                                                    loadingBar.dismiss();
+
+                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                                    startActivity(intent);
+
+                                                } else {
+                                                    loadingBar.dismiss();
+                                                    Toast t = Toast.makeText(SignInActivity.this, "Credentials does not match!", Toast.LENGTH_SHORT);
+                                                    t.show();
+                                                }
+                                            }
+
+                                            @Override
+                                            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                                                loadingBar.dismiss();
+                                                Log.e(tag, "Error in login");
+                                            }
+                                        });
+                                    } else {
+                                        loadingBar.dismiss();
+                                        Toast t = Toast.makeText(SignInActivity.this, "Credentials does not match!", Toast.LENGTH_SHORT);
+                                        t.show();
+                                    }
                                 }
-                                try {
-                                    JSONObject json = new JSONObject(resStr);
-                                    name = json.get("firstName").toString();
-                                    lastName = json.get("lastName").toString();
-                                    colour = json.get("colour").toString();
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
+                            });
 
-                                User newUser = new User(name, lastName, emailString);
-                                newUser.setColour(colour);
-                                createUser(newUser);
-
-                                SharedPreference.setLoggedEmail(getApplicationContext(), emailString);
-                                SharedPreference.setLoggedName(getApplicationContext(), name);
-                                SharedPreference.setLoggedLastName(getApplicationContext(), lastName);
-                                SharedPreference.setLoggedColour(getApplicationContext(), colour);
-
-                                Intent intent = new Intent(SignInActivity.this, MainActivity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                startActivity(intent);
-
-                            } else {
-                                Toast t = Toast.makeText(SignInActivity.this, "Credentials does not match!", Toast.LENGTH_SHORT);
-                                t.show();
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(Call<ResponseBody> call, Throwable t) {
-                            Log.e("tag", "Error in login");
-                        }
-                    });
                 }
             }
         });
@@ -164,9 +205,42 @@ public class SignInActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == RC_SIGN_IN) {
-            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            handleSignInResult(result);
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                Log.d(tag, "firebaseAuthWithGoogle:" + account.getId());
+                firebaseAuthWithGoogle(account.getIdToken(), data);
+            } catch (ApiException e) {
+                // Google Sign In failed, update UI appropriately
+                Log.w(tag, "Google sign in failed", e);
+            }
+
         }
+    }
+
+    private void firebaseAuthWithGoogle(String idToken, Intent data) {
+        AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
+        loadingBar.setTitle("Sing in");
+        loadingBar.setMessage("Pleas wait...");
+        loadingBar.setCanceledOnTouchOutside(true);
+        loadingBar.show();
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(tag, "signInWithCredential:success");
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+                            handleSignInResult(result);
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w(tag, "signInWithCredential:failure", task.getException());
+                            loadingBar.dismiss();
+                        }
+                    }
+                });
     }
 
     private void handleSignInResult(GoogleSignInResult result) {
@@ -196,8 +270,10 @@ public class SignInActivity extends AppCompatActivity {
                         SharedPreference.setLoggedColour(SignInActivity.this, colour);
                         SharedPreference.setLoggedName(SignInActivity.this, firstName);
                         SharedPreference.setLoggedLastName(SignInActivity.this, lastName);
+                        loadingBar.dismiss();
                         gotoHomePage();
                     } else {
+                        loadingBar.dismiss();
                         Toast t = Toast.makeText(SignInActivity.this, "An error occured!", Toast.LENGTH_SHORT);
                         t.show();
                     }
@@ -205,12 +281,14 @@ public class SignInActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    loadingBar.dismiss();
                     Log.e("tag", "Failed");
                 }
 
             });
 
         } else {
+            Log.e(tag, result.getStatus().toString());
             Toast.makeText(getApplicationContext(), "Sign in cancel", Toast.LENGTH_LONG).show();
         }
     }
