@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
 
     <application
         android:allowBackup="true"
@@ -86,6 +88,17 @@
             android:name="com.example.planit.database.LabelContentProvider"
             android:authorities="com.example.planit.LabelContentProvider"
             android:exported="false" />
+        <provider
+            android:name="com.example.planit.database.ReminderContentProvider"
+            android:authorities="com.example.planit.ReminderContentProvider"
+            android:exported="false" />
+
+        <receiver android:name="com.example.planit.broadcastReceivers.ReminderBroadcastReceiver"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"></action>
+            </intent-filter>
+        </receiver>
 
     </application>
 

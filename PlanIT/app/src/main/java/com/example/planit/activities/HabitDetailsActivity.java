@@ -1,6 +1,8 @@
 package com.example.planit.activities;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -19,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import com.example.planit.R;
+import com.example.planit.broadcastReceivers.ReminderBroadcastReceiver;
 import com.example.planit.database.Contract;
 
 import java.text.DateFormat;
@@ -60,7 +63,6 @@ public class HabitDetailsActivity extends AppCompatActivity {
 
         this.intent = new Intent();
         this.changed = false;
-
         // check if habit exists
         if (getIntent().hasExtra("habitId")) {
             this.habitId = getIntent().getIntExtra("habitId", -1);
@@ -189,6 +191,7 @@ public class HabitDetailsActivity extends AppCompatActivity {
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
                         //Yes button clicked
+
                         int deletedRows = deleteHabitFromDB();
 
                         if (deletedRows > 0) {
@@ -215,8 +218,8 @@ public class HabitDetailsActivity extends AppCompatActivity {
     }
 
     private int deleteHabitFromDB() {
-
         this.deleteHabitFulfillmentByHabit();
+        this.deleteAndCancelReminders();
 
         if (this.habit.getNumberOfDays() == null) {
             this.deleteHabitDays();
@@ -226,10 +229,48 @@ public class HabitDetailsActivity extends AppCompatActivity {
         return getContentResolver().delete(uri, null, null);
     }
 
+    private void deleteAndCancelReminders() {
+        Uri uri = Uri.parse(Contract.HabitReminderConnection.CONTENT_URI_HABIT_REMINDER_CONN + "/" + Contract.Habit.TABLE_NAME + "/" + this.habitId);
+        Cursor cursor = this.getContentResolver().query(uri, null, null, null, null);
+        if (cursor.getCount() > 0) {
+            //delete for reminder column all values
+            while (cursor.moveToNext()) {
+                int deletedRow = deleteHabitReminderConn(cursor.getInt(cursor.getColumnIndex(Contract.HabitReminderConnection.COLUMN_ID)));
+                int deletedRowsReminder = deleteHabitReminders(cursor.getInt(cursor.getColumnIndex(Contract.HabitReminderConnection.COLUMN_REMINDER_ID)));
+                // cancel alarm for reminder
+                if (deletedRowsReminder > 0) {
+                    Intent alarmIntent = new Intent(this, ReminderBroadcastReceiver.class);
+                    PendingIntent pendingIntent = PendingIntent.getBroadcast(this, cursor.getColumnIndex(Contract.HabitReminderConnection.COLUMN_REMINDER_ID), alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                    alarmManager.cancel(pendingIntent);
+                }
+            }
+
+            cursor.close();
+        }
+    }
+
     private void deleteHabitFulfillmentByHabit() {
         Uri uri = Uri.parse(Contract.HabitFulfillment.CONTENT_HABIT_FULFILLMENT + "/" + Contract.Habit.TABLE_NAME + "/" + habit.getId());
         getContentResolver().delete(uri, null, null);
     }
+
+    /**
+     * Method for deleting a reminder from db based on id
+     *
+     * @param reminderId reminder's identifier
+     * @return number of deleted rows
+     */
+    public int deleteHabitReminders(Integer reminderId) {
+        Uri uri = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + reminderId);
+        return getContentResolver().delete(uri, null, null);
+    }
+
+    public int deleteHabitReminderConn(Integer id) {
+        Uri uri = Uri.parse(Contract.HabitReminderConnection.CONTENT_URI_HABIT_REMINDER_CONN + "/" + id);
+        return getContentResolver().delete(uri, null, null);
+    }
+
 
     private void deleteHabitDays() {
         Uri uri = Uri.parse(Contract.HabitDayConnection.CONTENT_URI_HABIT_DAY_CONN + "/" + Contract.Habit.TABLE_NAME + "/" + habit.getId());

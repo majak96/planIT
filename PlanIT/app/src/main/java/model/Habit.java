@@ -1,7 +1,6 @@
 package model;
 
 import java.io.Serializable;
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +11,7 @@ public class Habit implements Serializable {
     private String description;
     private Integer goal;
     private Integer numberOfDays;
-    private Time reminder;
+    private Integer reminder;
     private Integer totalNumberOfDays;
     private List<HabitDayConnection> habitDays;
 
@@ -69,11 +68,11 @@ public class Habit implements Serializable {
         this.numberOfDays = numberOfDays;
     }
 
-    public Time getReminder() {
+    public Integer getReminder() {
         return reminder;
     }
 
-    public void setReminder(Time reminder) {
+    public void setReminder(Integer reminder) {
         this.reminder = reminder;
     }
 

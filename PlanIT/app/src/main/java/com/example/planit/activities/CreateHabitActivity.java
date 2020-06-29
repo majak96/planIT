@@ -1,6 +1,8 @@
 package com.example.planit.activities;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -8,6 +10,7 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -27,10 +30,9 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 
 import com.example.planit.R;
+import com.example.planit.broadcastReceivers.ReminderBroadcastReceiver;
 import com.example.planit.database.Contract;
 
-import java.sql.Time;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -69,14 +71,6 @@ public class CreateHabitActivity extends AppCompatActivity {
     private ImageButton removeReminderButton;
     private Button reminderButton;
 
-    private CheckBox mondayCheckBox;
-    private CheckBox tuesdayCheckBox;
-    private CheckBox wednesdayCheckBox;
-    private CheckBox thursdayCheckBox;
-    private CheckBox fridayCheckBox;
-    private CheckBox saturdayCheckBox;
-    private CheckBox sundayCheckBox;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,15 +99,6 @@ public class CreateHabitActivity extends AppCompatActivity {
         this.goalAmountRadio = findViewById(R.id.habit_create_goal_amount);
 
 
-        // getting checkboxes
-        this.mondayCheckBox = findViewById(R.id.monday);
-        this.tuesdayCheckBox = findViewById(R.id.tuesday);
-        this.wednesdayCheckBox = findViewById(R.id.wednesday);
-        this.thursdayCheckBox = findViewById(R.id.thursday);
-        this.fridayCheckBox = findViewById(R.id.friday);
-        this.saturdayCheckBox = findViewById(R.id.saturday);
-        this.sundayCheckBox = findViewById(R.id.sunday);
-
         //getting groups
         this.frequencyRadioGroup = findViewById(R.id.frequency_radio_group);
         this.goalRadioGroup = findViewById(R.id.goal_radio_group);
@@ -127,23 +112,40 @@ public class CreateHabitActivity extends AppCompatActivity {
         this.selectedDays = new ArrayList<>();
         this.checkBoxesDaysList = new ArrayList<>();
 
-        this.checkBoxesDaysList.add(this.mondayCheckBox);
-        this.checkBoxesDaysList.add(this.tuesdayCheckBox);
-        this.checkBoxesDaysList.add(this.wednesdayCheckBox);
-        this.checkBoxesDaysList.add(this.thursdayCheckBox);
-        this.checkBoxesDaysList.add(this.fridayCheckBox);
-        this.checkBoxesDaysList.add(this.saturdayCheckBox);
-        this.checkBoxesDaysList.add(this.sundayCheckBox);
+        // getting checkboxes
+        CheckBox mondayCheckBox = findViewById(R.id.monday);
+        CheckBox tuesdayCheckBox = findViewById(R.id.tuesday);
+        CheckBox wednesdayCheckBox = findViewById(R.id.wednesday);
+        CheckBox thursdayCheckBox = findViewById(R.id.thursday);
+        CheckBox fridayCheckBox= findViewById(R.id.friday);
+        CheckBox saturdayCheckBox= findViewById(R.id.saturday);
+        CheckBox sundayCheckBox= findViewById(R.id.sunday);
+
+        this.checkBoxesDaysList.add(mondayCheckBox);
+        this.checkBoxesDaysList.add(tuesdayCheckBox);
+        this.checkBoxesDaysList.add(wednesdayCheckBox);
+        this.checkBoxesDaysList.add(thursdayCheckBox);
+        this.checkBoxesDaysList.add(fridayCheckBox);
+        this.checkBoxesDaysList.add(saturdayCheckBox);
+        this.checkBoxesDaysList.add(sundayCheckBox);
 
         // Reminder Button Click Listener for opening TimePickerDialog
         this.reminderButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                // TODO Auto-generated method stub
                 Calendar currentTime = Calendar.getInstance();
-                int hour = currentTime.get(Calendar.HOUR_OF_DAY);
-                int minute = currentTime.get(Calendar.MINUTE);
+                int hour;
+                int minute;
+                if (reminderTime != null) {
+                    String[] parts = reminderTime.split(":");
+                    hour = Integer.parseInt(parts[0]);
+                    minute = Integer.parseInt(parts[1]);
+                } else {
+                    hour = currentTime.get(Calendar.HOUR_OF_DAY);
+                    minute = currentTime.get(Calendar.MINUTE);
+                }
+                Log.e("TIME IS" , reminderTime);
                 TimePickerDialog timePickerDialog;
                 timePickerDialog = new TimePickerDialog(CreateHabitActivity.this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
@@ -192,16 +194,6 @@ public class CreateHabitActivity extends AppCompatActivity {
             habit.setGoal(cursor.getInt(cursor.getColumnIndex(Contract.Habit.COLUMN_GOAL)));
             habit.setNumberOfDays(cursor.getInt(cursor.getColumnIndex(Contract.Habit.COLUMN_NUMBER_OF_DAYS)));
             habit.setDescription(description);
-            String time = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_REMINDER));
-
-            if (time != null) {
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
-                try {
-                    habit.setReminder(new Time(sdf.parse(time).getTime()));
-                } catch (Exception e) {
-                    // handle exception
-                }
-            }
 
             if (this.habit.getNumberOfDays() == -1) {
                 getHabitDays();
@@ -257,14 +249,23 @@ public class CreateHabitActivity extends AppCompatActivity {
             frequencyDaysButton.setTextColor(Color.rgb(142, 142, 142));
         }
 
-        if (this.habit.getReminder() != null) {
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
-            reminderButton.setText(sdf.format(this.habit.getReminder()));
-            reminderButton.setBackground(ContextCompat.getDrawable(CreateHabitActivity.this, R.drawable.circle_primary));
-            removeReminderButton.setVisibility(View.VISIBLE);
+
+        Uri uriReminders = Uri.parse(Contract.HabitReminderConnection.CONTENT_URI_HABIT_REMINDER_CONN + "/" + Contract.Habit.TABLE_NAME + "/" + this.habitId);
+        Cursor cursorRemindersConnections = this.getContentResolver().query(uriReminders, null, null, null, null);
+        // check if a least one reminder is set for this habit
+        if (cursorRemindersConnections.moveToNext()) {
+            Uri uriReminder = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + cursorRemindersConnections.getInt(cursorRemindersConnections.getColumnIndex(Contract.HabitReminderConnection.COLUMN_REMINDER_ID)));
+            Cursor cursorReminder = this.getContentResolver().query(uriReminder, null, null, null, null);
+            // all reminders have the same time (only difference if a day) so one time is enough to set
+            if (cursorReminder.moveToNext()) {
+                reminderTime = cursorReminder.getString(cursorReminder.getColumnIndex(Contract.Reminder.COLUMN_DATE));
+                reminderButton.setText(reminderTime);
+                reminderButton.setBackground(ContextCompat.getDrawable(CreateHabitActivity.this, R.drawable.circle_primary));
+                removeReminderButton.setVisibility(View.VISIBLE);
+            }
+            cursorReminder.close();
         }
-
-
+        cursorRemindersConnections.close();
 
     }
 
@@ -284,48 +285,111 @@ public class CreateHabitActivity extends AppCompatActivity {
                 if (values == null)
                     return false;
 
+                Intent intent = new Intent();
+
                 if (this.habit == null) {
                     Uri resultUri = getContentResolver().insert(Contract.Habit.CONTENT_URI_HABIT, values);
                     if (resultUri != null) {
-                        String habitId = resultUri.getLastPathSegment();
+                        this.habitId = Integer.parseInt(resultUri.getLastPathSegment());
                         if (!this.selectedDays.isEmpty()) {
                             for (Integer dayId : this.selectedDays) {
-                                addHabitDay(Integer.parseInt(habitId), dayId);
+                                addHabitDay(habitId, dayId);
                             }
-
                         }
-
                         Toast.makeText(this, R.string.habit_created, Toast.LENGTH_SHORT).show();
-
-                        Intent intent = new Intent();
-                        intent.putExtra("habitId", Integer.parseInt(habitId));
-                        setResult(Activity.RESULT_OK, intent);
-                        finish();
+                        intent.putExtra("habitId", habitId);
                     }
                 } else {
+                    //first delete all reminders connected to the habit
+                    Uri uri = Uri.parse(Contract.HabitReminderConnection.CONTENT_URI_HABIT_REMINDER_CONN + "/" + Contract.Habit.TABLE_NAME + "/" + this.habitId);
+                    Cursor cursor = this.getContentResolver().query(uri, null, null, null, null);
+                    if (cursor.getCount() > 0) {
+                        //delete for reminder column all values
+                        while (cursor.moveToNext()) {
+                            int deletedRow = deleteHabitReminderConn(cursor.getInt(cursor.getColumnIndex(Contract.HabitReminderConnection.COLUMN_ID)));
+                            int deletedRowsReminder = deleteHabitReminders(cursor.getInt(cursor.getColumnIndex(Contract.HabitReminderConnection.COLUMN_REMINDER_ID)));
+                            // cancel alarm for reminder
+                            if (deletedRowsReminder > 0) {
+                                Intent alarmIntent = new Intent(this, ReminderBroadcastReceiver.class);
+                                PendingIntent pendingIntent = PendingIntent.getBroadcast(this, cursor.getColumnIndex(Contract.HabitReminderConnection.COLUMN_REMINDER_ID), alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                                alarmManager.cancel(pendingIntent);
+                            }
+                        }
+
+                    }
+                    cursor.close();
+
                     int rowsUpdated = updateHabit(values);
 
                     if (rowsUpdated > 0) {
                         if (!this.selectedDays.isEmpty()) {
                             updateDays();
                         } else if (!this.habit.getHabitDays().isEmpty()) {
-                            for(HabitDayConnection conn : this.habit.getHabitDays())
+                            for (HabitDayConnection conn : this.habit.getHabitDays())
                                 this.deleteHabitDay(conn.getId());
                         }
 
                         Toast.makeText(this, "Habit updated", Toast.LENGTH_SHORT).show();
-
-                        Intent intent = new Intent();
                         intent.putExtra("updated", true);
-                        setResult(Activity.RESULT_OK, intent);
-                        finish();
                     }
                 }
+
+                // if reminder exists
+                if (this.reminderTime != null || !this.reminderTime.trim().isEmpty()) {
+                    createReminder();
+                }
+
+                setResult(Activity.RESULT_OK, intent);
+                finish();
 
                 break;
         }
         return super.onOptionsItemSelected(item);
     }
+
+    public int deleteHabitReminderConn(Integer id) {
+        Uri uri = Uri.parse(Contract.HabitReminderConnection.CONTENT_URI_HABIT_REMINDER_CONN + "/" + id);
+        return getContentResolver().delete(uri, null, null);
+    }
+
+    /**
+     * Method for saving a reminder to db
+     *
+     * @return Uri of the saved reminder
+     */
+    public Uri saveReminderDB() {
+        ContentValues contentValuesReminder = new ContentValues();
+        contentValuesReminder.put(Contract.Reminder.COLUMN_DATE, this.reminderTime);
+
+        return this.getContentResolver().insert(Contract.Reminder.CONTENT_URI_REMINDER, contentValuesReminder);
+    }
+
+    /**
+     * Method for saving habit-reminder connection in the db
+     *
+     * @param reminderId reminder's identifier
+     */
+    public void saveHabitReminderConnectionDB(Integer reminderId) {
+        ContentValues contentValuesReminder = new ContentValues();
+        contentValuesReminder.put(Contract.HabitReminderConnection.COLUMN_HABIT_ID, this.habitId);
+        contentValuesReminder.put(Contract.HabitReminderConnection.COLUMN_REMINDER_ID, reminderId);
+        this.getContentResolver().insert(Contract.HabitReminderConnection.CONTENT_URI_HABIT_REMINDER_CONN, contentValuesReminder);
+        return;
+    }
+
+
+    /**
+     * Method for deleting a reminder from db based on id
+     *
+     * @param reminderId reminder's identifier
+     * @return number of deleted rows
+     */
+    public int deleteHabitReminders(Integer reminderId) {
+        Uri uri = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + reminderId);
+        return getContentResolver().delete(uri, null, null);
+    }
+
 
     /**
      * Method for updating selected days
@@ -444,6 +508,11 @@ public class CreateHabitActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Method for removing chosen reminder from the UI
+     *
+     * @param view
+     */
     public void removeReminder(View view) {
         this.reminderTime = null;
         this.reminderButton.setText("");
@@ -526,13 +595,6 @@ public class CreateHabitActivity extends AppCompatActivity {
             values.put(Contract.Habit.COLUMN_GOAL, -1);
         }
 
-        // setting reminder
-        if (this.reminderTime == null || !this.reminderTime.trim().isEmpty()) {
-            values.put(Contract.Habit.COLUMN_REMINDER, this.reminderTime);
-        } else {
-            values.putNull(Contract.Habit.COLUMN_REMINDER);
-        }
-
         return values;
     }
 
@@ -551,6 +613,7 @@ public class CreateHabitActivity extends AppCompatActivity {
         Uri uri = getContentResolver().insert(Contract.HabitDayConnection.CONTENT_URI_HABIT_DAY_CONN, contentValues);
 
     }
+
 
     /**
      * Method for getting habit days from db
@@ -582,5 +645,77 @@ public class CreateHabitActivity extends AppCompatActivity {
         Uri uri = Uri.parse(Contract.HabitDayConnection.CONTENT_URI_HABIT_DAY_CONN + "/" + habitConnectionId);
         return getContentResolver().delete(uri, null, null);
     }
+
+    /**
+     * Method for creating and saving reminders in db
+     *
+     * @return
+     */
+    public void createReminder() {
+
+        if (this.selectedDays.isEmpty()) {
+            // TODO: add validation to check if reminder is really added to the db
+            Uri uri = saveReminderDB();
+            saveHabitReminderConnectionDB(Integer.parseInt(uri.getLastPathSegment()));
+            setAlarm(Integer.parseInt(uri.getLastPathSegment()), this.titleHabit.getText().toString().trim(), "Reminder", null);
+        } else {
+            // create reminder for specific days
+            for (Integer day : this.selectedDays) {
+                //set alarm
+                Uri uri = saveReminderDB();
+                saveHabitReminderConnectionDB(Integer.parseInt(uri.getLastPathSegment()));
+                setAlarm(Integer.parseInt(uri.getLastPathSegment()), this.titleHabit.getText().toString().trim(), "Reminder", day);
+            }
+        }
+    }
+
+    /**
+     * Method for setting an alarm for the reminder
+     *
+     * @param reminderId reminder's identifier in db
+     * @param message    message text for notification
+     * @param title      title for notification
+     * @param dayOfWeek  a specific day of a week (ex. Monday)
+     */
+    public void setAlarm(Integer reminderId, String message, String title, Integer dayOfWeek) {
+        Calendar currentTime = Calendar.getInstance();
+        Calendar calendar = Calendar.getInstance();
+        String[] parts = this.reminderTime.split(":");
+        // setting parameters based on user input
+        calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(parts[0]));
+        calendar.set(Calendar.MINUTE, Integer.parseInt(parts[1]));
+        calendar.set(Calendar.SECOND, 0);
+
+        Intent intent = new Intent(CreateHabitActivity.this, ReminderBroadcastReceiver.class);
+        intent.putExtra("message", message);
+        intent.putExtra("title", title);
+        intent.putExtra("habitId", habitId);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, reminderId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        if (dayOfWeek != null) {
+            calendar.set(Calendar.DAY_OF_WEEK, dayOfWeek);
+            if (currentTime.getTimeInMillis() < calendar.getTimeInMillis()) {
+                // nothing to do - time of alarm in the future
+            } else {
+                int dayDiffBetweenClosestFriday = (7 + calendar.get(Calendar.DAY_OF_WEEK) - currentTime.get(Calendar.DAY_OF_WEEK)) % 7;
+
+                if (dayDiffBetweenClosestFriday == 0) {
+                    // Today that day, but the time has passed, so schedule for the next week
+                    dayDiffBetweenClosestFriday = 7;
+                }
+
+                calendar.add(Calendar.DAY_OF_MONTH, dayDiffBetweenClosestFriday);
+            }
+
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), 24 * 7 * 60 * 60 * 1000, pendingIntent);
+        } else {
+            alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
+        }
+
+
+    }
+
 
 }
