@@ -26,6 +26,8 @@ import com.example.planit.database.Contract;
 import com.example.planit.service.ServiceUtils;
 import com.example.planit.service.TeamService;
 import com.example.planit.utils.SharedPreference;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,6 +54,7 @@ public class TeamMembersActivity extends AppCompatActivity {
     private String tag = "TeamMembersActivity";
     private Integer teamId;
     private Intent intent;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +66,7 @@ public class TeamMembersActivity extends AppCompatActivity {
         this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         this.getSupportActionBar().setDisplayShowHomeEnabled(true);
         this.getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
+        mAuth = FirebaseAuth.getInstance();
 
         if (getIntent().hasExtra("teamId")) {
             teamId = getIntent().getIntExtra("teamId", -1);
@@ -344,6 +348,11 @@ public class TeamMembersActivity extends AppCompatActivity {
         }
 
         Uri uri = getContentResolver().insert(Contract.Team.CONTENT_URI_TEAM, values);
+
+        if(uri!=null){
+            //subscribe on messages
+            FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid()+"-"+uri.getLastPathSegment());
+        }
 
         return uri;
     }

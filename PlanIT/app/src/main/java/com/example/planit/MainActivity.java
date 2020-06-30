@@ -2,7 +2,9 @@ package com.example.planit;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -20,6 +22,7 @@ import androidx.fragment.app.FragmentManager;
 import com.example.planit.activities.ProfileActivity;
 import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.SignInActivity;
+import com.example.planit.database.Contract;
 import com.example.planit.fragments.CalendarFragment;
 import com.example.planit.fragments.DailyPreviewFragment;
 import com.example.planit.fragments.HabitsOverviewFragment;
@@ -30,6 +33,11 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import model.Team;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -45,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private LinearLayout profileLayout;
     private FirebaseUser currentUser;
     private FirebaseAuth mAuth;
+    private List<Team> myTeams;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        myTeams = new ArrayList<>();
         drawer = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -118,8 +128,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     }
                 });
         */
-
-        FirebaseMessaging.getInstance().subscribeToTopic("chat");
+        getAllTeams();
+        for (Team team : myTeams) {
+            FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getId());
+        }
     }
 
     @Override
@@ -358,5 +370,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
+    private void getAllTeams() {
+
+        myTeams.clear();
+
+        Cursor cursor = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, null, null, null);
+
+        if (cursor.getCount() == 0) {
+            Log.i("MainActivity", "There are no teams");
+        } else {
+            while (cursor.moveToNext()) {
+                Team newTeam = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2));
+                this.myTeams.add(newTeam);
+            }
+        }
+
+        cursor.close();
+    }
 
 }

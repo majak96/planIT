@@ -1,30 +1,16 @@
 package model;
 
-public class Message {
-    private Integer id;
+public class MessageDTO {
+    private Long serverTeamId;
     private String message;
-    private User sender;
+    private String sender;
     private Long createdAt;
 
-    public Message(Integer id, String message, User sender, Long createdAt) {
-        this.id = id;
+    public MessageDTO(Long serverTeamId, String message, String sender, Long createdAt) {
+        this.serverTeamId = serverTeamId;
         this.message = message;
         this.sender = sender;
         this.createdAt = createdAt;
-    }
-
-    public Message(String message, User sender, Long createdAt) {
-        this.message = message;
-        this.sender = sender;
-        this.createdAt = createdAt;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
     }
 
     public String getMessage() {
@@ -35,11 +21,11 @@ public class Message {
         this.message = message;
     }
 
-    public User getSender() {
+    public String getSender() {
         return sender;
     }
 
-    public void setSender(User sender) {
+    public void setSender(String sender) {
         this.sender = sender;
     }
 
@@ -50,4 +36,13 @@ public class Message {
     public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
     }
+
+    public Long getServerTeamId() {
+        return serverTeamId;
+    }
+
+    public void setServerTeamId(Long serverTeamId) {
+        this.serverTeamId = serverTeamId;
+    }
+
 }

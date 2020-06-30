@@ -12,10 +12,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.example.planit.R;
 import com.example.planit.adapters.MessageListAdapter;
 import com.example.planit.database.Contract;
+import com.example.planit.service.ChatService;
+import com.example.planit.service.ServiceUtils;
 import com.example.planit.utils.SharedPreference;
 import com.example.planit.utils.Utils;
 import com.google.firebase.auth.FirebaseAuth;
@@ -23,11 +26,15 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import model.Message;
+import model.MessageDTO;
 import model.Team;
 import model.User;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -77,18 +84,33 @@ public class ChatActivity extends AppCompatActivity {
             if (loggedUser != null) {
                 Message newMessage = new Message(message, loggedUser, Utils.getCurrentDateTime());
                 if (addMessage(newMessage) != null) {
-                    messages.add(newMessage);
 
-                    HashMap <String, String> notification= new HashMap<>();
-                    notification.put("from", mAuth.getUid());
-                    notification.put("type", "message");
-                    for(User u : team.getUsers()){
-                        rootRef.child("Users").child(u.getFirebaseId()).push().setValue(notification);
-                    }
+                    MessageDTO messageDTO = new MessageDTO(team.getId().longValue(), message, loggedUser.getEmail(), newMessage.getCreatedAt());
 
-                    mMessageAdapter.notifyItemInserted(messages.size() + 1);
-                    messageText.getText().clear();
-                    mMessageRecycler.scrollToPosition(messages.size() - 1);
+                    ChatService apiService = ServiceUtils.getClient().create(ChatService.class);
+                    Call<ResponseBody> call = apiService.sendMessage(messageDTO);
+                    call.enqueue(new Callback<ResponseBody>() {
+
+                        @Override
+                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+
+                            if (response.code() == 200) {
+                                messages.add(newMessage);
+                                mMessageAdapter.notifyItemInserted(messages.size() + 1);
+                                messageText.getText().clear();
+                                mMessageRecycler.scrollToPosition(messages.size() - 1);
+                            } else {
+                                Toast t = Toast.makeText(ChatActivity.this, "Error in sending message!", Toast.LENGTH_SHORT);
+                                t.show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<ResponseBody> call, Throwable t) {
+                            Log.e(tag, "Error in login");
+                        }
+                    });
+
                 }
             } else {
                 Log.i(tag, "Can not find logged user!");
@@ -149,7 +171,7 @@ public class ChatActivity extends AppCompatActivity {
             Log.i(tag, "User does not exist!");
         } else {
             while (cursor.moveToNext()) {
-                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4),  cursor.getString(5));
+                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5));
             }
         }
 
