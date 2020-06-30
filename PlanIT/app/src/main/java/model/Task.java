@@ -15,20 +15,13 @@ public class Task {
     private Date reminderTime;
     private Boolean done;
     private TaskPriority priority;
+    private Integer team;
+    private Integer user;
 
     private List<Label> labels = new ArrayList<Label>();
 
     public Task(){
         this.done = false;
-    }
-
-    public Task(Integer id, String title, String description, Date startDate, Date startTime, Boolean done) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.startDate = startDate;
-        this.startTime = startTime;
-        this.done = done;
     }
 
     public String getTitle() {
@@ -109,6 +102,22 @@ public class Task {
 
     public void setReminderTime(Date reminderTime) {
         this.reminderTime = reminderTime;
+    }
+
+    public Integer getTeam() {
+        return team;
+    }
+
+    public void setTeam(Integer team) {
+        this.team = team;
+    }
+
+    public Integer getUser() {
+        return user;
+    }
+
+    public void setUser(Integer user) {
+        this.user = user;
     }
 
     @Override

@@ -44,6 +44,8 @@ import retrofit2.Response;
 
 public class TeamMembersActivity extends AppCompatActivity {
 
+    private static final String TAG = "TeamMembersActivity";
+
     private EditText newMember;
     private TeamMembersAdapter adapter;
     private ArrayList<User> users;
@@ -130,8 +132,8 @@ public class TeamMembersActivity extends AppCompatActivity {
                                     e.printStackTrace();
                                 }
 
-                                user = new User(name, lastName, colour);
-                                user.setEmail(teamUser);
+                                user = new User(name, lastName, teamUser);
+                                user.setColour(colour);
 
                                 Uri userUri = createUser(user);
                                 String id = userUri.getLastPathSegment();
