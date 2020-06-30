@@ -199,6 +199,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                 if (task == null) {
 
                     Uri reminderUri = null;
+
                     // create reminder
                     if (reminderTime != null) {
                         reminderUri = createReminder();
@@ -223,7 +224,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                         }
 
                         // setting alarm if reminder exists
-                        if (reminderUri != null) {
+                        if (reminderUri != null && (assignedMember == null || assignedMember.getId() == SharedPreference.getLoggedId(this) )) {
                             setAlarm(Integer.parseInt(reminderUri.getLastPathSegment()), Integer.parseInt(taskId));
                         }
 
@@ -259,13 +260,16 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                             updateReminder();
                         } else if (reminderId != null && reminderTime == null) {
                             //delete reminder from db
-                            deleteReminderAndCancelAlarms();
+                            deleteReminder();
                         }
 
-                        // set Alarm if reminder exists
-                        if (reminderTime != null) {
+                        // reminder should be set if it is a personal task or a team task with no assignee or a team task assigned to the logged user
+                        if (reminderTime != null && (assignedMember == null || assignedMember.getId() == SharedPreference.getLoggedId(this) )) {
                             Integer id = (reminderId == null) ? Integer.parseInt(reminderUri.getLastPathSegment()) : reminderId;
                             setAlarm(id, task.getId());
+                        // reminder should be canceled if other team member is assigned
+                        } else if(reminderTime != null && (task.getUser() == SharedPreference.getLoggedId(this) || task.getUser() == null) ) {
+                            cancelAlarm();
                         }
 
                         updateLabels();
@@ -926,20 +930,26 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
      *
      * @return true - indicates that the operation succeeded, false - operation failed
      */
-    public boolean deleteReminderAndCancelAlarms() {
+    public boolean deleteReminder() {
         Uri reminderUri = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + this.reminderId);
         int numberOfDeletedRows = getContentResolver().delete(reminderUri, null, null);
         //cancel reminder
         if (numberOfDeletedRows > 0) {
-            Intent alarmIntent = new Intent(this, ReminderBroadcastReceiver.class);
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, reminderId, alarmIntent, PendingIntent.FLAG_NO_CREATE);
-            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-            if (alarmManager != null && pendingIntent != null) {
-                alarmManager.cancel(pendingIntent);
-                return true;
-            }
+            return cancelAlarm();
 
         }
+        return false;
+    }
+
+    public boolean cancelAlarm(){
+        Intent alarmIntent = new Intent(this, ReminderBroadcastReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, reminderId, alarmIntent, PendingIntent.FLAG_NO_CREATE);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        if (alarmManager != null && pendingIntent != null) {
+            alarmManager.cancel(pendingIntent);
+            return true;
+        }
+
         return false;
     }
 }

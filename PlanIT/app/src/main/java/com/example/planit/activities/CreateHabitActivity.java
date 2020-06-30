@@ -698,18 +698,17 @@ public class CreateHabitActivity extends AppCompatActivity {
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
         if (dayOfWeek != null) {
-            calendar.set(Calendar.DAY_OF_WEEK, dayOfWeek);
+            calendar.set(Calendar.DAY_OF_WEEK, dayOfWeek + 1);
             if (currentTime.getTimeInMillis() < calendar.getTimeInMillis()) {
-                // nothing to do - time of alarm in the future
+                // nothing to do - time of alarm is in the future
             } else {
-                int dayDiffBetweenClosestFriday = (7 + calendar.get(Calendar.DAY_OF_WEEK) - currentTime.get(Calendar.DAY_OF_WEEK)) % 7;
-
-                if (dayDiffBetweenClosestFriday == 0) {
-                    // Today that day, but the time has passed, so schedule for the next week
-                    dayDiffBetweenClosestFriday = 7;
+                int dayDiffBetweenClosest = (7 + calendar.get(Calendar.DAY_OF_WEEK) - currentTime.get(Calendar.DAY_OF_WEEK)) % 7;
+                if (dayDiffBetweenClosest == 0) {
+                    // Today is that day, but the time has passed, so schedule for the next week
+                    dayDiffBetweenClosest = 7;
                 }
 
-                calendar.add(Calendar.DAY_OF_MONTH, dayDiffBetweenClosestFriday);
+                calendar.add(Calendar.DAY_OF_MONTH, dayDiffBetweenClosest);
             }
 
             alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), 24 * 7 * 60 * 60 * 1000, pendingIntent);
