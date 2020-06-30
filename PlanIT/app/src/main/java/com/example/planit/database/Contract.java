@@ -116,7 +116,7 @@ public final class Contract {
         public static final String COLUMN_PRIORITY = "priority";
         public static final String COLUMN_ADDRESS = "address";
         public static final String COLUMN_DONE = "done";
-        public static final String COLUMN_REMINDER = "reminder";
+        public static final String COLUMN_REMINDER_ID = "reminder_id";
 
     }
 

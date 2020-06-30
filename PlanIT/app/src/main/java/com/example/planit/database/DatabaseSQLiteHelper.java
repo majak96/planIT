@@ -94,8 +94,9 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.Task.COLUMN_START_TIME + " text, "
             + Contract.Task.COLUMN_PRIORITY + " text, "
             + Contract.Task.COLUMN_ADDRESS + " text, "
-            + Contract.Task.COLUMN_REMINDER + " text, "
-            + Contract.Task.COLUMN_DONE + " integer default 0"
+            + Contract.Task.COLUMN_REMINDER_ID + " integer, "
+            + Contract.Task.COLUMN_DONE + " integer default 0 ,"
+            + " foreign key (" + Contract.Task.COLUMN_REMINDER_ID + ") references  "+ Contract.Reminder.TABLE_NAME + "(" + Contract.Reminder.COLUMN_ID + ")"
             + ")";
 
     private static final String TABLE_LABEL_CREATE = "create table "
