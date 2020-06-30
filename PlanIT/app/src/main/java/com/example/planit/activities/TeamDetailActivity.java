@@ -152,7 +152,13 @@ public class TeamDetailActivity extends AppCompatActivity {
         Uri uri = Uri.parse(Contract.User.CONTENT_URI_USER + "/" + userId);
         Cursor cursor = getContentResolver().query(uri, null, null, null, null);
         if (cursor.moveToNext()) {
-            User user = new User(cursor.getInt(cursor.getColumnIndex(Contract.User.COLUMN_ID)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_EMAIL)));
+            Integer id = cursor.getInt(cursor.getColumnIndex(Contract.User.COLUMN_ID));
+            String email = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_EMAIL));
+            String name = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_NAME));
+            String lastName = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_LAST_NAME));
+            String colour = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_COLOUR));
+            String firebaseId = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_FIREBASE_ID));
+            User user = new User(id, email, name, lastName, colour, firebaseId);
             cursor.close();
             return user;
         }

@@ -18,11 +18,6 @@ public class User {
         this.email = email;
     }
 
-    public User(Integer id, String email) {
-        this.id = id;
-        this.email = email;
-    }
-
     public User(Integer id, String email, String name, String lastName, String colour, String firebaseId) {
         this.id = id;
         this.name = name;

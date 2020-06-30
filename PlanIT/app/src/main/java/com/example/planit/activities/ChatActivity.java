@@ -2,10 +2,15 @@ package com.example.planit.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -42,10 +47,11 @@ public class ChatActivity extends AppCompatActivity {
     private MessageListAdapter mMessageAdapter;
     private EditText messageText;
     private ArrayList<Message> messages;
-    private Team team;
+    private static Team team;
     private String tag = "ChatActivity";
     private DatabaseReference rootRef;
     private FirebaseAuth mAuth;
+    static boolean active = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,8 +80,45 @@ public class ChatActivity extends AppCompatActivity {
         mMessageRecycler.scrollToPosition(messages.size() - 1);
         ((LinearLayoutManager) mMessageRecycler.getLayoutManager()).setStackFromEnd(true);
         rootRef = FirebaseDatabase.getInstance().getReference();
-        mAuth = FirebaseAuth.getInstance();
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+                new IntentFilter("receive-message"));
     }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        active = true;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        active = false;
+    }
+
+    @Override
+    protected void onDestroy() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        super.onDestroy();
+    }
+
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String message = intent.getStringExtra("message");
+            Long time = intent.getLongExtra("time", 1);
+            String nameLastName = intent.getStringExtra("nemaLastname");
+
+            User user = findUserByNameLastName(nameLastName);
+
+            Message newMessage = new Message(message, user, time);
+            addMessage(newMessage);
+            messages.add(newMessage);
+            mMessageAdapter.notifyItemInserted(messages.size() + 1);
+            mMessageRecycler.scrollToPosition(messages.size() - 1);
+        }
+    };
 
     public void sendMessage(View view) {
         String message = messageText.getText().toString();
@@ -124,6 +167,12 @@ public class ChatActivity extends AppCompatActivity {
         return true;
     }
 
+    public static boolean isActive(Integer teamId) {
+        if (team != null && teamId == team.getId())
+            return active;
+        return false;
+    }
+
     //get team with the id from the database
     private Team getTeamFromDatabase(Integer teamId) {
         Uri taskUri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamId);
@@ -131,6 +180,8 @@ public class ChatActivity extends AppCompatActivity {
         Cursor cursor = getContentResolver().query(taskUri, null, null, null, null);
         cursor.moveToFirst();
 
+        Integer in = cursor.getInt(3);
+        Log.e("DEBUG ", in.toString());
         User creator = getUserFromDB(cursor.getInt(3));
         Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator);
 
@@ -149,7 +200,13 @@ public class ChatActivity extends AppCompatActivity {
         Uri uri = Uri.parse(Contract.User.CONTENT_URI_USER + "/" + userId);
         Cursor cursor = getContentResolver().query(uri, null, null, null, null);
         if (cursor.moveToNext()) {
-            User user = new User(cursor.getInt(cursor.getColumnIndex(Contract.User.COLUMN_ID)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_EMAIL)));
+            Integer id = cursor.getInt(cursor.getColumnIndex(Contract.User.COLUMN_ID));
+            String email = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_EMAIL));
+            String name = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_NAME));
+            String lastName = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_LAST_NAME));
+            String colour = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_COLOUR));
+            String firebaseId = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_FIREBASE_ID));
+            User user = new User(id, email, name, lastName, colour, firebaseId);
             cursor.close();
             return user;
         }
@@ -174,7 +231,30 @@ public class ChatActivity extends AppCompatActivity {
                 newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5));
             }
         }
+        cursor.close();
+        return newUser;
+    }
 
+    private User findUserByNameLastName(String nameLastName) {
+        User newUser = null;
+
+        String[] parts = nameLastName.split(" ");
+        String name = parts[0];
+        String lastName = parts[1];
+        String whereClause = "name = ? and last_name = ? ";
+        String[] whereArgs = new String[]{
+                name,
+                lastName
+        };
+        Cursor cursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, whereClause, whereArgs, null);
+
+        if (cursor.getCount() == 0) {
+            Log.i(tag, "User does not exist!");
+        } else {
+            while (cursor.moveToNext()) {
+                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5));
+            }
+        }
         cursor.close();
         return newUser;
     }
@@ -210,6 +290,7 @@ public class ChatActivity extends AppCompatActivity {
         cursor.close();
     }
 
+    //Save new message on local DB
     public Uri addMessage(Message message) {
         ContentValues values = new ContentValues();
 
