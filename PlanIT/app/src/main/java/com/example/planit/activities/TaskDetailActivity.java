@@ -276,6 +276,9 @@ public class TaskDetailActivity extends AppCompatActivity {
         return getContentResolver().delete(Contract.TaskLabel.CONTENT_URI_TASK_LABEL, selection, selectionArgs);
     }
 
+    /**
+     * Method for deleting reminder for db and canceling alarm
+     */
     private void deleteAndCancelReminders() {
         Uri reminderUri = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + this.reminderId);
         int numberOfDeletedRows = getContentResolver().delete(reminderUri, null, null);

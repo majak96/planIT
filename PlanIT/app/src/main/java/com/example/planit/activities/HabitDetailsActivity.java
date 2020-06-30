@@ -28,7 +28,6 @@ import com.example.planit.database.Contract;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 
 import model.Habit;
 
@@ -44,6 +43,8 @@ public class HabitDetailsActivity extends AppCompatActivity {
     private TextView reminderTextView;
     private Switch switchDone;
     private Boolean changed;
+
+    private DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 
 
     @Override
@@ -80,7 +81,6 @@ public class HabitDetailsActivity extends AppCompatActivity {
     }
 
     public int deleteTodayHabitFulfillment() {
-        DateFormat format = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
         String selection = Contract.HabitFulfillment.COLUMN_HABIT_ID + " = ? and " + Contract.HabitFulfillment.COLUMN_DATE + " = ?";
         String[] selectionArgs = new String[]{Integer.toString(habitId), format.format(new Date())};
 
@@ -88,7 +88,6 @@ public class HabitDetailsActivity extends AppCompatActivity {
     }
 
     public Uri addHabitFulfillment() {
-        DateFormat format = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
         ContentValues values = new ContentValues();
         values.put(Contract.HabitFulfillment.COLUMN_DATE, format.format(new Date()));
         values.put(Contract.HabitFulfillment.COLUMN_HABIT_ID, habitId);
@@ -130,6 +129,23 @@ public class HabitDetailsActivity extends AppCompatActivity {
                         if (resultUri != null) {
                             habit.setTotalNumberOfDays(habit.getTotalNumberOfDays() + 1);
                             changed = true;
+                            // if user goal is completed cancel remaining reminders
+                            if(habit.getGoal() != -1 && habit.getTotalNumberOfDays() + 1 > habit.getGoal()) {
+                                Uri uri = Uri.parse(Contract.HabitReminderConnection.CONTENT_URI_HABIT_REMINDER_CONN + "/" + Contract.Habit.TABLE_NAME + "/" + habitId);
+                                Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+                                if (cursor.getCount() > 0) {
+                                    // cancel remaining reminders
+                                    while (cursor.moveToNext()) {
+                                        Intent alarmIntent = new Intent(HabitDetailsActivity.this, ReminderBroadcastReceiver.class);
+                                        PendingIntent pendingIntent = PendingIntent.getBroadcast(HabitDetailsActivity.this, cursor.getInt(cursor.getColumnIndex(Contract.HabitReminderConnection.COLUMN_REMINDER_ID)), alarmIntent, PendingIntent.FLAG_NO_CREATE);
+                                        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                                        if (alarmManager != null)
+                                            alarmManager.cancel(pendingIntent);
+                                    }
+                                }
+                                cursor.close();
+                            }
+
                         } else {
                             switchDone.setChecked(false);
                         }
@@ -153,27 +169,33 @@ public class HabitDetailsActivity extends AppCompatActivity {
         Uri uri = Uri.parse(Contract.Habit.CONTENT_URI_HABIT + "/" + this.habitId);
         Cursor cursor = getContentResolver().query(uri, null, null, null, null);
         if (cursor.moveToNext()) {
+            habit = new Habit();
             Integer id = (Integer) cursor.getInt(cursor.getColumnIndex(Contract.Habit.COLUMN_ID));
             String title = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_TITLE));
             String description = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_DESCRIPTION));
+            Integer goal = cursor.getInt(cursor.getColumnIndex(Contract.Habit.COLUMN_GOAL));
             Uri uriFulfillment = Uri.parse(Contract.HabitFulfillment.CONTENT_HABIT_FULFILLMENT + "/" + Contract.Habit.TABLE_NAME + "/" + id);
             Cursor cursorFulfillment = getContentResolver().query(uriFulfillment, null, null, null, null);
-            if (cursorFulfillment.getCount() != 0)
-                while (cursorFulfillment.moveToNext()) {
-                    String dateString = cursorFulfillment.getString(cursorFulfillment.getColumnIndex(Contract.HabitFulfillment.COLUMN_DATE));
-                    DateFormat format = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
-                    if (dateString.toString().equals(format.format(new Date()))) {
-                        this.switchDone.setChecked(true);
-                        break;
-                    }
-                }
+            habit.setTotalNumberOfDays(cursorFulfillment.getCount());
+            cursorFulfillment.close();
 
-            habit = new Habit();
+            // check if habit is already fulfilled today
+            String today = format.format(new Date());
+            String selection = Contract.HabitFulfillment.COLUMN_HABIT_ID + " = ? and " + Contract.HabitFulfillment.COLUMN_DATE + "= ? ";
+            String[] selectionArgs = new String[]{habitId.toString(), today};
+
+            Cursor cursorFulfilledToday = getContentResolver().query(Contract.HabitFulfillment.CONTENT_HABIT_FULFILLMENT, null, selection, selectionArgs, null);
+            if (cursorFulfilledToday.getCount() > 0) {
+                this.switchDone.setChecked(true);
+            }
+            cursorFulfilledToday.close();
+
+
             habit.setId(id);
             habit.setTitle(title);
-            habit.setTotalNumberOfDays(cursorFulfillment.getCount());
             habit.setDescription(description);
-            cursorFulfillment.close();
+            habit.setGoal(goal);
+
         }
         cursor.close();
     }
@@ -261,8 +283,7 @@ public class HabitDetailsActivity extends AppCompatActivity {
                     Intent alarmIntent = new Intent(this, ReminderBroadcastReceiver.class);
                     PendingIntent pendingIntent = PendingIntent.getBroadcast(this, cursor.getInt(cursor.getColumnIndex(Contract.HabitReminderConnection.COLUMN_REMINDER_ID)), alarmIntent, PendingIntent.FLAG_NO_CREATE);
                     AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                    Log.e("TAGIC", alarmIntent.toString());
-                    if(alarmManager!= null)
+                    if (alarmManager != null)
                         alarmManager.cancel(pendingIntent);
                 }
             }

@@ -171,15 +171,12 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                 ContentValues values = getTaskValues();
 
                 if (task == null) {
-                    Uri reminderUri = null;
-                    //set the reminder
-                    if (reminderTime != null) {
-                        String timeString = timeFormat.format(reminderTime);
-                        ContentValues reminderValues = new ContentValues();
-                        reminderValues.put(Contract.Reminder.COLUMN_DATE, timeString);
-                        reminderUri = getContentResolver().insert(Contract.Reminder.CONTENT_URI_REMINDER, reminderValues);
 
-                        if(reminderUri!= null) {
+                    Uri reminderUri = null;
+                    // create reminder
+                    if (reminderTime != null) {
+                        reminderUri = createReminder();
+                        if (reminderUri != null) {
                             values.put(Contract.Task.COLUMN_REMINDER_ID, Integer.parseInt(reminderUri.getLastPathSegment()));
                         }
                     } else {
@@ -200,7 +197,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                         }
 
                         // setting alarm if reminder exists
-                        if(reminderUri != null) {
+                        if (reminderUri != null) {
                             setAlarm(Integer.parseInt(reminderUri.getLastPathSegment()), Integer.parseInt(taskId));
                         }
 
@@ -213,32 +210,15 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                         finish();
                     }
                 } else {
+
                     Uri reminderUri = null;
-                    // check if remainder used to exist but now doesn't exists
-                    if(reminderId != null && reminderTime == null) {
-                        //delete reminder from db
-                        reminderUri = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + this.reminderId);
-                        int numberOfDeletedRows = getContentResolver().delete(reminderUri,null,null);
-                        //cancel reminder
-                        if(numberOfDeletedRows > 0) {
-                            Intent alarmIntent = new Intent(this, ReminderBroadcastReceiver.class);
-                            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, reminderId, alarmIntent, PendingIntent.FLAG_NO_CREATE);
-                            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                            if (alarmManager != null && pendingIntent != null) {
-                                alarmManager.cancel(pendingIntent);
-                                values.putNull(Contract.Task.COLUMN_REMINDER_ID);
-                            }
-
-                        }
-                    //check if reminder didn't exist but now exists
-                    } else if(reminderId == null && reminderTime != null) {
-                        String timeString = timeFormat.format(reminderTime);
-                        // add reminder to the db
-                        ContentValues reminderValues = new ContentValues();
-                        reminderValues.put(Contract.Reminder.COLUMN_DATE, timeString);
-                        reminderUri = getContentResolver().insert(Contract.Reminder.CONTENT_URI_REMINDER, reminderValues);
-
-                        if(reminderUri!= null) {
+                    // check if reminder used to exist but now doesn't exists
+                    if (reminderId != null && reminderTime == null) {
+                        values.putNull(Contract.Task.COLUMN_REMINDER_ID);
+                        //check if reminder didn't exist but now exists
+                    } else if (reminderId == null && reminderTime != null) {
+                        reminderUri = createReminder();
+                        if (reminderUri != null) {
                             values.put(Contract.Task.COLUMN_REMINDER_ID, Integer.parseInt(reminderUri.getLastPathSegment()));
                         }
                     }
@@ -248,19 +228,19 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
 
                     if (rowsUpdated > 0) {
                         //if value for reminder needs to be updated in db
-                        if(reminderId != null && reminderTime != null) {
-                            Uri uri = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + reminderId);
-                            String timeString = timeFormat.format(reminderTime);
-                            ContentValues reminderValues = new ContentValues();
-                            reminderValues.put(Contract.Reminder.COLUMN_DATE, timeString);
-                            getContentResolver().update(uri, reminderValues,null,null);
+                        if (reminderId != null && reminderTime != null) {
+                            updateReminder();
+                        } else if (reminderId != null && reminderTime == null) {
+                            //delete reminder from db
+                            deleteReminderAndCancelAlarms();
                         }
 
                         // set Alarm if reminder exists
-                        if(reminderTime != null) {
-                            Integer id = (reminderId == null)? Integer.parseInt(reminderUri.getLastPathSegment()) : reminderId;
+                        if (reminderTime != null) {
+                            Integer id = (reminderId == null) ? Integer.parseInt(reminderUri.getLastPathSegment()) : reminderId;
                             setAlarm(id, task.getId());
                         }
+
                         updateLabels();
 
                         Toast.makeText(this, R.string.task_updated, Toast.LENGTH_SHORT).show();
@@ -268,7 +248,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                         Intent intent = new Intent();
                         intent.putExtra("updated", true);
 
-                        if(!startDate.equals(task.getStartDate())){
+                        if (!startDate.equals(task.getStartDate())) {
                             intent.putExtra("changed_date", true);
                         }
 
@@ -729,7 +709,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
             reminderId = cursor.getInt(8);
             Uri reminderUri = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + cursor.getInt(8));
             Cursor cursorReminder = getContentResolver().query(reminderUri, null, null, null, null);
-            if(cursorReminder.moveToNext()) {
+            if (cursorReminder.moveToNext()) {
                 try {
                     Date reminderTime = timeFormat.parse(cursorReminder.getString(cursorReminder.getColumnIndex(Contract.Reminder.COLUMN_DATE)));
                     task.setReminderTime(reminderTime);
@@ -780,10 +760,12 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
 
     /**
      * Method for setting alarm for task reminder
+     *
      * @param reminderId
      * @param taskId
      */
     public void setAlarm(Integer reminderId, Integer taskId) {
+        String details = (descriptionEditText.getText() == null)? "" : descriptionEditText.getText().toString().trim();
         Date date = this.startDate;
         date.setTime(this.reminderTime.getTime());
         Calendar currentTime = Calendar.getInstance();
@@ -792,12 +774,57 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         calendar.setTime(date);
 
         Intent intent = new Intent(this, ReminderBroadcastReceiver.class);
-        intent.putExtra("message", this.titleEditText.getText().toString().trim());
-        intent.putExtra("title", "Task Reminder");
-        intent.putExtra("taskId",taskId );
+        intent.putExtra("message", details);
+        intent.putExtra("title", "Don't forget: " + this.titleEditText.getText().toString().trim());
+        intent.putExtra("taskId", taskId);
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, reminderId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+    }
+
+    /**
+     * Method for creating a reminder in db
+     *
+     * @return Uri of created reminder
+     */
+    public Uri createReminder() {
+        String timeString = timeFormat.format(reminderTime);
+        ContentValues reminderValues = new ContentValues();
+        reminderValues.put(Contract.Reminder.COLUMN_DATE, timeString);
+        return getContentResolver().insert(Contract.Reminder.CONTENT_URI_REMINDER, reminderValues);
+    }
+
+    /**
+     * Method for updating reminder in db
+     */
+    public void updateReminder() {
+        Uri uri = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + reminderId);
+        String timeString = timeFormat.format(reminderTime);
+        ContentValues reminderValues = new ContentValues();
+        reminderValues.put(Contract.Reminder.COLUMN_DATE, timeString);
+        getContentResolver().update(uri, reminderValues, null, null);
+    }
+
+    /**
+     * Method for deleting reminder from db and canceling alarms
+     *
+     * @return true - indicates that the operation succeeded, false - operation failed
+     */
+    public boolean deleteReminderAndCancelAlarms() {
+        Uri reminderUri = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + this.reminderId);
+        int numberOfDeletedRows = getContentResolver().delete(reminderUri, null, null);
+        //cancel reminder
+        if (numberOfDeletedRows > 0) {
+            Intent alarmIntent = new Intent(this, ReminderBroadcastReceiver.class);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, reminderId, alarmIntent, PendingIntent.FLAG_NO_CREATE);
+            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+            if (alarmManager != null && pendingIntent != null) {
+                alarmManager.cancel(pendingIntent);
+                return true;
+            }
+
+        }
+        return false;
     }
 }
