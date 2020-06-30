@@ -1,6 +1,8 @@
 package com.example.planit.activities;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -27,6 +29,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.planit.R;
 import com.example.planit.adapters.TaskDetailAdapter;
+import com.example.planit.broadcastReceivers.ReminderBroadcastReceiver;
 import com.example.planit.database.Contract;
 
 import java.text.ParseException;
@@ -49,9 +52,10 @@ public class TaskDetailActivity extends AppCompatActivity {
     private Intent intent;
     private int taskPosition;
     private Integer taskId;
+    private Integer reminderId;
     private Boolean fromTeam;
-
     private RelativeLayout assignedMemberLayout;
+
 
     private CheckBox checkBox;
     private TextView title;
@@ -258,6 +262,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
+
                 //first remove task labels
                 deleteTaskLabelsFromDatabase(task.getId());
 
@@ -265,6 +270,10 @@ public class TaskDetailActivity extends AppCompatActivity {
                 int deletedRows = deleteTaskFromDatabase(task.getId());
 
                 if (deletedRows > 0) {
+                    //delete and cancel alarms
+                    if (reminderId != null) {
+                        deleteAndCancelReminders();
+                    }
                     intent.putExtra("deleted", true);
                     intent.putExtra("position", taskPosition);
 
@@ -309,6 +318,24 @@ public class TaskDetailActivity extends AppCompatActivity {
     }
 
     /**
+     * Method for deleting reminder for db and canceling alarm
+     */
+    private void deleteAndCancelReminders() {
+        Uri reminderUri = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + this.reminderId);
+        int numberOfDeletedRows = getContentResolver().delete(reminderUri, null, null);
+        //cancel reminder
+        if (numberOfDeletedRows > 0) {
+            Intent alarmIntent = new Intent(this, ReminderBroadcastReceiver.class);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, reminderId, alarmIntent, PendingIntent.FLAG_NO_CREATE);
+            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+            if (alarmManager != null && pendingIntent != null) {
+                alarmManager.cancel(pendingIntent);
+            }
+
+        }
+    }
+
+    /**
      * Updates the status of the task in the database
      *
      * @param id        of the task
@@ -334,7 +361,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + id);
 
         String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_DESCRIPTION, Contract.Task.COLUMN_START_DATE, Contract.Task.COLUMN_START_TIME,
-                Contract.Task.COLUMN_PRIORITY, Contract.Task.COLUMN_ADDRESS, Contract.Task.COLUMN_DONE, Contract.Task.COLUMN_REMINDER, Contract.Task.COLUMN_TEAM, Contract.Task.COLUMN_USER};
+                Contract.Task.COLUMN_PRIORITY, Contract.Task.COLUMN_ADDRESS, Contract.Task.COLUMN_DONE, Contract.Task.COLUMN_REMINDER_ID, Contract.Task.COLUMN_TEAM, Contract.Task.COLUMN_USER};
 
         Cursor cursor = getContentResolver().query(taskUri, allColumns, null, null, null);
         cursor.moveToFirst();
@@ -373,15 +400,21 @@ public class TaskDetailActivity extends AppCompatActivity {
         task.setAddress(cursor.getString(6));
         task.setDone(cursor.getInt(7) == 1);
 
-        if (cursor.getString(8) == null) {
+        if (cursor.isNull(8)) {
             task.setReminderTime(null);
         } else {
-            try {
-                Date reminderTime = timeFormat.parse(cursor.getString(8));
-                task.setReminderTime(reminderTime);
-            } catch (ParseException e) {
-                task.setReminderTime(null);
+            reminderId = cursor.getInt(8);
+            Uri reminderUri = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + cursor.getInt(8));
+            Cursor cursorReminder = getContentResolver().query(reminderUri, null, null, null, null);
+            if (cursorReminder.moveToNext()) {
+                try {
+                    Date reminderTime = timeFormat.parse(cursorReminder.getString(cursorReminder.getColumnIndex(Contract.Reminder.COLUMN_DATE)));
+                    task.setReminderTime(reminderTime);
+                } catch (ParseException e) {
+                    task.setReminderTime(null);
+                }
             }
+            cursorReminder.close();
         }
 
         if (!cursor.isNull(9)) {
