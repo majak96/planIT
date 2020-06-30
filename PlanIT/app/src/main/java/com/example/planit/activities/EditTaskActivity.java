@@ -892,6 +892,10 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         // setting parameters based on user input
         calendar.setTime(date);
 
+        if (currentTime.getTimeInMillis() > calendar.getTimeInMillis()) {
+            return;
+        }
+
         Intent intent = new Intent(this, ReminderBroadcastReceiver.class);
         intent.putExtra("message", details);
         intent.putExtra("title", "Don't forget: " + this.titleEditText.getText().toString().trim());
