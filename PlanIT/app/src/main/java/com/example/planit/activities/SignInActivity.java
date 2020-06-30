@@ -67,6 +67,7 @@ public class SignInActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 1;
     private String tag = "SignInActivity";
     private ProgressDialog loadingBar;
+    private String firebaseId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,6 +141,7 @@ public class SignInActivity extends AppCompatActivity {
                                                 String name = "";
                                                 String lastName = "";
                                                 String colour = "";
+                                                firebaseId = "";
                                                 String emailString = email.getText().toString();
                                                 if (response.code() == 200) {
                                                     String resStr = null;
@@ -153,11 +155,12 @@ public class SignInActivity extends AppCompatActivity {
                                                         name = json.get("firstName").toString();
                                                         lastName = json.get("lastName").toString();
                                                         colour = json.get("colour").toString();
+                                                        firebaseId = json.get("firebaseId").toString();
                                                     } catch (JSONException e) {
                                                         e.printStackTrace();
                                                     }
 
-                                                    User newUser = new User(name, lastName, emailString);
+                                                    User newUser = new User(name, lastName, emailString, firebaseId);
                                                     newUser.setColour(colour);
                                                     createUser(newUser);
 
@@ -252,7 +255,7 @@ public class SignInActivity extends AppCompatActivity {
             String firstName = parts[0];
             String lastName = parts[1];
 
-            RegisterDTO googleRegisterDTO = new RegisterDTO(email, null, firstName, lastName, colour);
+            RegisterDTO googleRegisterDTO = new RegisterDTO(email, null, firstName, lastName, colour, mAuth.getCurrentUser().getUid());
             AuthService apiService = ServiceUtils.getClient().create(AuthService.class);
             Call<ResponseBody> call = apiService.googleLogin(googleRegisterDTO);
             call.enqueue(new Callback<ResponseBody>() {
@@ -260,9 +263,10 @@ public class SignInActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 
+
                     if (response.code() == 200) {
 
-                        User newUser = new User(firstName, lastName, email);
+                        User newUser = new User(firstName, lastName, email, mAuth.getCurrentUser().getUid());
                         newUser.setColour(colour);
                         createUser(newUser);
 
@@ -327,6 +331,7 @@ public class SignInActivity extends AppCompatActivity {
         values.put(Contract.User.COLUMN_NAME, user.getName());
         values.put(Contract.User.COLUMN_LAST_NAME, user.getLastName());
         values.put(Contract.User.COLUMN_COLOUR, user.getColour());
+        values.put(Contract.User.COLUMN_FIREBASE_ID, user.getFirebaseId());
 
         Uri uri = getContentResolver().insert(Contract.User.CONTENT_URI_USER, values);
 

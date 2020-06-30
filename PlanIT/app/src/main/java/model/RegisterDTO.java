@@ -19,16 +19,20 @@ public class RegisterDTO {
     @SerializedName("colour")
     private String colour;
 
+    @SerializedName("firebaseId")
+    private String firebaseId;
+
     public RegisterDTO() {
 
     }
 
-    public RegisterDTO(String email, String password, String firstName, String lastName, String colour) {
+    public RegisterDTO(String email, String password, String firstName, String lastName, String colour, String firebaseId) {
         this.email = email;
         this.password = password;
         this.firstName = firstName;
         this.lastName = lastName;
         this.colour = colour;
+        this.firebaseId = firebaseId;
     }
 
     public String getColour() {
@@ -38,7 +42,6 @@ public class RegisterDTO {
     public void setColour(String colour) {
         this.colour = colour;
     }
-
 
     public String getPassword() {
         return password;
@@ -62,6 +65,14 @@ public class RegisterDTO {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public String getFirebaseId() {
+        return firebaseId;
+    }
+
+    public void setFirebaseId(String firebaseId) {
+        this.firebaseId = firebaseId;
     }
 
     public String getEmail() {

@@ -18,8 +18,12 @@ import com.example.planit.adapters.MessageListAdapter;
 import com.example.planit.database.Contract;
 import com.example.planit.utils.SharedPreference;
 import com.example.planit.utils.Utils;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import model.Message;
 import model.Team;
@@ -33,6 +37,8 @@ public class ChatActivity extends AppCompatActivity {
     private ArrayList<Message> messages;
     private Team team;
     private String tag = "ChatActivity";
+    private DatabaseReference rootRef;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +66,8 @@ public class ChatActivity extends AppCompatActivity {
         messageText = findViewById(R.id.message_text);
         mMessageRecycler.scrollToPosition(messages.size() - 1);
         ((LinearLayoutManager) mMessageRecycler.getLayoutManager()).setStackFromEnd(true);
+        rootRef = FirebaseDatabase.getInstance().getReference();
+        mAuth = FirebaseAuth.getInstance();
     }
 
     public void sendMessage(View view) {
@@ -70,6 +78,14 @@ public class ChatActivity extends AppCompatActivity {
                 Message newMessage = new Message(message, loggedUser, Utils.getCurrentDateTime());
                 if (addMessage(newMessage) != null) {
                     messages.add(newMessage);
+
+                    HashMap <String, String> notification= new HashMap<>();
+                    notification.put("from", mAuth.getUid());
+                    notification.put("type", "message");
+                    for(User u : team.getUsers()){
+                        rootRef.child("Users").child(u.getFirebaseId()).push().setValue(notification);
+                    }
+
                     mMessageAdapter.notifyItemInserted(messages.size() + 1);
                     messageText.getText().clear();
                     mMessageRecycler.scrollToPosition(messages.size() - 1);
@@ -133,7 +149,7 @@ public class ChatActivity extends AppCompatActivity {
             Log.i(tag, "User does not exist!");
         } else {
             while (cursor.moveToNext()) {
-                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4));
+                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4),  cursor.getString(5));
             }
         }
 

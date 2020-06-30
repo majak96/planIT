@@ -26,7 +26,8 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.User.COLUMN_EMAIL + " text , "
             + Contract.User.COLUMN_NAME + " text , "
             + Contract.User.COLUMN_LAST_NAME + " text , "
-            + Contract.User.COLUMN_COLOUR + " text "
+            + Contract.User.COLUMN_COLOUR + " text , "
+            + Contract.User.COLUMN_FIREBASE_ID + " text "
             + ")";
 
     private static final String TABLE_USER_TEAM_CONNECTION_CREATE = "create table "

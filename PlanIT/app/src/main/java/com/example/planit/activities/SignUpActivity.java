@@ -84,21 +84,22 @@ public class SignUpActivity extends AppCompatActivity {
                     loadingBar.setCanceledOnTouchOutside(true);
                     loadingBar.show();
 
-                    RegisterDTO registerDTO = new RegisterDTO(email.getText().toString(), password.getText().toString(), name.getText().toString(), lastName.getText().toString(), Utils.getRandomColor());
+                    mAuth.createUserWithEmailAndPassword(email.getText().toString(), password.getText().toString())
+                            .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                                @Override
+                                public void onComplete(@NonNull Task<AuthResult> task) {
+                                    if (task.isSuccessful()) {
 
-                    AuthService apiService = ServiceUtils.getClient().create(AuthService.class);
-                    Call<ResponseBody> call = apiService.register(registerDTO);
-                    call.enqueue(new Callback<ResponseBody>() {
+                                        RegisterDTO registerDTO = new RegisterDTO(email.getText().toString(), password.getText().toString(), name.getText().toString(), lastName.getText().toString(), Utils.getRandomColor(), mAuth.getCurrentUser().getUid());
 
-                        @Override
-                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                                        AuthService apiService = ServiceUtils.getClient().create(AuthService.class);
+                                        Call<ResponseBody> call = apiService.register(registerDTO);
+                                        call.enqueue(new Callback<ResponseBody>() {
 
-                            if (response.code() == 200) {
-                                mAuth.createUserWithEmailAndPassword(email.getText().toString(), password.getText().toString())
-                                        .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                                             @Override
-                                            public void onComplete(@NonNull Task<AuthResult> task) {
-                                                if (task.isSuccessful()) {
+                                            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+
+                                                if (response.code() == 200) {
                                                     Toast t = Toast.makeText(SignUpActivity.this, "Successfully registered!", Toast.LENGTH_SHORT);
                                                     t.show();
                                                     String currentUserId = mAuth.getCurrentUser().getUid();
@@ -107,29 +108,29 @@ public class SignUpActivity extends AppCompatActivity {
                                                     loadingBar.dismiss();
                                                     Intent intent = new Intent(SignUpActivity.this, SignInActivity.class);
                                                     startActivity(intent);
+
                                                 } else {
                                                     loadingBar.dismiss();
-                                                    Log.e(tag, "An error occurred");
+
+                                                    Toast t = Toast.makeText(SignUpActivity.this, "User with same email already exists!", Toast.LENGTH_SHORT);
+                                                    t.show();
                                                 }
                                             }
+
+                                            @Override
+                                            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                                                loadingBar.dismiss();
+                                                Log.e("tag", "Failed");
+                                            }
+
                                         });
 
-                            } else {
-                                loadingBar.dismiss();
-
-                                Toast t = Toast.makeText(SignUpActivity.this, "User with same email already exists!", Toast.LENGTH_SHORT);
-                                t.show();
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(Call<ResponseBody> call, Throwable t) {
-                            loadingBar.dismiss();
-                            Log.e("tag", "Failed");
-                        }
-
-                    });
-
+                                    } else {
+                                        loadingBar.dismiss();
+                                        Log.e(tag, "An error occurred");
+                                    }
+                                }
+                            });
                 }
             }
         });

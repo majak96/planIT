@@ -177,7 +177,8 @@ public class TeamDetailActivity extends AppCompatActivity {
                 String email = cursor.getString(2);
                 String colour = cursor.getString(3);
                 Integer id = cursor.getInt(4);
-                User newUser = new User(id, email, name, lastName, colour);
+                String firebaseId = cursor.getString(5);
+                User newUser = new User(id, email, name, lastName, colour, firebaseId);
                 users.add(newUser);
             }
         }

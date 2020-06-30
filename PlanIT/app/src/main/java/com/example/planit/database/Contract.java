@@ -73,6 +73,7 @@ public final class Contract {
         public static final String COLUMN_NAME = "name";
         public static final String COLUMN_LAST_NAME = "last_name";
         public static final String COLUMN_COLOUR = "colour";
+        public static final String COLUMN_FIREBASE_ID = "firebase_id";
 
     }
 

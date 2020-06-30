@@ -114,6 +114,7 @@ public class TeamMembersActivity extends AppCompatActivity {
                                 String name = "";
                                 String lastName = "";
                                 String colour = "";
+                                String firebaseId = "";
 
                                 String resStr = null;
                                 try {
@@ -126,11 +127,12 @@ public class TeamMembersActivity extends AppCompatActivity {
                                     name = json.get("name").toString();
                                     lastName = json.get("lastName").toString();
                                     colour = json.get("colour").toString();
+                                    firebaseId = json.get("firebaseId").toString();
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
 
-                                user = new User(name, lastName, colour);
+                                user = new User(name, lastName, colour, firebaseId);
                                 user.setEmail(teamUser);
 
                                 Uri userUri = createUser(user);
@@ -313,7 +315,7 @@ public class TeamMembersActivity extends AppCompatActivity {
             //TODO: do something when there's no data
         } else {
             while (cursor.moveToNext()) {
-                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4));
+                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5));
             }
         }
 
@@ -376,6 +378,7 @@ public class TeamMembersActivity extends AppCompatActivity {
         values.put(Contract.User.COLUMN_NAME, user.getName());
         values.put(Contract.User.COLUMN_LAST_NAME, user.getLastName());
         values.put(Contract.User.COLUMN_COLOUR, user.getColour());
+        values.put(Contract.User.COLUMN_FIREBASE_ID, user.getFirebaseId());
 
         Uri uri = getContentResolver().insert(Contract.User.CONTENT_URI_USER, values);
 
@@ -399,7 +402,8 @@ public class TeamMembersActivity extends AppCompatActivity {
                 String email = cursor.getString(2);
                 String colour = cursor.getString(3);
                 Integer id = cursor.getInt(4);
-                User newUser = new User(id, email, name, lastName, colour);
+                String firebaseId = cursor.getString(5);
+                User newUser = new User(id, email, name, lastName, colour, firebaseId);
                 users.add(newUser);
             }
         }

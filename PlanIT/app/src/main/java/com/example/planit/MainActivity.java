@@ -26,7 +26,7 @@ import com.example.planit.fragments.HabitsOverviewFragment;
 import com.example.planit.fragments.TeamsOverviewFragment;
 import com.example.planit.utils.FragmentTransition;
 import com.example.planit.utils.SharedPreference;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -118,6 +118,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     }
                 });
         */
+
+        FirebaseMessaging.getInstance().subscribeToTopic("chat");
     }
 
     @Override
