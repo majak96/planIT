@@ -28,7 +28,7 @@ public class User {
         this.lastName = lastName;
         this.colour = colour;
         this.email = email;
-        this.colour = Utils.getRandomColor();
+        this.colour = colour;
     }
 
     public User(String name, String lastName, String password, String username) {
@@ -36,14 +36,12 @@ public class User {
         this.lastName = lastName;
         this.password = password;
         this.email = username;
-        this.colour = Utils.getRandomColor();
     }
 
     public User(String name, String lastName, String email) {
         this.name = name;
         this.lastName = lastName;
         this.email = email;
-        this.colour = Utils.getRandomColor();
     }
 
     public String getName() {

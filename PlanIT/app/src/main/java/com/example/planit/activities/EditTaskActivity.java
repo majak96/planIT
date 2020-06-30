@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -32,10 +33,12 @@ import com.example.planit.R;
 import com.example.planit.adapters.EditTaskAdapter;
 import com.example.planit.broadcastReceivers.ReminderBroadcastReceiver;
 import com.example.planit.database.Contract;
+import com.example.planit.fragments.AssignedMemberDialogFragment;
 import com.example.planit.fragments.DateDialogFragment;
 import com.example.planit.fragments.LabelDialogFragment;
 import com.example.planit.fragments.PriorityDialogFragment;
 import com.example.planit.fragments.TaskReminderDialogFragment;
+import com.example.planit.utils.SharedPreference;
 import com.example.planit.utils.Utils;
 
 import java.text.ParseException;
@@ -48,14 +51,19 @@ import java.util.List;
 import model.Label;
 import model.Task;
 import model.TaskPriority;
+import model.User;
 
-public class EditTaskActivity extends AppCompatActivity implements TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener, PriorityDialogFragment.PriorityDialogListener, LabelDialogFragment.LabelDialogListener {
+public class EditTaskActivity extends AppCompatActivity implements TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener, PriorityDialogFragment.PriorityDialogListener, LabelDialogFragment.LabelDialogListener, AssignedMemberDialogFragment.AssignedMemberDialogListener {
 
     private static final String TAG = "EditTaskActivity";
+
+    private Boolean fromTeam;
 
     private int selectedPriority;
 
     private EditTaskAdapter adapter;
+
+    private RelativeLayout assignedMemberLayout;
 
     private EditText titleEditText;
     private EditText descriptionEditText;
@@ -64,22 +72,26 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     private TextView timeTextView;
     private TextView priorityTextView;
     private TextView labelTextView;
+    private TextView assignedMemberTextView;
     private EditText locationEditText;
 
     private ImageButton removeReminderImageButton;
     private ImageButton removeTimeImageButton;
     private ImageButton removePriorityImageButton;
+    private ImageButton removeAssignedMemberImageButton;
 
     private Date startDate;
+    private Integer teamId;
     private Date startTime;
     private Date reminderTime;
     private TaskPriority taskPriority;
+    private User assignedMember;
 
     private SimpleDateFormat viewDateFormat = new SimpleDateFormat("E, MMMM dd, YYYY");
     private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
     private SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    Task task;
+    private Task task;
     private List<Label> labels = new ArrayList<>();
     private Integer reminderId;
 
@@ -87,12 +99,14 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_edittask);
+        setContentView(R.layout.activity_edit_task);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        assignedMemberLayout = findViewById(R.id.assigned_member_layout);
 
         titleEditText = findViewById(R.id.title_create_task);
         descriptionEditText = findViewById(R.id.description_create_task);
@@ -102,13 +116,25 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         timeTextView = findViewById(R.id.time_create_task);
         locationEditText = findViewById(R.id.location_create_task);
         labelTextView = findViewById(R.id.label_create_task);
+        assignedMemberTextView = findViewById(R.id.assigned_member_create_task);
 
         removeReminderImageButton = findViewById(R.id.reminder_remove);
         removeTimeImageButton = findViewById(R.id.time_remove);
         removePriorityImageButton = findViewById(R.id.priority_remove);
+        removeAssignedMemberImageButton = findViewById(R.id.assigned_member_remove);
 
         //set focus to title
         titleEditText.requestFocus();
+
+        teamId = getIntent().getIntExtra("team", -1);
+        if (teamId == -1) {
+            teamId = null;
+        }
+        else {
+            assignedMemberLayout.setVisibility(View.VISIBLE);
+        }
+
+        fromTeam = getIntent().getBooleanExtra("from_team", false);
 
         //if this is edit - get the task
         if (getIntent().hasExtra("task")) {
@@ -205,6 +231,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
 
                         Intent intent = new Intent();
                         intent.putExtra("date", startDate.getTime());
+                        intent.putExtra("team", teamId);
 
                         setResult(Activity.RESULT_OK, intent);
                         finish();
@@ -248,6 +275,13 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                         Intent intent = new Intent();
                         intent.putExtra("updated", true);
 
+                        //if assigned team task changed assigned member -> task must be "removed" from daily preview
+                        Integer loggedId = SharedPreference.getLoggedId(this);
+                        if(!fromTeam && task.getUser() != null && (assignedMember == null || assignedMember.getId() != loggedId)){
+                            intent.putExtra("deleted", true);
+                        }
+
+                      
                         if (!startDate.equals(task.getStartDate())) {
                             intent.putExtra("changed_date", true);
                         }
@@ -311,6 +345,14 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
             reminderTextView.setTextColor(getResources().getColor(R.color.darkGray));
 
             removeReminderImageButton.setVisibility(View.VISIBLE);
+        }
+
+        //set task member
+        if (assignedMember != null) {
+            assignedMemberTextView.setText(assignedMember.getName() + " " + assignedMember.getLastName());
+            assignedMemberTextView.setTextColor(getResources().getColor(R.color.darkGray));
+
+            removeAssignedMemberImageButton.setVisibility(View.VISIBLE);
         }
 
         //set task priority
@@ -387,6 +429,15 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         labelDialogFragment.show(getSupportFragmentManager(), "New label dialog");
     }
 
+    public void openAssignDialog(View v) {
+        Integer assignedMemberId = assignedMember != null ? assignedMember.getId() : null;
+
+        DialogFragment assignedMemberDialogFragment = AssignedMemberDialogFragment.newInstance(teamId, assignedMemberId);
+        assignedMemberDialogFragment.setCancelable(true);
+
+        assignedMemberDialogFragment.show(getSupportFragmentManager(), "Task assigned member dialog");
+    }
+
     @Override
     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
         Calendar calendar = Calendar.getInstance();
@@ -417,7 +468,6 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
 
         dateTextView.setText(dateString);
     }
-
 
     @Override
     public void setPriority(String[] choices, Integer position) {
@@ -472,6 +522,16 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         adapter.notifyItemInserted(labels.size() - 1);
     }
 
+    @Override
+    public void addAssignedMember(User user) {
+        assignedMember = user;
+
+        assignedMemberTextView.setText(user.getName() + " " + user.getLastName());
+        assignedMemberTextView.setTextColor(getResources().getColor(R.color.darkGray));
+
+        removeAssignedMemberImageButton.setVisibility(View.VISIBLE);
+    }
+
     public void clearTime(View view) {
         timeTextView.setText(R.string.add_time);
         timeTextView.setTextColor(getResources().getColor(R.color.gray));
@@ -502,6 +562,16 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         view.setVisibility(View.GONE);
 
         selectedPriority = 0;
+    }
+
+    public void clearAssignedMember(View view) {
+        assignedMemberTextView.setText(R.string.add_assigned_member);
+        assignedMemberTextView.setTextColor(getResources().getColor(R.color.gray));
+
+        //set the variable that keeps the assigned member
+        assignedMember = null;
+
+        view.setVisibility(View.GONE);
     }
 
     /**
@@ -548,6 +618,18 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
             values.putNull(Contract.Task.COLUMN_ADDRESS);
         }
 
+        if (teamId != null) {
+            values.put(Contract.Task.COLUMN_TEAM, teamId);
+        } else {
+            values.putNull(Contract.Task.COLUMN_TEAM);
+        }
+
+        if (assignedMember != null) {
+            values.put(Contract.Task.COLUMN_USER, assignedMember.getId());
+        } else {
+            values.putNull(Contract.Task.COLUMN_USER);
+        }
+
         return values;
     }
 
@@ -565,7 +647,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     /**
      * Updates the task in the database
      *
-     * @param values of updated task properies
+     * @param values of updated task properties
      * @return number of updated rows in the database
      */
     public int updateTask(ContentValues values) {
@@ -581,10 +663,10 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     /**
      * Adds a new label or an existing label to the task
      *
-     * @param label
-     * @param taskId
+     * @param label that is being added to the task
+     * @param id    of the task
      */
-    public void createLabel(Label label, Integer taskId) {
+    public void createLabel(Label label, Integer id) {
         //if the label doesn't exist yet
         if (label.getId() == null) {
             ContentValues labelValues = new ContentValues();
@@ -604,7 +686,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
 
                 //set the label and the task
                 taskLabelValues.put(Contract.TaskLabel.COLUMN_LABEL, labelId);
-                taskLabelValues.put(Contract.TaskLabel.COLUMN_TASK, taskId);
+                taskLabelValues.put(Contract.TaskLabel.COLUMN_TASK, id);
 
                 Uri taskLabelUri = getContentResolver().insert(Contract.TaskLabel.CONTENT_URI_TASK_LABEL, taskLabelValues);
             }
@@ -615,7 +697,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
 
             //set the label and the task
             taskLabelValues.put(Contract.TaskLabel.COLUMN_LABEL, labelId);
-            taskLabelValues.put(Contract.TaskLabel.COLUMN_TASK, taskId);
+            taskLabelValues.put(Contract.TaskLabel.COLUMN_TASK, id);
 
             Uri taskLabelUri = getContentResolver().insert(Contract.TaskLabel.CONTENT_URI_TASK_LABEL, taskLabelValues);
         }
@@ -624,13 +706,13 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     /**
      * Removes the label from the task
      *
-     * @param label
-     * @param taskId
+     * @param label that is being remove from the task
+     * @param id    of the task
      * @return number of deleted rows
      */
-    public int deleteLabel(Label label, Integer taskId) {
+    public int deleteLabel(Label label, Integer id) {
         String selection = "label = ? and task = ?";
-        String[] selectionArgs = new String[]{Integer.toString(label.getId()), Integer.toString(taskId)};
+        String[] selectionArgs = new String[]{Integer.toString(label.getId()), Integer.toString(id)};
 
         return getContentResolver().delete(Contract.TaskLabel.CONTENT_URI_TASK_LABEL, selection, selectionArgs);
     }
@@ -657,14 +739,15 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     /**
      * Gets task from the database
      *
-     * @param taskId
+     * @param id of the task
      * @return the task
      */
-    private Task getTaskFromDatabase(Integer taskId) {
-        Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
+    private Task getTaskFromDatabase(Integer id) {
+        Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + id);
 
         String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_DESCRIPTION, Contract.Task.COLUMN_START_DATE,
-                Contract.Task.COLUMN_START_TIME, Contract.Task.COLUMN_PRIORITY, Contract.Task.COLUMN_ADDRESS, Contract.Task.COLUMN_DONE, Contract.Task.COLUMN_REMINDER_ID};
+                Contract.Task.COLUMN_START_TIME, Contract.Task.COLUMN_PRIORITY, Contract.Task.COLUMN_ADDRESS, Contract.Task.COLUMN_DONE, Contract.Task.COLUMN_REMINDER_ID, Contract.Task.COLUMN_USER};
+
 
         Cursor cursor = getContentResolver().query(taskUri, allColumns, null, null, null);
         cursor.moveToFirst();
@@ -720,21 +803,53 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
             cursorReminder.close();
         }
 
+        if (!cursor.isNull(9)) {
+            Integer userId = cursor.getInt(9);
+            assignedMember = getUserFromDatabase(userId);
+            task.setUser(userId);
+        }
+
         cursor.close();
 
         return task;
     }
 
     /**
+     * Gets user from the database
+     *
+     * @param id of the user
+     * @return user with the id
+     */
+    private User getUserFromDatabase(Integer id) {
+        Uri userUri = Uri.parse(Contract.User.CONTENT_URI_USER + "/" + id);
+
+        String[] allColumns = {Contract.User.COLUMN_ID, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_COLOUR};
+
+        Cursor cursor = getContentResolver().query(userUri, allColumns, null, null, null);
+        cursor.moveToFirst();
+
+        Integer userId = cursor.getInt(0);
+        String name = cursor.getString(2);
+        String lastName = cursor.getString(3);
+        String email = cursor.getString(1);
+        String colour = cursor.getString(4);
+        User user = new User(userId, email, name, lastName, colour);
+
+        cursor.close();
+
+        return user;
+    }
+
+    /**
      * Gets labels of the task from the database
      *
-     * @param taskId
+     * @param id of the task
      * @return list of labels
      */
-    private List<Label> getTaskLabelsFromDatabase(Integer taskId) {
+    private List<Label> getTaskLabelsFromDatabase(Integer id) {
         List<Label> taskLabels = new ArrayList<>();
 
-        Uri taskLabelsUri = Uri.parse(Contract.Label.CONTENT_URI_LABEL_TASK + "/" + taskId);
+        Uri taskLabelsUri = Uri.parse(Contract.Label.CONTENT_URI_LABEL_TASK + "/" + id);
 
         String[] allColumns = {Contract.Label.COLUMN_ID, Contract.Label.COLUMN_NAME, Contract.Label.COLUMN_COLOR};
 

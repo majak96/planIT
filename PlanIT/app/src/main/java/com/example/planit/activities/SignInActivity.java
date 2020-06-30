@@ -131,8 +131,10 @@ public class SignInActivity extends AppCompatActivity {
 
                                 User newUser = new User(name, lastName, emailString);
                                 newUser.setColour(colour);
-                                createUser(newUser);
+                                Uri uri = createUser(newUser);
+                                String id = uri.getLastPathSegment();
 
+                                SharedPreference.setLoggedId(SignInActivity.this, Integer.parseInt(id));
                                 SharedPreference.setLoggedEmail(getApplicationContext(), emailString);
                                 SharedPreference.setLoggedName(getApplicationContext(), name);
                                 SharedPreference.setLoggedLastName(getApplicationContext(), lastName);
@@ -190,12 +192,15 @@ public class SignInActivity extends AppCompatActivity {
 
                         User newUser = new User(firstName, lastName, email);
                         newUser.setColour(colour);
-                        createUser(newUser);
+                        Uri uri = createUser(newUser);
+                        String id = uri.getLastPathSegment();
 
+                        SharedPreference.setLoggedId(SignInActivity.this, Integer.parseInt(id));
                         SharedPreference.setLoggedEmail(SignInActivity.this, email);
                         SharedPreference.setLoggedColour(SignInActivity.this, colour);
                         SharedPreference.setLoggedName(SignInActivity.this, firstName);
                         SharedPreference.setLoggedLastName(SignInActivity.this, lastName);
+
                         gotoHomePage();
                     } else {
                         Toast t = Toast.makeText(SignInActivity.this, "An error occured!", Toast.LENGTH_SHORT);

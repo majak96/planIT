@@ -9,12 +9,15 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,6 +41,7 @@ import java.util.List;
 import model.Label;
 import model.Task;
 import model.TaskPriority;
+import model.User;
 
 public class TaskDetailActivity extends AppCompatActivity {
 
@@ -49,6 +53,9 @@ public class TaskDetailActivity extends AppCompatActivity {
     private int taskPosition;
     private Integer taskId;
     private Integer reminderId;
+    private Boolean fromTeam;
+    private RelativeLayout assignedMemberLayout;
+
 
     private CheckBox checkBox;
     private TextView title;
@@ -58,6 +65,8 @@ public class TaskDetailActivity extends AppCompatActivity {
     private TextView location;
     private TextView label;
     private TextView priority;
+    private TextView assignedMember;
+    private ImageView teamImage;
     private RecyclerView recyclerView;
 
     private SimpleDateFormat viewDateFormat = new SimpleDateFormat("E, MMMM dd, YYYY");
@@ -68,8 +77,9 @@ public class TaskDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_taskdetail);
+        setContentView(R.layout.activity_task_detail);
 
+        assignedMemberLayout = findViewById(R.id.assigned_member_layout_detail);
         title = findViewById(R.id.title_task_detail);
         description = findViewById(R.id.description_task_detail);
         priority = findViewById(R.id.priority_task_detail);
@@ -79,6 +89,8 @@ public class TaskDetailActivity extends AppCompatActivity {
         time = findViewById(R.id.time_task_detail);
         reminder = findViewById(R.id.reminder_task_detail);
         recyclerView = findViewById(R.id.task_detail_recycle_view);
+        assignedMember = findViewById(R.id.assigned_member_task_detail);
+        teamImage = findViewById(R.id.team_task_detail);
 
         intent = new Intent();
 
@@ -87,10 +99,10 @@ public class TaskDetailActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-
         if (getIntent().hasExtra("task")) {
             taskId = getIntent().getIntExtra("task", -1);
             taskPosition = getIntent().getIntExtra("position", -1);
+            fromTeam = getIntent().getBooleanExtra("from_team", false);
 
             //initialize RecyclerView
             recyclerView.setHasFixedSize(true);
@@ -130,6 +142,10 @@ public class TaskDetailActivity extends AppCompatActivity {
             String dateString = viewDateFormat.format(task.getStartDate());
             setTitle(dateString);
 
+            if (task.getTeam() != null) {
+                assignedMemberLayout.setVisibility(View.VISIBLE);
+            }
+
             //set field values to the values from the task
             setTaskValues();
 
@@ -155,6 +171,8 @@ public class TaskDetailActivity extends AppCompatActivity {
             case R.id.menu_edit_task:
                 Intent intent = new Intent(this, EditTaskActivity.class);
                 intent.putExtra("task", task.getId());
+                intent.putExtra("team", task.getTeam());
+                intent.putExtra("from_team", fromTeam);
 
                 startActivityForResult(intent, 1);
                 break;
@@ -181,24 +199,47 @@ public class TaskDetailActivity extends AppCompatActivity {
 
         if (task.getPriority() != null) {
             priority.setText(task.getPriority().getSymbol());
+        } else {
+            priority.setText("");
         }
 
-        if (task.getDescription() != null) {
+        if (task.getDescription() != null && !task.getDescription().isEmpty()) {
             description.setText(task.getDescription());
+        } else {
+            description.setText(R.string.no_description);
         }
 
-        if (task.getAddress() != null) {
+        if (task.getAddress() != null && !task.getAddress().isEmpty()) {
             location.setText(task.getAddress());
+        } else {
+            location.setText(R.string.no_location);
         }
 
         if (task.getStartTime() != null) {
             String timeString = timeFormat.format(task.getStartTime());
             time.setText(timeString);
+        } else {
+            time.setText(R.string.no_time);
         }
 
         if (task.getReminderTime() != null) {
             String reminderString = timeFormat.format(task.getReminderTime());
             reminder.setText(reminderString);
+        } else {
+            reminder.setText(R.string.no_reminder);
+        }
+
+        if (task.getUser() != null) {
+            User user = getUserFromDatabase(task.getUser());
+            if (user != null) {
+                assignedMember.setText(user.getName() + " " + user.getLastName());
+            }
+        } else {
+            assignedMember.setText(R.string.no_assigned_member);
+        }
+
+        if (task.getTeam() != null) {
+            teamImage.setVisibility(View.VISIBLE);
         }
 
         //check if task has labels
@@ -254,11 +295,11 @@ public class TaskDetailActivity extends AppCompatActivity {
     /**
      * Deletes the task from the database
      *
-     * @param taskId
+     * @param id of the task
      * @return number of deleted rows
      */
-    private int deleteTaskFromDatabase(Integer taskId) {
-        Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
+    private int deleteTaskFromDatabase(Integer id) {
+        Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + id);
 
         return getContentResolver().delete(taskUri, null, null);
     }
@@ -266,12 +307,12 @@ public class TaskDetailActivity extends AppCompatActivity {
     /**
      * Deletes the task labels from the database
      *
-     * @param taskId
+     * @param id of the task
      * @return
      */
-    private int deleteTaskLabelsFromDatabase(Integer taskId) {
+    private int deleteTaskLabelsFromDatabase(Integer id) {
         String selection = "task = ?";
-        String[] selectionArgs = new String[]{Integer.toString(taskId)};
+        String[] selectionArgs = new String[]{Integer.toString(id)};
 
         return getContentResolver().delete(Contract.TaskLabel.CONTENT_URI_TASK_LABEL, selection, selectionArgs);
     }
@@ -297,12 +338,12 @@ public class TaskDetailActivity extends AppCompatActivity {
     /**
      * Updates the status of the task in the database
      *
-     * @param taskId
+     * @param id        of the task
      * @param isChecked
      * @return number of updated rows
      */
-    private int updateTaskStatusInDatabase(Integer taskId, Boolean isChecked) {
-        Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
+    private int updateTaskStatusInDatabase(Integer id, Boolean isChecked) {
+        Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + id);
 
         ContentValues values = new ContentValues();
         values.put(Contract.Task.COLUMN_DONE, isChecked ? 1 : 0);
@@ -313,14 +354,14 @@ public class TaskDetailActivity extends AppCompatActivity {
     /**
      * Gets task from the database
      *
-     * @param taskId
+     * @param id of the task
      * @return the task
      */
-    private Task getTaskFromDatabase(Integer taskId) {
-        Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskId);
+    private Task getTaskFromDatabase(Integer id) {
+        Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + id);
 
-        String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_DESCRIPTION, Contract.Task.COLUMN_START_DATE,
-                Contract.Task.COLUMN_START_TIME, Contract.Task.COLUMN_PRIORITY, Contract.Task.COLUMN_ADDRESS, Contract.Task.COLUMN_DONE, Contract.Task.COLUMN_REMINDER_ID};
+        String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_DESCRIPTION, Contract.Task.COLUMN_START_DATE, Contract.Task.COLUMN_START_TIME,
+                Contract.Task.COLUMN_PRIORITY, Contract.Task.COLUMN_ADDRESS, Contract.Task.COLUMN_DONE, Contract.Task.COLUMN_REMINDER_ID, Contract.Task.COLUMN_TEAM, Contract.Task.COLUMN_USER};
 
         Cursor cursor = getContentResolver().query(taskUri, allColumns, null, null, null);
         cursor.moveToFirst();
@@ -376,6 +417,14 @@ public class TaskDetailActivity extends AppCompatActivity {
             cursorReminder.close();
         }
 
+        if (!cursor.isNull(9)) {
+            task.setTeam(cursor.getInt(9));
+        }
+
+        if (!cursor.isNull(10)) {
+            task.setUser(cursor.getInt(10));
+        }
+
         cursor.close();
 
         return task;
@@ -384,13 +433,13 @@ public class TaskDetailActivity extends AppCompatActivity {
     /**
      * Get labels of the task from the database
      *
-     * @param taskId
+     * @param id of the task
      * @return list of labels
      */
-    private List<Label> getTaskLabelsFromDatabase(Integer taskId) {
+    private List<Label> getTaskLabelsFromDatabase(Integer id) {
         List<Label> taskLabels = new ArrayList<>();
 
-        Uri taskLabelsUri = Uri.parse(Contract.Label.CONTENT_URI_LABEL_TASK + "/" + taskId);
+        Uri taskLabelsUri = Uri.parse(Contract.Label.CONTENT_URI_LABEL_TASK + "/" + id);
 
         String[] allColumns = {Contract.Label.COLUMN_ID, Contract.Label.COLUMN_NAME, Contract.Label.COLUMN_COLOR};
 
@@ -414,6 +463,32 @@ public class TaskDetailActivity extends AppCompatActivity {
         return taskLabels;
     }
 
+    /**
+     * Gets user from the database
+     *
+     * @param id of the user
+     * @return user with the id
+     */
+    private User getUserFromDatabase(Integer id) {
+        Uri userUri = Uri.parse(Contract.User.CONTENT_URI_USER + "/" + id);
+
+        String[] allColumns = {Contract.User.COLUMN_ID, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_COLOUR};
+
+        Cursor cursor = getContentResolver().query(userUri, allColumns, null, null, null);
+        cursor.moveToFirst();
+
+        Integer userId = cursor.getInt(0);
+        String name = cursor.getString(2);
+        String lastName = cursor.getString(3);
+        String email = cursor.getString(1);
+        String colour = cursor.getString(4);
+        User user = new User(userId, email, name, lastName, colour);
+
+        cursor.close();
+
+        return user;
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -422,10 +497,12 @@ public class TaskDetailActivity extends AppCompatActivity {
         if (requestCode == 1) {
             if (resultCode == Activity.RESULT_OK) {
                 Boolean updated = data.getBooleanExtra("updated", false);
+                Boolean deleted = data.getBooleanExtra("deleted", false);
                 Boolean changed_date = data.getBooleanExtra("changed_date", false);
 
                 if (updated) {
                     intent.putExtra("updated", true);
+                    intent.putExtra("deleted", deleted);
                     intent.putExtra("position", taskPosition);
                     intent.putExtra("taskId", task.getId());
                     intent.putExtra("changed_date", changed_date);

@@ -18,15 +18,16 @@
         android:usesCleartextTraffic="true">
         <activity
             android:name=".activities.TeamMembersActivity"
-            android:theme="@style/AppTheme.NoActionBarWithStatus"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBarWithStatus" />
         <activity
             android:name=".activities.ProfileActivity"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
         <activity
             android:name=".activities.CreateTeamActivity"
-            android:theme="@style/AppTheme.NoActionBarWithStatus" />
+            android:theme="@style/AppTheme.NoActionBarWithStatus"
+            android:windowSoftInputMode="stateVisible" />
         <activity
             android:name=".activities.CreateHabitActivity"
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
@@ -71,6 +72,7 @@
             android:name=".MainActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" />
+
         <provider
             android:name="com.example.planit.database.TeamContentProvider"
             android:authorities="com.example.planit.TeamContentProvider"

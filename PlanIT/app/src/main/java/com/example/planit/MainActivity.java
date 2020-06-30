@@ -223,12 +223,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (requestCode == 1) {
             if (resultCode == Activity.RESULT_OK) {
                 Long date = data.getLongExtra("date", -1);
+                Integer team = data.getIntExtra("team", -1);
+                if (team == -1) {
+                    team = null;
+                }
 
                 if (date != -1) {
                     getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
 
                     //show daily preview for the chosen date
-                    FragmentTransition.replaceFragment(this, DailyPreviewFragment.newInstance(date), R.id.fragment_container, true);
+                    FragmentTransition.replaceFragment(this, DailyPreviewFragment.newInstance(date, team), R.id.fragment_container, true);
                 }
             } else if (resultCode == Activity.RESULT_CANCELED) {
                 //do nothing
@@ -339,8 +343,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         if (requestCode == 6) {
             if (resultCode == Activity.RESULT_OK) {
-                Boolean deleted=data.getBooleanExtra("deleted", false);
-                if(deleted){
+                Boolean deleted = data.getBooleanExtra("deleted", false);
+                if (deleted) {
                     getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                     FragmentTransition.replaceFragment(this, TeamsOverviewFragment.newInstance(), R.id.fragment_container, true);
                 }
