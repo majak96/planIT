@@ -14,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,6 +49,7 @@ public class TaskDetailActivity extends AppCompatActivity {
     private Intent intent;
     private int taskPosition;
     private Integer taskId;
+    private Boolean fromTeam;
 
     private RelativeLayout assignedMemberLayout;
 
@@ -60,6 +62,7 @@ public class TaskDetailActivity extends AppCompatActivity {
     private TextView label;
     private TextView priority;
     private TextView assignedMember;
+    private ImageView teamImage;
     private RecyclerView recyclerView;
 
     private SimpleDateFormat viewDateFormat = new SimpleDateFormat("E, MMMM dd, YYYY");
@@ -83,6 +86,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         reminder = findViewById(R.id.reminder_task_detail);
         recyclerView = findViewById(R.id.task_detail_recycle_view);
         assignedMember = findViewById(R.id.assigned_member_task_detail);
+        teamImage = findViewById(R.id.team_task_detail);
 
         intent = new Intent();
 
@@ -94,6 +98,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         if (getIntent().hasExtra("task")) {
             taskId = getIntent().getIntExtra("task", -1);
             taskPosition = getIntent().getIntExtra("position", -1);
+            fromTeam = getIntent().getBooleanExtra("from_team", false);
 
             //initialize RecyclerView
             recyclerView.setHasFixedSize(true);
@@ -133,7 +138,7 @@ public class TaskDetailActivity extends AppCompatActivity {
             String dateString = viewDateFormat.format(task.getStartDate());
             setTitle(dateString);
 
-            if(task.getTeam() != null) {
+            if (task.getTeam() != null) {
                 assignedMemberLayout.setVisibility(View.VISIBLE);
             }
 
@@ -163,6 +168,7 @@ public class TaskDetailActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, EditTaskActivity.class);
                 intent.putExtra("task", task.getId());
                 intent.putExtra("team", task.getTeam());
+                intent.putExtra("from_team", fromTeam);
 
                 startActivityForResult(intent, 1);
                 break;
@@ -189,32 +195,47 @@ public class TaskDetailActivity extends AppCompatActivity {
 
         if (task.getPriority() != null) {
             priority.setText(task.getPriority().getSymbol());
+        } else {
+            priority.setText("");
         }
 
-        if (task.getDescription() != null) {
+        if (task.getDescription() != null && !task.getDescription().isEmpty()) {
             description.setText(task.getDescription());
+        } else {
+            description.setText(R.string.no_description);
         }
 
-        if (task.getAddress() != null) {
+        if (task.getAddress() != null && !task.getAddress().isEmpty()) {
             location.setText(task.getAddress());
+        } else {
+            location.setText(R.string.no_location);
         }
 
         if (task.getStartTime() != null) {
             String timeString = timeFormat.format(task.getStartTime());
             time.setText(timeString);
+        } else {
+            time.setText(R.string.no_time);
         }
 
         if (task.getReminderTime() != null) {
             String reminderString = timeFormat.format(task.getReminderTime());
             reminder.setText(reminderString);
+        } else {
+            reminder.setText(R.string.no_reminder);
         }
 
-        Log.d(TAG, "setTaskValues: task user" + task.getUser());
         if (task.getUser() != null) {
             User user = getUserFromDatabase(task.getUser());
             if (user != null) {
                 assignedMember.setText(user.getName() + " " + user.getLastName());
             }
+        } else {
+            assignedMember.setText(R.string.no_assigned_member);
+        }
+
+        if (task.getTeam() != null) {
+            teamImage.setVisibility(View.VISIBLE);
         }
 
         //check if task has labels
@@ -290,7 +311,7 @@ public class TaskDetailActivity extends AppCompatActivity {
     /**
      * Updates the status of the task in the database
      *
-     * @param id of the task
+     * @param id        of the task
      * @param isChecked
      * @return number of updated rows
      */
@@ -443,10 +464,12 @@ public class TaskDetailActivity extends AppCompatActivity {
         if (requestCode == 1) {
             if (resultCode == Activity.RESULT_OK) {
                 Boolean updated = data.getBooleanExtra("updated", false);
+                Boolean deleted = data.getBooleanExtra("deleted", false);
                 Boolean changed_date = data.getBooleanExtra("changed_date", false);
 
                 if (updated) {
                     intent.putExtra("updated", true);
+                    intent.putExtra("deleted", deleted);
                     intent.putExtra("position", taskPosition);
                     intent.putExtra("taskId", task.getId());
                     intent.putExtra("changed_date", changed_date);

@@ -1,6 +1,7 @@
 package com.example.planit.fragments;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,6 +21,7 @@ import com.example.planit.R;
 import com.example.planit.activities.EditTaskActivity;
 import com.example.planit.adapters.DailyPreviewAdapter;
 import com.example.planit.database.Contract;
+import com.example.planit.utils.SharedPreference;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.text.ParseException;
@@ -84,7 +87,7 @@ public class DailyPreviewFragment extends Fragment {
             recyclerView.setHasFixedSize(true);
 
             //set the adapter and layout manager
-            adapter = new DailyPreviewAdapter(this.getContext(), dailyTasks);
+            adapter = new DailyPreviewAdapter(this.getContext(), dailyTasks, teamId != null);
             recyclerView.setAdapter(adapter);
             recyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
         }
@@ -111,13 +114,28 @@ public class DailyPreviewFragment extends Fragment {
      * @param date
      */
     private void getDailyTasks(String date, Integer teamId) {
-        String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_START_TIME, Contract.Task.COLUMN_DONE};
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        Boolean showTeamTasks = sharedPreferences.getBoolean("pref_assigned_team_tasks", false);
+
+        String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_START_TIME, Contract.Task.COLUMN_DONE, Contract.Task.COLUMN_TEAM};
 
         String selection = Contract.Task.COLUMN_START_DATE + " = ?";
         String[] selectionArgs;
+        //for personal calendar
         if (teamId == null) {
-            selection += " and " + Contract.Task.COLUMN_TEAM + " is null";
-            selectionArgs = new String[]{date};
+            selection += " and (" + Contract.Task.COLUMN_TEAM + " is null";
+            //show team tasks assigned to the logged in user as well
+            if (showTeamTasks) {
+                Integer id = SharedPreference.getLoggedId(getActivity());
+
+                selection += " or " + Contract.Task.COLUMN_USER + "= ?)";
+                selectionArgs = new String[]{date, id.toString()};
+            }
+            //show only personal task assigned to the logged in user
+            else {
+                selection += ")";
+                selectionArgs = new String[]{date};
+            }
         } else {
             selection += " and " + Contract.Task.COLUMN_TEAM + " = ?";
             selectionArgs = new String[]{date, Integer.toString(teamId)};
@@ -145,6 +163,9 @@ public class DailyPreviewFragment extends Fragment {
 
                 task.setDone(cursor.getInt(3) == 1);
 
+                if(!cursor.isNull(4)){
+                    task.setTeam(cursor.getInt(4));
+                }
                 dailyTasks.add(task);
             }
         }

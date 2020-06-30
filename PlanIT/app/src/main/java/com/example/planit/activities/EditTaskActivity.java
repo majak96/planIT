@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -35,6 +36,7 @@ import com.example.planit.fragments.DateDialogFragment;
 import com.example.planit.fragments.LabelDialogFragment;
 import com.example.planit.fragments.PriorityDialogFragment;
 import com.example.planit.fragments.TaskReminderDialogFragment;
+import com.example.planit.utils.SharedPreference;
 import com.example.planit.utils.Utils;
 
 import java.text.ParseException;
@@ -52,6 +54,8 @@ import model.User;
 public class EditTaskActivity extends AppCompatActivity implements TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener, PriorityDialogFragment.PriorityDialogListener, LabelDialogFragment.LabelDialogListener, AssignedMemberDialogFragment.AssignedMemberDialogListener {
 
     private static final String TAG = "EditTaskActivity";
+
+    private Boolean fromTeam;
 
     private int selectedPriority;
 
@@ -85,7 +89,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
     private SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    Task task;
+    private Task task;
     private List<Label> labels = new ArrayList<>();
 
     @Override
@@ -126,6 +130,8 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         else {
             assignedMemberLayout.setVisibility(View.VISIBLE);
         }
+
+        fromTeam = getIntent().getBooleanExtra("from_team", false);
 
         //if this is edit - get the task
         if (getIntent().hasExtra("task")) {
@@ -221,6 +227,12 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
 
                         Intent intent = new Intent();
                         intent.putExtra("updated", true);
+
+                        //if assigned team task changed assigned member -> task must be "removed" from daily preview
+                        Integer loggedId = SharedPreference.getLoggedId(this);
+                        if(!fromTeam && task.getUser() != null && (assignedMember == null || assignedMember.getId() != loggedId)){
+                            intent.putExtra("deleted", true);
+                        }
 
                         if (!startDate.equals(task.getStartDate())) {
                             intent.putExtra("changed_date", true);
@@ -747,6 +759,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         if (!cursor.isNull(9)) {
             Integer userId = cursor.getInt(9);
             assignedMember = getUserFromDatabase(userId);
+            task.setUser(userId);
         }
 
         cursor.close();

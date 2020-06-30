@@ -71,9 +71,11 @@
     <string name="task_title_required">Task title can\'t be empty!</string>
 
     //settings
-    <string name="set_date_category">Date and time</string>
+    <string name="set_calendar_category">Calendar</string>
     <string name="set_start_day">Start day of the week</string>
-    <string name="set_week_numbers">Show week numbers</string>
+    <string name="set_week_days">Show week days</string>
+    <string name="set_assigned_team_tasks">Show team tasks in calendar</string>
+    <string name="set_assigned_team_tasks_desc">Show team tasks assigned to me in personal calendar</string>
 
     <string name="set_notifications_category">Notifications</string>
     <string name="set_notifications">Enable notifications</string>

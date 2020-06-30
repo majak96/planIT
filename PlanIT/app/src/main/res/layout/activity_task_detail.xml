@@ -25,6 +25,7 @@
 
             <!-- CHECKBOX, TITLE, PRIORITY -->
             <RelativeLayout
+                android:id="@+id/task_detail_relative"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -47,16 +48,33 @@
                     android:textColor="@color/darkGray"
                     android:textSize="16dp" />
 
-                <TextView
-                    android:id="@+id/priority_task_detail"
+                <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_alignParentRight="true"
-                    android:layout_centerVertical="true"
-                    android:layout_toRightOf="@id/title_task_detail"
-                    android:textAlignment="textEnd"
-                    android:textColor="@color/colorPrimary"
-                    android:textSize="22dp" />
+                    android:layout_centerVertical="true">
+
+                    <TextView
+                        android:id="@+id/priority_task_detail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_gravity="center_vertical"
+                        android:textColor="@color/colorPrimary"
+                        android:textSize="22dp" />
+
+                    <ImageView
+                        android:id="@+id/team_task_detail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginLeft="5dp"
+                        android:src="@drawable/ic_teams"
+                        android:tint="@color/colorPrimary"
+                        android:visibility="gone" />
+
+                </LinearLayout>
 
             </RelativeLayout>
 
@@ -162,9 +180,8 @@
                     android:clickable="true"
                     android:drawableLeft="@drawable/ic_person"
                     android:drawablePadding="5dp"
-                    android:paddingLeft="4dp"
                     android:drawableTint="@color/gray"
-                    android:onClick="openAssignDialog"
+                    android:paddingLeft="4dp"
                     android:text="@string/no_assigned_member"
                     android:textColor="@color/darkGray"
                     android:textSize="16dp" />

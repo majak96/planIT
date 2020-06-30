@@ -5,15 +5,16 @@ import com.example.planit.activities.ChatActivity;
 import com.example.planit.activities.EditTaskActivity;
 import com.example.planit.activities.TeamDetailActivity;
 import com.example.planit.database.Contract;
-import com.example.planit.mokaps.Mokap;
 import com.example.planit.utils.EventDecorator;
 import com.example.planit.utils.FragmentTransition;
+import com.example.planit.utils.SharedPreference;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.prolificinteractive.materialcalendarview.CalendarDay;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 import com.prolificinteractive.materialcalendarview.OnDateSelectedListener;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -28,17 +29,17 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.preference.PreferenceManager;
 
 import com.prolificinteractive.materialcalendarview.OnMonthChangedListener;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
-import model.Task;
-import model.Team;
 
 public class CalendarFragment extends Fragment {
 
@@ -85,6 +86,12 @@ public class CalendarFragment extends Fragment {
 
         calendarView = view.findViewById(R.id.calendar_view);
         calendarView.setDateSelected(CalendarDay.today(), true);
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        Boolean showWeekDays = sharedPreferences.getBoolean("pref_week_days", true);
+        String startDayOfTheWeek = sharedPreferences.getString("pref_start_day", "3");
+
+        calendarView.state().edit().setShowWeekDays(showWeekDays);
 
         //update the size of the calendar tiles
         if (this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -185,6 +192,9 @@ public class CalendarFragment extends Fragment {
      * @param year  shown in the calendar
      */
     private void getTaskDates(int month, int year, Integer teamId) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        Boolean showTeamTasks = sharedPreferences.getBoolean("pref_assigned_team_tasks", false);
+
         String monthString = Integer.toString(month);
         if (monthString.length() < 2) {
             monthString = "0" + monthString;
@@ -195,10 +205,24 @@ public class CalendarFragment extends Fragment {
 
         String selection = Contract.Task.COLUMN_START_DATE + " between date(?) and date(?, '+1 month', '-1 day')";
         String[] selectionArgs;
+        //for personal calendar
         if (teamId == null) {
-            selection += " and " + Contract.Task.COLUMN_TEAM + " is null";
-            selectionArgs = new String[]{date, date};
-        } else {
+            selection += " and (" + Contract.Task.COLUMN_TEAM + " is null";
+            //show team tasks assigned to the logged in user as well
+            if (showTeamTasks) {
+                Integer id = SharedPreference.getLoggedId(getActivity());
+
+                selection += " or " + Contract.Task.COLUMN_USER + "= ?)";
+                selectionArgs = new String[]{date, date, id.toString()};
+            }
+            //show only personal task assigned to the logged in user
+            else {
+                selection += ")";
+                selectionArgs = new String[]{date, date};
+            }
+        }
+        //for team calendar
+        else {
             selection += " and " + Contract.Task.COLUMN_TEAM + " = ?";
             selectionArgs = new String[]{date, date, Integer.toString(teamId)};
         }
