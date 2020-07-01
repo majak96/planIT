@@ -126,6 +126,7 @@ public class SignUpActivity extends AppCompatActivity {
                                         });
 
                                     } else {
+                                        Log.e(tag, task.getException().toString());
                                         loadingBar.dismiss();
                                         Log.e(tag, "An error occurred");
                                     }

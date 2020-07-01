@@ -1,7 +1,8 @@
 package com.example.planit.service;
 
+import java.util.List;
+
 import model.MessageDTO;
-import model.RegisterDTO;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -20,7 +21,7 @@ public interface ChatService {
     @POST("chat/message")
     Call<ResponseBody> sendMessage(@Body MessageDTO messageDTO);
 
-    @GET("chat/allMessages")
-    Call<ResponseBody> getMessagse(@Query("teamId") Integer teamId);
+    @GET("chat/all")
+    Call<List<MessageDTO>> getMessagse(@Query("teamId") Integer teamId);
 
 }

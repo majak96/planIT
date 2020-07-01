@@ -31,6 +31,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import model.Message;
 import model.MessageDTO;
@@ -50,7 +51,6 @@ public class ChatActivity extends AppCompatActivity {
     private static Team team;
     private String tag = "ChatActivity";
     private DatabaseReference rootRef;
-    private FirebaseAuth mAuth;
     static boolean active = false;
 
     @Override
@@ -83,6 +83,8 @@ public class ChatActivity extends AppCompatActivity {
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("receive-message"));
+
+        loadMessages();
     }
 
     @Override
@@ -173,6 +175,35 @@ public class ChatActivity extends AppCompatActivity {
         return false;
     }
 
+    public void loadMessages() {
+
+        ChatService apiService = ServiceUtils.getClient().create(ChatService.class);
+        Call<List<MessageDTO>> call = apiService.getMessagse(team.getId());
+
+        call.enqueue(new Callback<List<MessageDTO>>() {
+            @Override
+            public void onResponse(Call<List<MessageDTO>> call, Response<List<MessageDTO>> response) {
+
+                for (Message m : messages) {
+                    deleteMessage(m);
+                }
+
+                List<MessageDTO> data = response.body();
+                for (MessageDTO messageDTO : data) {
+                    User sender = getUserFromDatabase(messageDTO.getSender());
+                    Message newMessage = new Message(messageDTO.getMessage(), sender, messageDTO.getCreatedAt());
+                    addMessage(newMessage);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<MessageDTO>> call, Throwable t) {
+                Log.e("onFailure", t.toString());
+            }
+        });
+
+    }
+
     //get team with the id from the database
     private Team getTeamFromDatabase(Integer teamId) {
         Uri taskUri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamId);
@@ -181,7 +212,6 @@ public class ChatActivity extends AppCompatActivity {
         cursor.moveToFirst();
 
         Integer in = cursor.getInt(3);
-        Log.e("DEBUG ", in.toString());
         User creator = getUserFromDB(cursor.getInt(3));
         Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator);
 
@@ -278,11 +308,9 @@ public class ChatActivity extends AppCompatActivity {
                 String message = cursor.getString(1);
                 Integer createdAt = cursor.getInt(2);
                 Integer senderId = cursor.getInt(3);
-
                 User sender = getUserFromDB(senderId);
 
                 Message newMessage = new Message(id, message, sender, createdAt.longValue());
-
                 messages.add(newMessage);
             }
         }
@@ -302,6 +330,11 @@ public class ChatActivity extends AppCompatActivity {
         Uri uri = getContentResolver().insert(Contract.Message.CONTENT_URI_MESSAGE, values);
 
         return uri;
+    }
+
+    private int deleteMessage(Message message) {
+        Uri uri = Uri.parse(Contract.Message.CONTENT_URI_MESSAGE + "/" + message.getId());
+        return getContentResolver().delete(uri, null, null);
     }
 
 }

@@ -263,7 +263,6 @@ public class SignInActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 
-
                     if (response.code() == 200) {
 
                         User newUser = new User(firstName, lastName, email, mAuth.getCurrentUser().getUid());

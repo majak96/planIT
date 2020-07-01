@@ -45,4 +45,13 @@ public class MessageDTO {
         this.serverTeamId = serverTeamId;
     }
 
+    @Override
+    public String toString() {
+        return "MessageDTO{" +
+                "serverTeamId=" + serverTeamId +
+                ", message='" + message + '\'' +
+                ", sender='" + sender + '\'' +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }
