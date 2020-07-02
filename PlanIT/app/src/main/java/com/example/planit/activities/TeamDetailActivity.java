@@ -245,13 +245,15 @@ public class TeamDetailActivity extends AppCompatActivity {
 
                                 @Override
                                 public void onFailure(Call<ResponseBody> call, Throwable t) {
+                                    Toast toast = Toast.makeText(TeamDetailActivity.this, "Connection error!", Toast.LENGTH_SHORT);
+                                    toast.show();
                                     Log.e("tag", "Connection error");
                                 }
                             });
 
 
                         } else {
-
+                            Log.i(tag, "Team is not deleted");
                         }
                         break;
                     case DialogInterface.BUTTON_NEGATIVE:

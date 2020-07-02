@@ -3,6 +3,7 @@ package com.example.planit;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -23,6 +24,7 @@ import com.example.planit.activities.ProfileActivity;
 import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.SignInActivity;
 import com.example.planit.database.Contract;
+import com.example.planit.database.DatabaseSQLiteHelper;
 import com.example.planit.fragments.CalendarFragment;
 import com.example.planit.fragments.DailyPreviewFragment;
 import com.example.planit.fragments.HabitsOverviewFragment;
@@ -209,10 +211,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         SharedPreference.setLoggedName(getApplicationContext(), "");
         SharedPreference.setLoggedColour(getApplicationContext(), "");
         SharedPreference.setLoggedLastName(getApplicationContext(), "");
+
+        //unsubscribe of all my topics
+        for (Team team : myTeams) {
+            FirebaseMessaging.getInstance().unsubscribeFromTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getId());
+        }
+        FirebaseAuth.getInstance().signOut();
+
+        //delete all data from db
+        DatabaseSQLiteHelper databaseHelper = new DatabaseSQLiteHelper(this);
+        databaseHelper.truncateDatabase(this);
+
         Intent intent = new Intent(MainActivity.this, SignInActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
-        FirebaseAuth.getInstance().signOut();
     }
 
     public Fragment getCurrentFragment() {

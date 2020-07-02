@@ -162,13 +162,13 @@ public class CreateTeamActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 5) {
             if (resultCode == Activity.RESULT_CANCELED) {
-                setResult(Activity.RESULT_CANCELED, intent);
+                setResult(Activity.RESULT_CANCELED, data);
                 finish();
             } else if (resultCode == Activity.RESULT_OK) {
                 if (data.hasExtra("teamId")) {
                     Integer teamId = data.getIntExtra("teamId", -1);
-                    intent.putExtra("teamId", teamId);
-                    setResult(Activity.RESULT_OK, intent);
+                    data.putExtra("teamId", teamId);
+                    setResult(Activity.RESULT_OK, data);
                     finish();
                 } else {
                     Log.i(tag, "Team does not exists");

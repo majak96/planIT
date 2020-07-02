@@ -46,12 +46,13 @@ import retrofit2.Response;
 
 public class TeamMembersActivity extends AppCompatActivity {
 
+    private String tag = "TeamMembersActivity";
     private EditText newMember;
     private TeamMembersAdapter adapter;
     private ArrayList<User> users;
+    private ArrayList<String> userEmails;
     private ImageButton addMemberBtn;
     private String description;
-    private String tag = "TeamMembersActivity";
     private Integer teamId;
     private Intent intent;
     private FirebaseAuth mAuth;
@@ -67,20 +68,33 @@ public class TeamMembersActivity extends AppCompatActivity {
         this.getSupportActionBar().setDisplayShowHomeEnabled(true);
         this.getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
         mAuth = FirebaseAuth.getInstance();
-
-        if (getIntent().hasExtra("teamId")) {
-            teamId = getIntent().getIntExtra("teamId", -1);
-        }
-
         newMember = findViewById(R.id.addMember);
+        addMemberBtn = findViewById(R.id.addMemberBtn);
 
-        if (teamId != null && teamId != -1) {
-            users = getUsersFromDatabase(teamId);
-        } else {
+        //check was activity destroyed
+        if (savedInstanceState != null) {
+            teamId = savedInstanceState.getInt("teamId");
+            //check is creating and activity was destroyed (in boundle is default 0 fore teamId)
+            if (teamId == 0) {
+                teamId = null;
+            }
+            userEmails = savedInstanceState.getStringArrayList("userEmails");
             users = new ArrayList<>();
-            String creator = SharedPreference.getLoggedEmail(this);
-            User currentUser = getUserFromDatabase(creator);
-            users.add(currentUser);
+            for (String email : userEmails) {
+                User user = getUserFromDatabase(email);
+                users.add(user);
+            }
+        } else {
+            // if edit
+            if (getIntent().hasExtra("teamId")) {
+                teamId = getIntent().getIntExtra("teamId", -1);
+                users = getUsersFromDatabase(teamId);
+            } else {
+                users = new ArrayList<>();
+                String creator = SharedPreference.getLoggedEmail(this);
+                User currentUser = getUserFromDatabase(creator);
+                users.add(currentUser);
+            }
         }
 
         RecyclerView recyclerView = findViewById(R.id.team_members_recycle_view);
@@ -88,7 +102,6 @@ public class TeamMembersActivity extends AppCompatActivity {
         adapter = new TeamMembersAdapter(this, users, teamId);
         recyclerView.setAdapter(adapter);
 
-        addMemberBtn = findViewById(R.id.addMemberBtn);
         addMemberBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -285,6 +298,19 @@ public class TeamMembersActivity extends AppCompatActivity {
         return true;
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (teamId != null) {
+            outState.putInt("teamId", teamId);
+        }
+        userEmails = new ArrayList<>();
+        for(User u:users){
+            userEmails.add(u.getEmail());
+        }
+        outState.putStringArrayList("userEmails", userEmails);
+    }
+
     //inserts a new user_team_connection into the database
     public Uri createUserTeamConnection(Integer userId, Integer teamId) {
 
@@ -349,34 +375,12 @@ public class TeamMembersActivity extends AppCompatActivity {
 
         Uri uri = getContentResolver().insert(Contract.Team.CONTENT_URI_TEAM, values);
 
-        if(uri!=null){
+        if (uri != null) {
             //subscribe on messages
-            FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid()+"-"+uri.getLastPathSegment());
+            FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid() + "-" + uri.getLastPathSegment());
         }
 
         return uri;
-    }
-
-    //get team with the name from the database
-    private Team getTeamFromDatabase(String title) {
-        Team newTeam = null;
-
-        String whereClause = "title = ? ";
-        String[] whereArgs = new String[]{
-                title
-        };
-        Cursor cursor = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, whereClause, whereArgs, null);
-
-        if (cursor.getCount() == 0) {
-            //TODO: do something when there's no data
-        } else {
-            while (cursor.moveToNext()) {
-                newTeam = new Team(cursor.getInt(0), cursor.getString(1));
-            }
-        }
-
-        cursor.close();
-        return newTeam;
     }
 
     //inserts a new user into the database
@@ -397,6 +401,7 @@ public class TeamMembersActivity extends AppCompatActivity {
     private ArrayList<User> getUsersFromDatabase(Integer teamId) {
 
         users = new ArrayList<>();
+
         String[] allColumns = {Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_COLOUR};
         Uri teamMembersUri = Uri.parse(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM + "/" + teamId);
 

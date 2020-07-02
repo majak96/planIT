@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +14,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
-
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -63,13 +63,13 @@ public class TeamMembersAdapter extends RecyclerView.Adapter<TeamMembersAdapter.
             }
         });
 
-        if( teamId != null) {
+        if (teamId != null) {
             String userCreator = getTeamCreator();
             if (member.getEmail().equals(userCreator)) {
                 holder.imageButton.setVisibility(View.GONE);
             }
-        } else{
-            String loggedUser= SharedPreference.getLoggedEmail(context);
+        } else {
+            String loggedUser = SharedPreference.getLoggedEmail(context);
             if (member.getEmail().equals(loggedUser)) {
                 holder.imageButton.setVisibility(View.GONE);
             }
@@ -110,14 +110,19 @@ public class TeamMembersAdapter extends RecyclerView.Adapter<TeamMembersAdapter.
             public void onClick(DialogInterface dialog, int which) {
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
-                        if (deleteUserTeamConnection(members.get(position).getId(), teamId) > 0) {
+                        if (teamId == null) {
                             members.remove(position);
                             notifyItemRemoved(position);
                         } else {
-                            //TODO error message
-                        }
+                            if (deleteUserTeamConnection(members.get(position).getId(), teamId) > 0) {
+                                members.remove(position);
+                                notifyItemRemoved(position);
+                            } else {
+                                Log.i("TeamMembersAdapter", "Can not delete");
+                            }
 
-                        //TODO delete from db
+                            //TODO delete from db
+                        }
 
                         break;
                     case DialogInterface.BUTTON_NEGATIVE:

@@ -35,6 +35,7 @@ public class ProfileActivity extends AppCompatActivity {
     private EditText editLastName;
     private MenuItem editItem;
     private MenuItem saveChanges;
+    private boolean isEdit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +58,12 @@ public class ProfileActivity extends AppCompatActivity {
         loggedCredential.setText(name.getText().toString().substring(0, 1).concat(lastName.getText().toString().substring(0, 1)));
         loggedEmail.setText(SharedPreference.getLoggedEmail(ProfileActivity.this));
 
+        if(savedInstanceState != null){
+            isEdit = savedInstanceState.getBoolean("isEdit");
+            editName.setText(savedInstanceState.getString("editName"));
+            editLastName.setText(savedInstanceState.getString("editLastName"));
+        }
+
     }
 
     @Override
@@ -64,6 +71,16 @@ public class ProfileActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.profile_menu, menu);
         editItem = menu.findItem(R.id.changeProfile);
         saveChanges = menu.findItem(R.id.saveChanges);
+        if(isEdit == true){
+            lastName.setVisibility(View.GONE);
+            name.setVisibility(View.GONE);
+            saveChanges.setVisible(true);
+            editItem.setVisible(false);
+            editLastName.setVisibility(View.VISIBLE);
+            editName.setVisibility(View.VISIBLE);
+            editLastName.setText(editLastName.getText().toString());
+            editName.setText(editName.getText().toString());
+        }
         return true;
     }
 
@@ -72,6 +89,7 @@ public class ProfileActivity extends AppCompatActivity {
         switch (item.getItemId()) {
 
             case R.id.changeProfile:
+                isEdit = true;
                 lastName.setVisibility(View.GONE);
                 name.setVisibility(View.GONE);
                 saveChanges.setVisible(true);
@@ -83,6 +101,8 @@ public class ProfileActivity extends AppCompatActivity {
                 break;
 
             case R.id.saveChanges:
+                isEdit = false;
+
                 String email = SharedPreference.getLoggedEmail(ProfileActivity.this);
                 ChangeProfileDTO changeProfileDTO = new ChangeProfileDTO(email, editName.getText().toString(), editLastName.getText().toString());
 
@@ -122,6 +142,14 @@ public class ProfileActivity extends AppCompatActivity {
 
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean("isEdit", isEdit);
+        outState.putString("editName", editName.getText().toString());
+        outState.putString("editLastName", editLastName.getText().toString());
     }
 
     public String findLoggedUserName() {

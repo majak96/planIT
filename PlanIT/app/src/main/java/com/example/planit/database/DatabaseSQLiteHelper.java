@@ -3,6 +3,9 @@ package com.example.planit.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+import retrofit2.http.DELETE;
 
 public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
 
@@ -162,7 +165,7 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + Contract.TaskLabel.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + Contract.Task.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + Contract.Label.TABLE_NAME);
-      
+
         onCreate(db);
     }
 
@@ -170,6 +173,27 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
     public void onConfigure(SQLiteDatabase db) {
         super.onConfigure(db);
         db.setForeignKeyConstraintsEnabled(true);
+    }
+
+    public void truncateDatabase(Context mContext) {
+
+        SQLiteDatabase db = getWritableDatabase();
+
+        db.execSQL("DELETE FROM " + Contract.Message.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.UserTeamConnection.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.Team.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.User.TABLE_NAME);
+
+        // drop table queries for habits
+        db.execSQL("DELETE FROM " + Contract.HabitDayConnection.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.HabitFulfillment.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.Habit.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.HabitDay.TABLE_NAME);
+
+        db.execSQL("DELETE FROM " + Contract.TaskLabel.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.Task.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.Label.TABLE_NAME);
+
     }
 
 }

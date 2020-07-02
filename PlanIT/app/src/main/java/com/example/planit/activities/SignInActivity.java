@@ -42,13 +42,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-
 import model.LoginDTO;
-import model.RegisterDTO;
+import model.UserInfoDTO;
 import model.User;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -57,6 +52,8 @@ import retrofit2.Response;
 
 public class SignInActivity extends AppCompatActivity {
 
+    private static final int RC_SIGN_IN = 1;
+    private String tag = "SignInActivity";
     private TextView signUpLink;
     private Button signInBtn;
     private EditText email;
@@ -64,8 +61,6 @@ public class SignInActivity extends AppCompatActivity {
     private SignInButton googleSignInButton;
     private FirebaseAuth mAuth;
     private GoogleSignInClient googleSignInClient;
-    private static final int RC_SIGN_IN = 1;
-    private String tag = "SignInActivity";
     private ProgressDialog loadingBar;
     private String firebaseId;
 
@@ -132,33 +127,22 @@ public class SignInActivity extends AppCompatActivity {
                                         loginDTO.setPassword(password.getText().toString());
 
                                         AuthService apiService = ServiceUtils.getClient().create(AuthService.class);
-                                        Call<ResponseBody> call = apiService.login(loginDTO);
-                                        call.enqueue(new Callback<ResponseBody>() {
+                                        Call<UserInfoDTO> call = apiService.login(loginDTO);
+                                        call.enqueue(new Callback<UserInfoDTO>() {
 
                                             @Override
-                                            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                                            public void onResponse(Call<UserInfoDTO> call, Response<UserInfoDTO> response) {
 
-                                                String name = "";
-                                                String lastName = "";
-                                                String colour = "";
-                                                firebaseId = "";
+                                                String name = "", lastName = "", colour = "";
                                                 String emailString = email.getText().toString();
+                                                firebaseId = "";
+
                                                 if (response.code() == 200) {
-                                                    String resStr = null;
-                                                    try {
-                                                        resStr = response.body().string().toString();
-                                                    } catch (IOException e) {
-                                                        e.printStackTrace();
-                                                    }
-                                                    try {
-                                                        JSONObject json = new JSONObject(resStr);
-                                                        name = json.get("firstName").toString();
-                                                        lastName = json.get("lastName").toString();
-                                                        colour = json.get("colour").toString();
-                                                        firebaseId = json.get("firebaseId").toString();
-                                                    } catch (JSONException e) {
-                                                        e.printStackTrace();
-                                                    }
+                                                    UserInfoDTO userInfo = response.body();
+                                                    name = userInfo.getFirstName();
+                                                    lastName = userInfo.getLastName();
+                                                    colour = userInfo.getColour();
+                                                    firebaseId = userInfo.getFirebaseId();
 
                                                     User newUser = new User(name, lastName, emailString, firebaseId);
                                                     newUser.setColour(colour);
@@ -169,10 +153,9 @@ public class SignInActivity extends AppCompatActivity {
                                                     SharedPreference.setLoggedLastName(getApplicationContext(), lastName);
                                                     SharedPreference.setLoggedColour(getApplicationContext(), colour);
 
-                                                    Intent intent = new Intent(SignInActivity.this, MainActivity.class);
-
                                                     loadingBar.dismiss();
 
+                                                    Intent intent = new Intent(SignInActivity.this, MainActivity.class);
                                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                                     startActivity(intent);
 
@@ -184,8 +167,10 @@ public class SignInActivity extends AppCompatActivity {
                                             }
 
                                             @Override
-                                            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                                            public void onFailure(Call<UserInfoDTO> call, Throwable t) {
                                                 loadingBar.dismiss();
+                                                Toast toast = Toast.makeText(SignInActivity.this, "Connection error!", Toast.LENGTH_SHORT);
+                                                toast.show();
                                                 Log.e(tag, "Error in login");
                                             }
                                         });
@@ -255,9 +240,9 @@ public class SignInActivity extends AppCompatActivity {
             String firstName = parts[0];
             String lastName = parts[1];
 
-            RegisterDTO googleRegisterDTO = new RegisterDTO(email, null, firstName, lastName, colour, mAuth.getCurrentUser().getUid());
+            UserInfoDTO googleUserInfoDTO = new UserInfoDTO(email, null, firstName, lastName, colour, mAuth.getCurrentUser().getUid());
             AuthService apiService = ServiceUtils.getClient().create(AuthService.class);
-            Call<ResponseBody> call = apiService.googleLogin(googleRegisterDTO);
+            Call<ResponseBody> call = apiService.googleLogin(googleUserInfoDTO);
             call.enqueue(new Callback<ResponseBody>() {
 
                 @Override
@@ -277,7 +262,7 @@ public class SignInActivity extends AppCompatActivity {
                         gotoHomePage();
                     } else {
                         loadingBar.dismiss();
-                        Toast t = Toast.makeText(SignInActivity.this, "An error occured!", Toast.LENGTH_SHORT);
+                        Toast t = Toast.makeText(SignInActivity.this, "An error occurred!", Toast.LENGTH_SHORT);
                         t.show();
                     }
                 }

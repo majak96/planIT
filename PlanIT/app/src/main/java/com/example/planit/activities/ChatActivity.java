@@ -26,7 +26,6 @@ import com.example.planit.service.ChatService;
 import com.example.planit.service.ServiceUtils;
 import com.example.planit.utils.SharedPreference;
 import com.example.planit.utils.Utils;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -44,12 +43,12 @@ import retrofit2.Response;
 
 public class ChatActivity extends AppCompatActivity {
 
+    private String tag = "ChatActivity";
     private RecyclerView mMessageRecycler;
     private MessageListAdapter mMessageAdapter;
     private EditText messageText;
     private ArrayList<Message> messages;
     private static Team team;
-    private String tag = "ChatActivity";
     private DatabaseReference rootRef;
     static boolean active = false;
 
@@ -62,15 +61,14 @@ public class ChatActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-
         if (getIntent().hasExtra("team")) {
             Integer teamId = getIntent().getIntExtra("team", 1);
             team = getTeamFromDatabase(teamId);
-
             setTitle(team.getName());
         }
 
         getMessgaesFromDatabase(team.getId());
+        loadMessages();
 
         mMessageRecycler = findViewById(R.id.recyclerview);
         mMessageAdapter = new MessageListAdapter(this, messages);
@@ -78,13 +76,12 @@ public class ChatActivity extends AppCompatActivity {
         mMessageRecycler.setAdapter(mMessageAdapter);
         messageText = findViewById(R.id.message_text);
         mMessageRecycler.scrollToPosition(messages.size() - 1);
+
         ((LinearLayoutManager) mMessageRecycler.getLayoutManager()).setStackFromEnd(true);
         rootRef = FirebaseDatabase.getInstance().getReference();
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("receive-message"));
-
-        loadMessages();
     }
 
     @Override
@@ -152,7 +149,9 @@ public class ChatActivity extends AppCompatActivity {
 
                         @Override
                         public void onFailure(Call<ResponseBody> call, Throwable t) {
-                            Log.e(tag, "Error in login");
+                            Toast toast = Toast.makeText(ChatActivity.this, "Connection error!", Toast.LENGTH_SHORT);
+                            toast.show();
+                            Log.e(tag, "Connection error!");
                         }
                     });
 
@@ -187,13 +186,19 @@ public class ChatActivity extends AppCompatActivity {
                 for (Message m : messages) {
                     deleteMessage(m);
                 }
+                messages.clear();
 
                 List<MessageDTO> data = response.body();
-                for (MessageDTO messageDTO : data) {
-                    User sender = getUserFromDatabase(messageDTO.getSender());
-                    Message newMessage = new Message(messageDTO.getMessage(), sender, messageDTO.getCreatedAt());
-                    addMessage(newMessage);
+                if (data != null) {
+                    for (MessageDTO messageDTO : data) {
+                        User sender = getUserFromDatabase(messageDTO.getSender());
+                        Message newMessage = new Message(messageDTO.getMessage(), sender, messageDTO.getCreatedAt());
+                        addMessage(newMessage);
+                        messages.add(newMessage);
+                    }
                 }
+                mMessageAdapter.notifyItemInserted(messages.size());
+                mMessageRecycler.scrollToPosition(messages.size() - 1);
             }
 
             @Override
@@ -290,9 +295,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void getMessgaesFromDatabase(Integer teamId) {
-
         messages = new ArrayList<>();
-
         String whereClause = "team_id = ? ";
         String[] whereArgs = new String[]{
                 teamId.toString()
@@ -314,7 +317,6 @@ public class ChatActivity extends AppCompatActivity {
                 messages.add(newMessage);
             }
         }
-
         cursor.close();
     }
 

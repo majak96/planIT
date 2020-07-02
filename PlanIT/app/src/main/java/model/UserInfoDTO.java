@@ -2,7 +2,7 @@ package model;
 
 import com.google.gson.annotations.SerializedName;
 
-public class RegisterDTO {
+public class UserInfoDTO {
 
     @SerializedName("email")
     private String email;
@@ -22,11 +22,11 @@ public class RegisterDTO {
     @SerializedName("firebaseId")
     private String firebaseId;
 
-    public RegisterDTO() {
+    public UserInfoDTO() {
 
     }
 
-    public RegisterDTO(String email, String password, String firstName, String lastName, String colour, String firebaseId) {
+    public UserInfoDTO(String email, String password, String firstName, String lastName, String colour, String firebaseId) {
         this.email = email;
         this.password = password;
         this.firstName = firstName;

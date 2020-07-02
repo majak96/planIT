@@ -28,7 +28,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import model.RegisterDTO;
+import model.UserInfoDTO;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -90,10 +90,10 @@ public class SignUpActivity extends AppCompatActivity {
                                 public void onComplete(@NonNull Task<AuthResult> task) {
                                     if (task.isSuccessful()) {
 
-                                        RegisterDTO registerDTO = new RegisterDTO(email.getText().toString(), password.getText().toString(), name.getText().toString(), lastName.getText().toString(), Utils.getRandomColor(), mAuth.getCurrentUser().getUid());
+                                        UserInfoDTO userInfoDTO = new UserInfoDTO(email.getText().toString(), password.getText().toString(), name.getText().toString(), lastName.getText().toString(), Utils.getRandomColor(), mAuth.getCurrentUser().getUid());
 
                                         AuthService apiService = ServiceUtils.getClient().create(AuthService.class);
-                                        Call<ResponseBody> call = apiService.register(registerDTO);
+                                        Call<ResponseBody> call = apiService.register(userInfoDTO);
                                         call.enqueue(new Callback<ResponseBody>() {
 
                                             @Override
