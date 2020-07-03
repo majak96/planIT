@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="10dp"
+    android:id="@+id/habits_overview_relative_layout"
+    android:background="@drawable/border">
+
+    <View
+        android:id="@+id/habits_overview_recycle_view_icon"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/habits_icon" />
+
+    <TextView
+        android:id="@+id/habits_overview_recycle_view_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="14dp"
+        android:layout_marginRight="15dp"
+        android:layout_toRightOf="@id/habits_overview_recycle_view_icon"
+        android:textColor="@color/darkGray"
+        android:textSize="16dp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:gravity="right"
+        android:layout_toRightOf="@id/habits_overview_recycle_view_name">
+
+        <TextView
+            android:id="@+id/habits_overview_recycle_view_num_days"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:textSize="20dp"
+            android:layout_marginRight="20dp"/>
+
+        <TextView
+            android:id="@+id/habits_overview_recycle_view_num_days_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:textSize="14dp"
+            android:text="@string/total_days" />
+    </LinearLayout>
+
+
+</RelativeLayout>

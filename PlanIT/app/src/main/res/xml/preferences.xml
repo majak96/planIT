@@ -1,0 +1,51 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- DATE AND TIME CATEGORY -->
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:key="pref_calendar_category"
+        app:title="@string/set_calendar_category">
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:iconSpaceReserved="false"
+            app:key="pref_week_days"
+            app:title="@string/set_week_days" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:iconSpaceReserved="false"
+            app:key="pref_assigned_team_tasks"
+            app:summary="@string/set_assigned_team_tasks_desc"
+            app:title="@string/set_assigned_team_tasks" />
+
+    </PreferenceCategory>
+
+    <!-- NOTIFICATIONS CATEGORY -->
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:key="pref_notifications_category"
+        app:title="@string/set_notifications_category">
+
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:key="pref_notifications"
+            app:title="@string/set_notifications" />
+
+    </PreferenceCategory>
+
+    <!-- HELP CATEGORY -->
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:key="pref_help_category"
+        app:title="@string/set_help_category">
+
+        <Preference
+            app:iconSpaceReserved="false"
+            app:key="pref_feedback"
+            app:summary="@string/set_feedback_summary"
+            app:title="@string/set_feedback" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
