@@ -19,7 +19,7 @@ PlanIT supports working in offline mode and synchronizing with the web server af
 
 ## Demo
 
-A video demonstration of the supported features can be accessed [here](https://www.google.com/).
+A video demonstration of the supported features can be accessed [here](https://drive.google.com/drive/folders/1cqoyvIgx9E37OPHcjZ3SMmsy-Y75oRkI?usp=sharing).
 
 ## Web server
 
