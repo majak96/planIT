@@ -62,7 +62,8 @@ public class ChatActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         if (getIntent().hasExtra("team")) {
-            Integer teamId = getIntent().getIntExtra("team", 1);
+            Integer teamId = getIntent().getIntExtra("team", -1);
+            Log.e("TEAM ID", teamId.toString());
             team = getTeamFromDatabase(teamId);
             setTitle(team.getName());
         }
@@ -263,7 +264,7 @@ public class ChatActivity extends AppCompatActivity {
             Log.i(tag, "User does not exist!");
         } else {
             while (cursor.moveToNext()) {
-                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5));
+                newUser = new User(cursor.getInt(cursor.getColumnIndex(Contract.User.COLUMN_ID)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_EMAIL)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_NAME)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_LAST_NAME)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_COLOUR)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_FIREBASE_ID)));
             }
         }
         cursor.close();
@@ -283,10 +284,10 @@ public class ChatActivity extends AppCompatActivity {
             Log.i(tag, "There are no messages in team chat");
         } else {
             while (cursor.moveToNext()) {
-                Integer id = cursor.getInt(0);
-                String message = cursor.getString(1);
-                Integer createdAt = cursor.getInt(2);
-                Integer senderId = cursor.getInt(3);
+                Integer id = cursor.getInt(cursor.getColumnIndex(Contract.Message.COLUMN_ID));
+                String message = cursor.getString(cursor.getColumnIndex(Contract.Message.COLUMN_MESSAGE));
+                Integer createdAt = cursor.getInt(cursor.getColumnIndex(Contract.Message.COLUMN_CREATED_AT));
+                Integer senderId = cursor.getInt(cursor.getColumnIndex(Contract.Message.COLUMN_SENDER_ID));
                 User sender = getUserFromDB(senderId);
 
                 Message newMessage = new Message(id, message, sender, createdAt.longValue());

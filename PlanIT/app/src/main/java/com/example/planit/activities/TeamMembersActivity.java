@@ -366,7 +366,7 @@ public class TeamMembersActivity extends AppCompatActivity {
             Log.i(tag, "No user in database");
         } else {
             while (cursor.moveToNext()) {
-                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5));
+                newUser = new User(cursor.getInt(cursor.getColumnIndex(Contract.User.COLUMN_ID)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_EMAIL)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_NAME)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_LAST_NAME)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_COLOUR)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_FIREBASE_ID)));
             }
         }
 
