@@ -16,6 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -68,6 +69,7 @@ public class TaskDetailActivity extends AppCompatActivity {
     private TextView assignedMember;
     private ImageView teamImage;
     private RecyclerView recyclerView;
+    private ImageButton directionsButton;
 
     private SimpleDateFormat viewDateFormat = new SimpleDateFormat("E, MMMM dd, YYYY");
     private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
@@ -91,6 +93,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.task_detail_recycle_view);
         assignedMember = findViewById(R.id.assigned_member_task_detail);
         teamImage = findViewById(R.id.team_task_detail);
+        directionsButton = findViewById(R.id.open_directions_button);
 
         intent = new Intent();
 
@@ -190,6 +193,18 @@ public class TaskDetailActivity extends AppCompatActivity {
     }
 
     /**
+     * Opens the activity that shows directions to the task location
+     */
+    public void openDirections(View view) {
+        Intent intent = new Intent(this, DirectionsActivity.class);
+        intent.putExtra("longitude", task.getLongitude());
+        intent.putExtra("latitude", task.getLatitude());
+        intent.putExtra("address", task.getAddress());
+
+        startActivity(intent);
+    }
+
+    /**
      * Sets field values to the values from the task
      */
     public void setTaskValues() {
@@ -249,6 +264,12 @@ public class TaskDetailActivity extends AppCompatActivity {
         } else {
             label.setText("");
             recyclerView.setVisibility(View.VISIBLE);
+        }
+
+        if (task.getLongitude() != null && task.getLatitude() != null) {
+            directionsButton.setVisibility(View.VISIBLE);
+        } else {
+            directionsButton.setVisibility(View.GONE);
         }
     }
 
@@ -360,8 +381,8 @@ public class TaskDetailActivity extends AppCompatActivity {
     private Task getTaskFromDatabase(Integer id) {
         Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + id);
 
-        String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_DESCRIPTION, Contract.Task.COLUMN_START_DATE, Contract.Task.COLUMN_START_TIME,
-                Contract.Task.COLUMN_PRIORITY, Contract.Task.COLUMN_ADDRESS, Contract.Task.COLUMN_DONE, Contract.Task.COLUMN_REMINDER_ID, Contract.Task.COLUMN_TEAM, Contract.Task.COLUMN_USER};
+        String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_DESCRIPTION, Contract.Task.COLUMN_START_DATE, Contract.Task.COLUMN_START_TIME, Contract.Task.COLUMN_PRIORITY,
+                Contract.Task.COLUMN_ADDRESS, Contract.Task.COLUMN_DONE, Contract.Task.COLUMN_REMINDER_ID, Contract.Task.COLUMN_TEAM, Contract.Task.COLUMN_USER, Contract.Task.COLUMN_LONGITUDE, Contract.Task.COLUMN_LATITUDE};
 
         Cursor cursor = getContentResolver().query(taskUri, allColumns, null, null, null);
         cursor.moveToFirst();
@@ -423,6 +444,14 @@ public class TaskDetailActivity extends AppCompatActivity {
 
         if (!cursor.isNull(10)) {
             task.setUser(cursor.getInt(10));
+        }
+
+        if (!cursor.isNull(11)) {
+            task.setLongitude(cursor.getDouble(11));
+        }
+
+        if (!cursor.isNull(12)) {
+            task.setLatitude(cursor.getDouble(12));
         }
 
         cursor.close();

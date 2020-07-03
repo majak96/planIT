@@ -98,6 +98,8 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.Task.COLUMN_DONE + " integer default 0, "
             + Contract.Task.COLUMN_TEAM + " integer, "
             + Contract.Task.COLUMN_USER + " integer, "
+            + Contract.Task.COLUMN_LONGITUDE + " double, "
+            + Contract.Task.COLUMN_LATITUDE + " double, "
             + "foreign key (" + Contract.Task.COLUMN_TEAM + ") references  " + Contract.Team.TABLE_NAME + "(" + Contract.Team.COLUMN_ID + "), "
             + "foreign key (" + Contract.Task.COLUMN_USER + ") references  " + Contract.User.TABLE_NAME + "(" + Contract.User.COLUMN_ID + "), "
             + "foreign key (" + Contract.Task.COLUMN_REMINDER_ID + ") references  "+ Contract.Reminder.TABLE_NAME + "(" + Contract.Reminder.COLUMN_ID + ")"

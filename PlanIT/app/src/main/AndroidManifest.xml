@@ -3,9 +3,15 @@
     package="com.example.planit">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -73,6 +79,11 @@
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" />
 
+        <activity
+            android:name=".activities.DirectionsActivity"
+            android:parentActivityName=".activities.TaskDetailActivity"
+            android:theme="@style/AppTheme.NoActionBarWithStatus" />
+
         <provider
             android:name="com.example.planit.database.TeamContentProvider"
             android:authorities="com.example.planit.TeamContentProvider"
@@ -95,7 +106,8 @@
             android:authorities="com.example.planit.ReminderContentProvider"
             android:exported="false" />
 
-        <receiver android:name="com.example.planit.broadcastReceivers.ReminderBroadcastReceiver"
+        <receiver
+            android:name="com.example.planit.broadcastReceivers.ReminderBroadcastReceiver"
             android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"></action>
