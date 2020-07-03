@@ -119,6 +119,8 @@ public final class Contract {
         public static final String COLUMN_REMINDER_ID = "reminder_id";
         public static final String COLUMN_TEAM = "team";
         public static final String COLUMN_USER = "user";
+        public static final String COLUMN_LONGITUDE = "longitude";
+        public static final String COLUMN_LATITUDE = "latitude";
 
     }
 

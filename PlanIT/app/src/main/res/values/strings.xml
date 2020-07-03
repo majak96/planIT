@@ -119,7 +119,7 @@
 
 
     <string name="reminder">Reminder</string>
-  
+
     <string name="team_no_name">Team name is required!</string>
     <string name="member_to_add">Member to add</string>
 
@@ -131,5 +131,13 @@
 
     <string name="delete_task_text">Are you sure you want to delete %1$s?</string>
     <string name="delete_task_title">Delete task</string>
+
+    //location
+    <string name="location_disabled_title">Location disabled</string>
+    <string name="location_disabled_message">Your location seems to be disabled. Do you want to enable it?</string>
+
+    <string name="location_not_allowed_title">Allow location</string>
+    <string name="location_not_allowed_message">In order to show your current position relative to the location of the task, we need to access your location. Otherwise we will only be able to show you the location of the task.</string>
+    <string name="no_allow">Don\'t allow</string>
 
 </resources>
