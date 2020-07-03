@@ -64,6 +64,7 @@
     <string name="team_created">Team created!</string>
 
     <string name="no_labels">No labels</string>
+    <string name="no_assigned_member">No assigned user</string>
     <string name="no_description">No description</string>
     <string name="no_location">No location</string>
     <string name="no_time">No time</string>
@@ -72,9 +73,11 @@
     <string name="task_title_required">Task title can\'t be empty!</string>
 
     //settings
-    <string name="set_date_category">Date and time</string>
+    <string name="set_calendar_category">Calendar</string>
     <string name="set_start_day">Start day of the week</string>
-    <string name="set_week_numbers">Show week numbers</string>
+    <string name="set_week_days">Show week days</string>
+    <string name="set_assigned_team_tasks">Show team tasks in calendar</string>
+    <string name="set_assigned_team_tasks_desc">Show team tasks assigned to me in personal calendar</string>
 
     <string name="set_notifications_category">Notifications</string>
     <string name="set_notifications">Enable notifications</string>
@@ -99,12 +102,14 @@
     <string name="add_priority">Add priority</string>
     <string name="add_date">Add date</string>
     <string name="add_time">Add time</string>
+    <string name="add_assigned_member">Assign task</string>
 
     //dialogs
     <string name="task_reminder_dialog">Task Reminder</string>
     <string name="task_date_dialog">Task Date</string>
     <string name="task_priority_dialog">Task Priority</string>
-    <string name="task_label_dialog">New Label</string>
+    <string name="task_label_dialog">Add Label</string>
+    <string name="task_user_dialog">Assign task</string>
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -116,7 +121,7 @@
 
 
     <string name="reminder">Reminder</string>
-  
+
     <string name="team_no_name">Team name is required!</string>
     <string name="member_to_add">Member to add</string>
 
@@ -128,5 +133,13 @@
 
     <string name="delete_task_text">Are you sure you want to delete %1$s?</string>
     <string name="delete_task_title">Delete task</string>
+
+    //location
+    <string name="location_disabled_title">Location disabled</string>
+    <string name="location_disabled_message">Your location seems to be disabled. Do you want to enable it?</string>
+
+    <string name="location_not_allowed_title">Allow location</string>
+    <string name="location_not_allowed_message">In order to show your current position relative to the location of the task, we need to access your location. Otherwise we will only be able to show you the location of the task.</string>
+    <string name="no_allow">Don\'t allow</string>
 
 </resources>

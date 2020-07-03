@@ -3,21 +3,21 @@
     <!-- DATE AND TIME CATEGORY -->
     <PreferenceCategory
         app:iconSpaceReserved="false"
-        app:key="pref_date_and_time_category"
-        app:title="@string/set_date_category">
-
-        <ListPreference
-            app:defaultValue="3"
-            app:entries="@array/pref_first_day"
-            app:entryValues="@array/pref_first_day_values"
-            app:iconSpaceReserved="false"
-            app:key="pref_start_day"
-            app:title="@string/set_start_day" />
+        app:key="pref_calendar_category"
+        app:title="@string/set_calendar_category">
 
         <SwitchPreferenceCompat
+            app:defaultValue="true"
             app:iconSpaceReserved="false"
-            app:key="pref_week_numbers"
-            app:title="@string/set_week_numbers" />
+            app:key="pref_week_days"
+            app:title="@string/set_week_days" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:iconSpaceReserved="false"
+            app:key="pref_assigned_team_tasks"
+            app:summary="@string/set_assigned_team_tasks_desc"
+            app:title="@string/set_assigned_team_tasks" />
 
     </PreferenceCategory>
 

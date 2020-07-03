@@ -7,12 +7,14 @@ import com.example.planit.activities.TeamDetailActivity;
 import com.example.planit.database.Contract;
 import com.example.planit.utils.EventDecorator;
 import com.example.planit.utils.FragmentTransition;
+import com.example.planit.utils.SharedPreference;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.prolificinteractive.materialcalendarview.CalendarDay;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 import com.prolificinteractive.materialcalendarview.OnDateSelectedListener;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -26,17 +28,17 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.preference.PreferenceManager;
 
 import com.prolificinteractive.materialcalendarview.OnMonthChangedListener;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
-import model.Task;
-import model.Team;
 
 public class CalendarFragment extends Fragment {
 
@@ -44,6 +46,7 @@ public class CalendarFragment extends Fragment {
 
     private ArrayList<CalendarDay> eventDates = new ArrayList<>();
     private MaterialCalendarView calendarView;
+    private Integer teamId;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -70,9 +73,8 @@ public class CalendarFragment extends Fragment {
         //set activity title
         if (getArguments() != null) {
 
-            Integer teamId = getArguments().getInt("SELECTED_TEAM");
+            teamId = getArguments().getInt("SELECTED_TEAM");
             String teamName = getArguments().getString("TEAM_NAME");
-            //Team team = Mokap.getTeam(teamId);
 
             getActivity().setTitle(teamName);
 
@@ -84,6 +86,12 @@ public class CalendarFragment extends Fragment {
         calendarView = view.findViewById(R.id.calendar_view);
         calendarView.setDateSelected(CalendarDay.today(), true);
 
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        Boolean showWeekDays = sharedPreferences.getBoolean("pref_week_days", true);
+        String startDayOfTheWeek = sharedPreferences.getString("pref_start_day", "3");
+
+        calendarView.state().edit().setShowWeekDays(showWeekDays);
+
         //update the size of the calendar tiles
         if (this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             calendarView.setTileSizeDp(view.getHeight() / 8);
@@ -92,7 +100,7 @@ public class CalendarFragment extends Fragment {
         //get dates with tasks for the current month
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
-        getTaskDates(calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.YEAR));
+        getTaskDates(calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.YEAR), teamId);
 
         //decorator for marking dates with events
         calendarView.addDecorator(new EventDecorator(getResources().getColor(R.color.colorPrimary), eventDates));
@@ -110,14 +118,14 @@ public class CalendarFragment extends Fragment {
                 Long dateInMilliseconds = cal.getTimeInMillis();
 
                 //go to DailyPreviewFragment for the selected date
-                FragmentTransition.replaceFragment(getActivity(), DailyPreviewFragment.newInstance(dateInMilliseconds), R.id.fragment_container, true);
+                FragmentTransition.replaceFragment(getActivity(), DailyPreviewFragment.newInstance(dateInMilliseconds, teamId), R.id.fragment_container, true);
             }
         });
 
         calendarView.setOnMonthChangedListener(new OnMonthChangedListener() {
             @Override
             public void onMonthChanged(MaterialCalendarView widget, CalendarDay date) {
-                getTaskDates(date.getMonth(), date.getYear());
+                getTaskDates(date.getMonth(), date.getYear(), teamId);
 
                 calendarView.removeDecorators();
                 calendarView.addDecorator(new EventDecorator(getResources().getColor(R.color.colorPrimary), eventDates));
@@ -130,6 +138,7 @@ public class CalendarFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getActivity(), EditTaskActivity.class);
+                intent.putExtra("team", teamId);
                 getActivity().startActivityForResult(intent, 1);
             }
         });
@@ -181,7 +190,10 @@ public class CalendarFragment extends Fragment {
      * @param month shown in the calendar
      * @param year  shown in the calendar
      */
-    private void getTaskDates(int month, int year) {
+    private void getTaskDates(int month, int year, Integer teamId) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        Boolean showTeamTasks = sharedPreferences.getBoolean("pref_assigned_team_tasks", false);
+
         String monthString = Integer.toString(month);
         if (monthString.length() < 2) {
             monthString = "0" + monthString;
@@ -191,7 +203,28 @@ public class CalendarFragment extends Fragment {
         String[] allColumns = {"distinct " + Contract.Task.COLUMN_START_DATE};
 
         String selection = Contract.Task.COLUMN_START_DATE + " between date(?) and date(?, '+1 month', '-1 day')";
-        String[] selectionArgs = new String[]{date, date};
+        String[] selectionArgs;
+        //for personal calendar
+        if (teamId == null) {
+            selection += " and (" + Contract.Task.COLUMN_TEAM + " is null";
+            //show team tasks assigned to the logged in user as well
+            if (showTeamTasks) {
+                Integer id = SharedPreference.getLoggedId(getActivity());
+
+                selection += " or " + Contract.Task.COLUMN_USER + "= ?)";
+                selectionArgs = new String[]{date, date, id.toString()};
+            }
+            //show only personal task assigned to the logged in user
+            else {
+                selection += ")";
+                selectionArgs = new String[]{date, date};
+            }
+        }
+        //for team calendar
+        else {
+            selection += " and " + Contract.Task.COLUMN_TEAM + " = ?";
+            selectionArgs = new String[]{date, date, Integer.toString(teamId)};
+        }
 
         Cursor cursor = getActivity().getContentResolver().query(Contract.Task.CONTENT_URI_TASK, allColumns, selection, selectionArgs, null);
 

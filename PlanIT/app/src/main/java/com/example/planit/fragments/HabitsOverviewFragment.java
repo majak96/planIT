@@ -29,7 +29,6 @@ import model.Habit;
  * create an instance of this fragment.
  */
 public class HabitsOverviewFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String TAG = "HabitPreviewFragment";
 
@@ -43,14 +42,8 @@ public class HabitsOverviewFragment extends Fragment {
      *
      * @return A new instance of fragment HabitsOverviewFragment.
      */
-    // TODO: Rename and change types and number of parameters
     public static HabitsOverviewFragment newInstance() {
         HabitsOverviewFragment fragment = new HabitsOverviewFragment();
-
-        /*Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);*/
 
         return fragment;
     }

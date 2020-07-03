@@ -113,7 +113,7 @@ public class SignInActivity extends AppCompatActivity {
                 } else {
 
                     loadingBar.setTitle("Sing in");
-                    loadingBar.setMessage("Pleas wait...");
+                    loadingBar.setMessage("Please wait...");
                     loadingBar.setCanceledOnTouchOutside(true);
                     loadingBar.show();
 
@@ -146,8 +146,10 @@ public class SignInActivity extends AppCompatActivity {
 
                                                     User newUser = new User(name, lastName, emailString, firebaseId);
                                                     newUser.setColour(colour);
-                                                    createUser(newUser);
+                                                    Uri uri = createUser(newUser);
+                                                    String id = uri.getLastPathSegment();
 
+                                                    SharedPreference.setLoggedId(SignInActivity.this, Integer.parseInt(id));
                                                     SharedPreference.setLoggedEmail(getApplicationContext(), emailString);
                                                     SharedPreference.setLoggedName(getApplicationContext(), name);
                                                     SharedPreference.setLoggedLastName(getApplicationContext(), lastName);
@@ -252,13 +254,16 @@ public class SignInActivity extends AppCompatActivity {
 
                         User newUser = new User(firstName, lastName, email, mAuth.getCurrentUser().getUid());
                         newUser.setColour(colour);
-                        createUser(newUser);
+                        Uri uri = createUser(newUser);
+                        String id = uri.getLastPathSegment();
 
+                        SharedPreference.setLoggedId(SignInActivity.this, Integer.parseInt(id));
                         SharedPreference.setLoggedEmail(SignInActivity.this, email);
                         SharedPreference.setLoggedColour(SignInActivity.this, colour);
                         SharedPreference.setLoggedName(SignInActivity.this, firstName);
                         SharedPreference.setLoggedLastName(SignInActivity.this, lastName);
                         loadingBar.dismiss();
+
                         gotoHomePage();
                     } else {
                         loadingBar.dismiss();

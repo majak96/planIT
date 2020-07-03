@@ -3,8 +3,15 @@
     package="com.example.planit">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -25,7 +32,8 @@
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
         <activity
             android:name=".activities.CreateTeamActivity"
-            android:theme="@style/AppTheme.NoActionBarWithStatus" />
+            android:theme="@style/AppTheme.NoActionBarWithStatus"
+            android:windowSoftInputMode="stateVisible" />
         <activity
             android:name=".activities.CreateHabitActivity"
             android:theme="@style/AppTheme.NoActionBarWithStatus" />
@@ -76,6 +84,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".activities.DirectionsActivity"
+            android:parentActivityName=".activities.TaskDetailActivity"
+            android:theme="@style/AppTheme.NoActionBarWithStatus" />
+
         <provider
             android:name="com.example.planit.database.TeamContentProvider"
             android:authorities="com.example.planit.TeamContentProvider"
@@ -93,6 +106,18 @@
             android:name="com.example.planit.database.LabelContentProvider"
             android:authorities="com.example.planit.LabelContentProvider"
             android:exported="false" />
+        <provider
+            android:name="com.example.planit.database.ReminderContentProvider"
+            android:authorities="com.example.planit.ReminderContentProvider"
+            android:exported="false" />
+
+        <receiver
+            android:name="com.example.planit.broadcastReceivers.ReminderBroadcastReceiver"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"></action>
+            </intent-filter>
+        </receiver>
 
         <service android:name=".service.MyFirebaseMessagingService">
             <intent-filter>

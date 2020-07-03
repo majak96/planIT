@@ -33,10 +33,12 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
 
     private List<Task> tasks;
     private Context context;
+    private Boolean fromTeam;
 
-    public DailyPreviewAdapter(Context context, List<Task> tasks) {
+    public DailyPreviewAdapter(Context context, List<Task> tasks, Boolean fromTeam) {
         this.context = context;
         this.tasks = tasks;
+        this.fromTeam = fromTeam;
     }
 
     @NonNull
@@ -55,7 +57,7 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
         //set checkbox text and status
         holder.taskTitleTextView.setText(task.getTitle());
         holder.taskCheckBox.setChecked(task.getDone());
-
+        
         //if task has set time
         if (task.getStartTime() != null) {
             DateFormat dateFormat = new SimpleDateFormat("HH:mm");
@@ -71,6 +73,7 @@ public class DailyPreviewAdapter extends RecyclerView.Adapter<DailyPreviewAdapte
                 Intent intent = new Intent(context, TaskDetailActivity.class);
                 intent.putExtra("task", tasks.get(position).getId());
                 intent.putExtra("position", position);
+                intent.putExtra("from_team", fromTeam);
 
                 ((Activity) context).startActivityForResult(intent, 2);
             }

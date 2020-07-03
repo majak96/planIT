@@ -43,6 +43,8 @@ import retrofit2.Response;
 public class TeamMembersActivity extends AppCompatActivity {
 
     private String tag = "TeamMembersActivity";
+    private static final String TAG = "TeamMembersActivity";
+
     private EditText newMember;
     private TeamMembersAdapter adapter;
     private ArrayList<User> users;
@@ -131,8 +133,8 @@ public class TeamMembersActivity extends AppCompatActivity {
                                 colour = userInfo.getColour();
                                 firebaseId = userInfo.getFirebaseId();
 
-                                user = new User(name, lastName, colour, firebaseId);
-                                user.setEmail(teamUser);
+                                user = new User(name, lastName, teamUser, firebaseId);
+                                user.setColour(colour);
 
                                 Uri userUri = createUser(user);
                                 String id = userUri.getLastPathSegment();
@@ -211,8 +213,7 @@ public class TeamMembersActivity extends AppCompatActivity {
                                     teamId = Integer.parseInt(uri.getLastPathSegment());
                                     FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid() + "-" + serverTeamId);
                                 }else{
-                                    Log.e("OVDE ", "NULL JE");
-
+                                    //TODO: complete
                                 }
 
                                 for (User u : users) {

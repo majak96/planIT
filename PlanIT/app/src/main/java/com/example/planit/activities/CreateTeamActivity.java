@@ -50,6 +50,9 @@ public class CreateTeamActivity extends AppCompatActivity {
         this.teamName = findViewById(R.id.team_name);
         this.teamDescription = findViewById(R.id.team_description);
 
+        //set focus to team name
+        teamName.requestFocus();
+
         //if this is edit - get the team
         if (getIntent().hasExtra("team")) {
             setTitle("Edit Team");

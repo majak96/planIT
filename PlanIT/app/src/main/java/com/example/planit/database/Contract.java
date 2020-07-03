@@ -20,7 +20,6 @@ public final class Contract {
         public static final String COLUMN_DESCRIPTION = "description";
         public static final String COLUMN_GOAL = "goal";
         public static final String COLUMN_NUMBER_OF_DAYS = "number_of_days";
-        public static final String COLUMN_REMINDER = "reminder";
 
     }
 
@@ -133,7 +132,11 @@ public final class Contract {
         public static final String COLUMN_PRIORITY = "priority";
         public static final String COLUMN_ADDRESS = "address";
         public static final String COLUMN_DONE = "done";
-        public static final String COLUMN_REMINDER = "reminder";
+        public static final String COLUMN_REMINDER_ID = "reminder_id";
+        public static final String COLUMN_TEAM = "team";
+        public static final String COLUMN_USER = "user";
+        public static final String COLUMN_LONGITUDE = "longitude";
+        public static final String COLUMN_LATITUDE = "latitude";
 
     }
 
@@ -162,6 +165,31 @@ public final class Contract {
         public static final String COLUMN_ID = "_id";
         public static final String COLUMN_TASK = "task";
         public static final String COLUMN_LABEL = "label";
+    }
+
+    public static class Reminder {
+        public static final String AUTHORITY = Contract.AUTHORITY + ".ReminderContentProvider";
+
+        public static final String TABLE_NAME = "reminder";
+
+        public static final Uri CONTENT_URI_REMINDER = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
+
+        public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_DATE = "date";
+
+    }
+
+    public static class HabitReminderConnection {
+        public static final String AUTHORITY = Contract.AUTHORITY + ".ReminderContentProvider";
+
+        public static final String TABLE_NAME = "habit_reminder_connection";
+
+        public static final Uri CONTENT_URI_HABIT_REMINDER_CONN = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
+
+        public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_HABIT_ID = "day_id";
+        public static final String COLUMN_REMINDER_ID = "reminder_id";
+
     }
 }
 
