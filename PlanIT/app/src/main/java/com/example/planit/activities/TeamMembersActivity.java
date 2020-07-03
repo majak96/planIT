@@ -29,16 +29,12 @@ import com.example.planit.utils.SharedPreference;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.messaging.FirebaseMessaging;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import model.TeamDTO;
-import model.Team;
 import model.User;
+import model.UserInfoDTO;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -119,35 +115,21 @@ public class TeamMembersActivity extends AppCompatActivity {
             if (newMember.length() > 0) {
 
                 TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
-                Call<ResponseBody> call = apiService.checkMember(teamUser);
-                call.enqueue(new Callback<ResponseBody>() {
+                Call<UserInfoDTO> call = apiService.checkMember(teamUser);
+                call.enqueue(new Callback<UserInfoDTO>() {
                     @Override
-                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    public void onResponse(Call<UserInfoDTO> call, Response<UserInfoDTO> response) {
 
                         if (response.code() == 200) {
                             User user = getUserFromDatabase(teamUser);
                             if (user == null) {
 
-                                String name = "";
-                                String lastName = "";
-                                String colour = "";
-                                String firebaseId = "";
-
-                                String resStr = null;
-                                try {
-                                    resStr = response.body().string();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                try {
-                                    JSONObject json = new JSONObject(resStr);
-                                    name = json.get("name").toString();
-                                    lastName = json.get("lastName").toString();
-                                    colour = json.get("colour").toString();
-                                    firebaseId = json.get("firebaseId").toString();
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
+                                String name = "", lastName = "", colour = "", firebaseId = "";
+                                UserInfoDTO userInfo = response.body();
+                                name = userInfo.getName();
+                                lastName = userInfo.getLastName();
+                                colour = userInfo.getColour();
+                                firebaseId = userInfo.getFirebaseId();
 
                                 user = new User(name, lastName, colour, firebaseId);
                                 user.setEmail(teamUser);
@@ -174,7 +156,9 @@ public class TeamMembersActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    public void onFailure(Call<UserInfoDTO> call, Throwable t) {
+                        Toast toast = Toast.makeText(TeamMembersActivity.this, "Connection error!", Toast.LENGTH_SHORT);
+                        toast.show();
                         Log.e("tag", "Connection error");
                     }
                 });
@@ -212,17 +196,23 @@ public class TeamMembersActivity extends AppCompatActivity {
                     TeamDTO teamDTO = new TeamDTO(title, description, creator, usersEmails);
 
                     TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
-                    Call<ResponseBody> call = apiService.createTeam(teamDTO);
-                    call.enqueue(new Callback<ResponseBody>() {
+                    Call<Integer> call = apiService.createTeam(teamDTO);
+                    call.enqueue(new Callback<Integer>() {
 
                         @Override
-                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        public void onResponse(Call<Integer> call, Response<Integer> response) {
 
                             if (response.code() == 200) {
 
-                                Uri uri = createTeam(creator, title, description);
+                                Integer serverTeamId = response.body();
+
+                                Uri uri = createTeam(creator, title, description, serverTeamId);
                                 if (uri != null) {
                                     teamId = Integer.parseInt(uri.getLastPathSegment());
+                                    FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid() + "-" + serverTeamId);
+                                }else{
+                                    Log.e("OVDE ", "NULL JE");
+
                                 }
 
                                 for (User u : users) {
@@ -241,7 +231,9 @@ public class TeamMembersActivity extends AppCompatActivity {
                         }
 
                         @Override
-                        public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        public void onFailure(Call<Integer> call, Throwable t) {
+                            Toast toast = Toast.makeText(TeamMembersActivity.this, "Connection error!", Toast.LENGTH_SHORT);
+                            toast.show();
                             Log.e("tag", "Connection error!");
                         }
                     });
@@ -254,7 +246,8 @@ public class TeamMembersActivity extends AppCompatActivity {
                     TeamDTO teamDTO = new TeamDTO(null, null, null, usersEmails);
 
                     TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
-                    Call<ResponseBody> call = apiService.updateTeamMembers(teamId, teamDTO);
+                    Integer serverTeamId = findGlobalTeamId(teamId);
+                    Call<ResponseBody> call = apiService.updateTeamMembers(serverTeamId, teamDTO);
                     call.enqueue(new Callback<ResponseBody>() {
                         @Override
                         public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
@@ -305,7 +298,7 @@ public class TeamMembersActivity extends AppCompatActivity {
             outState.putInt("teamId", teamId);
         }
         userEmails = new ArrayList<>();
-        for(User u:users){
+        for (User u : users) {
             userEmails.add(u.getEmail());
         }
         outState.putStringArrayList("userEmails", userEmails);
@@ -342,7 +335,7 @@ public class TeamMembersActivity extends AppCompatActivity {
         Cursor cursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, whereClause, whereArgs, null);
 
         if (cursor.getCount() == 0) {
-            //TODO: do something when there's no data
+            Log.i(tag, "No user in database");
         } else {
             while (cursor.moveToNext()) {
                 newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5));
@@ -355,7 +348,7 @@ public class TeamMembersActivity extends AppCompatActivity {
 
 
     //inserts a new team into the database
-    public Uri createTeam(String creator, String teamName, String description) {
+    public Uri createTeam(String creator, String teamName, String description, Integer serverTeamId) {
 
         User user = getUserFromDatabase(creator);
         if (user == null) {
@@ -367,6 +360,7 @@ public class TeamMembersActivity extends AppCompatActivity {
         //set the title
         values.put(Contract.Team.COLUMN_TITLE, teamName);
         values.put(Contract.Team.COLUMN_CREATOR, user.getId());
+        values.put(Contract.Team.COLUMN_SERVER_TEAM_ID, serverTeamId);
 
         //set the description
         if (!description.isEmpty()) {
@@ -374,11 +368,6 @@ public class TeamMembersActivity extends AppCompatActivity {
         }
 
         Uri uri = getContentResolver().insert(Contract.Team.CONTENT_URI_TEAM, values);
-
-        if (uri != null) {
-            //subscribe on messages
-            FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid() + "-" + uri.getLastPathSegment());
-        }
 
         return uri;
     }
@@ -424,6 +413,18 @@ public class TeamMembersActivity extends AppCompatActivity {
 
         cursor.close();
         return users;
+    }
+
+    Integer findGlobalTeamId(Integer teamId){
+        Uri teamUri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamId);
+
+        Cursor cursor = getContentResolver().query(teamUri, null, null, null, null);
+        cursor.moveToFirst();
+
+        Integer serverTeamId = cursor.getInt(4);
+        cursor.close();
+
+        return serverTeamId;
     }
 
 }

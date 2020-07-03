@@ -20,6 +20,7 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.Team.COLUMN_TITLE + " text, "
             + Contract.Team.COLUMN_DESCRIPTION + " text , "
             + Contract.Team.COLUMN_CREATOR + " integer , "
+            + Contract.Team.COLUMN_SERVER_TEAM_ID  + " integer , "
             + " foreign key (" + Contract.Team.COLUMN_CREATOR + " ) references "+ Contract.User.TABLE_NAME + " ( " + Contract.User.COLUMN_ID + " ) "
             + ")";
 

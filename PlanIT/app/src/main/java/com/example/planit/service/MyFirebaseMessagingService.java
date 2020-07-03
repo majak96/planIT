@@ -6,17 +6,23 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.planit.R;
 import com.example.planit.activities.ChatActivity;
+import com.example.planit.database.Contract;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
+import model.Team;
+import model.User;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -27,32 +33,32 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         super.onMessageReceived(remoteMessage);
         String title = remoteMessage.getNotification().getTitle();
-        String[] parts = title.split(" send message to ");
-        String nameLastName = parts[0];
+        String sender = remoteMessage.getData().get("sender");
 
-        parts = remoteMessage.getFrom().split("\\/");
+        String[] parts = remoteMessage.getFrom().split("\\/");
         String partWithTeamId = parts[parts.length - 1];
 
         parts = partWithTeamId.split("\\-");
-        String teamId = parts[parts.length - 1];
+        String serverTeamId = parts[parts.length - 1];
 
-        sendNotification(title, remoteMessage.getNotification().getBody(), teamId, remoteMessage.getSentTime(), nameLastName);
+        sendNotification(title, remoteMessage.getNotification().getBody(), serverTeamId, remoteMessage.getSentTime(), sender);
     }
 
-    public void sendNotification(String title, String messageBody, String teamId, Long time, String nemaLastname) {
+    public void sendNotification(String title, String messageBody, String serverTeamId, Long time, String senderEmail) {
         // First check is chat activity of team with teamId active
-        if (ChatActivity.isActive(Integer.parseInt(teamId))) {
+        Integer localId = getLocalTeamId(Integer.parseInt(serverTeamId));
+        if (ChatActivity.isActive(localId)) {
             Intent intent = new Intent("receive-message");
             intent.putExtra("message", messageBody);
             intent.putExtra("time", time);
-            intent.putExtra("nemaLastname", nemaLastname);
+            intent.putExtra("senderEmail", senderEmail);
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         } else {
             Uri sound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
             Intent intent = new Intent(this, ChatActivity.class);
-            intent.putExtra("team", Integer.valueOf(teamId));
+            intent.putExtra("team", Integer.valueOf(localId));
             PendingIntent pendingIntent = PendingIntent.getActivity(MyFirebaseMessagingService.this, 0, intent,
                     PendingIntent.FLAG_ONE_SHOT);
 
@@ -65,6 +71,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                         .setContentText(messageBody)
                         .setAutoCancel(true)
                         .setSound(sound).setSmallIcon(R.mipmap.ic_launcher_round)
+                        .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000})
                         .setChannelId("my_channel_01")
                         .setContentIntent(pendingIntent)
                         .build();
@@ -72,6 +79,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 notification = builder.setContentTitle(title)
                         .setContentText(messageBody)
                         .setAutoCancel(true)
+                        .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000})
                         .setSound(sound).setSmallIcon(R.mipmap.ic_launcher_round)
                         .setContentIntent(pendingIntent)
                         .build();
@@ -84,6 +92,28 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             notificationManager.notify(1, notification);
         }
 
+    }
+
+    private Integer getLocalTeamId(Integer serverTeamId) {
+        Integer localTeamId = -1;
+
+        String whereClause = "server_team_id = ? ";
+        String[] whereArgs = new String[]{
+                serverTeamId.toString()
+        };
+
+        Cursor cursor = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, whereClause, whereArgs, null);
+
+        if (cursor.getCount() == 0) {
+            Log.i(tag, "Team does not exists!");
+        } else {
+            while (cursor.moveToNext()) {
+                localTeamId = cursor.getInt(0);
+            }
+        }
+
+        cursor.close();
+        return localTeamId;
     }
 
 }

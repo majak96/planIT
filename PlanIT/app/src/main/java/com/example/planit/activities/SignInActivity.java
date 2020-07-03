@@ -139,7 +139,7 @@ public class SignInActivity extends AppCompatActivity {
 
                                                 if (response.code() == 200) {
                                                     UserInfoDTO userInfo = response.body();
-                                                    name = userInfo.getFirstName();
+                                                    name = userInfo.getName();
                                                     lastName = userInfo.getLastName();
                                                     colour = userInfo.getColour();
                                                     firebaseId = userInfo.getFirebaseId();

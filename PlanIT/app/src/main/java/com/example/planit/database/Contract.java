@@ -83,6 +83,7 @@ public final class Contract {
 
         public static final Uri CONTENT_URI_TEAM = Uri.parse("content://" + AUTHORITY + ".TeamContentProvider" + "/" + TABLE_NAME);
 
+        public static final String COLUMN_SERVER_TEAM_ID = "server_team_id";
         public static final String COLUMN_ID = "_id";
         public static final String COLUMN_TITLE = "title";
         public static final String COLUMN_DESCRIPTION = "description";

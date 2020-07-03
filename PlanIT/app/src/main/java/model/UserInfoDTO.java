@@ -10,8 +10,8 @@ public class UserInfoDTO {
     @SerializedName("password")
     private String password;
 
-    @SerializedName("firstName")
-    private String firstName;
+    @SerializedName("name")
+    private String name;
 
     @SerializedName("lastName")
     private String lastName;
@@ -26,10 +26,10 @@ public class UserInfoDTO {
 
     }
 
-    public UserInfoDTO(String email, String password, String firstName, String lastName, String colour, String firebaseId) {
+    public UserInfoDTO(String email, String password, String name, String lastName, String colour, String firebaseId) {
         this.email = email;
         this.password = password;
-        this.firstName = firstName;
+        this.name = name;
         this.lastName = lastName;
         this.colour = colour;
         this.firebaseId = firebaseId;
@@ -51,12 +51,12 @@ public class UserInfoDTO {
         this.password = password;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public String getName() {
+        return name;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getLastName() {

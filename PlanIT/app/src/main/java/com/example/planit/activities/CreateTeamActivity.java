@@ -56,7 +56,6 @@ public class CreateTeamActivity extends AppCompatActivity {
 
             //get the team with the id
             team = getTeamFromDatabase(getIntent().getIntExtra("team", -1));
-
             //set field values to the values from the existing task
             setExistingTeamValues();
         } else {
@@ -109,10 +108,13 @@ public class CreateTeamActivity extends AppCompatActivity {
                 } else {
                     if (team != null) {
 
-                        TeamDTO teamDTO = new TeamDTO(teamName.getText().toString().trim(), teamDescription.getText().toString().trim());
+                        //send serverId...
+                        TeamDTO teamDTO = new TeamDTO(teamName.getText().toString().trim(), teamDescription.getText().toString(), team.getServerTeamId());
 
                         TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
-                        Call<ResponseBody> call = apiService.updateTeam(team.getId(), teamDTO);
+                        //send serverId...
+                        Call<ResponseBody> call = apiService.updateTeam(team.getServerTeamId(), teamDTO);
+
                         call.enqueue(new Callback<ResponseBody>() {
 
                             @Override
@@ -191,7 +193,7 @@ public class CreateTeamActivity extends AppCompatActivity {
     private Team getTeamFromDatabase(Integer teamId) {
         Uri teamUri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamId);
 
-        String[] allColumns = {Contract.Team.COLUMN_ID, Contract.Team.COLUMN_TITLE, Contract.Team.COLUMN_DESCRIPTION};
+        String[] allColumns = {Contract.Team.COLUMN_ID, Contract.Team.COLUMN_TITLE, Contract.Team.COLUMN_DESCRIPTION, Contract.Team.COLUMN_SERVER_TEAM_ID};
 
         Cursor cursor = getContentResolver().query(teamUri, allColumns, null, null, null);
         cursor.moveToFirst();
@@ -200,6 +202,7 @@ public class CreateTeamActivity extends AppCompatActivity {
         team.setId(cursor.getInt(0));
         team.setName(cursor.getString(1));
         team.setDescription(cursor.getString(2));
+        team.setServerTeamId(cursor.getInt(3));
 
         cursor.close();
 

@@ -1,6 +1,7 @@
 package com.example.planit.service;
 
 import model.TeamDTO;
+import model.UserInfoDTO;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -20,10 +21,10 @@ public interface TeamService {
     })
 
     @POST("team/create")
-    Call<ResponseBody> createTeam(@Body TeamDTO teamDTO);
+    Call<Integer> createTeam(@Body TeamDTO teamDTO);
 
     @GET("team/checkMember")
-    Call<ResponseBody> checkMember(@Query("email") String email);
+    Call<UserInfoDTO> checkMember(@Query("email") String email);
 
     @DELETE("team/{teamId}")
     Call<ResponseBody> deleteTeam(@Path("teamId") Integer teamId);

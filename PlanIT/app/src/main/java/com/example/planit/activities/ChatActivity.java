@@ -107,9 +107,9 @@ public class ChatActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             String message = intent.getStringExtra("message");
             Long time = intent.getLongExtra("time", 1);
-            String nameLastName = intent.getStringExtra("nemaLastname");
+            String senderEmail = intent.getStringExtra("senderEmail");
 
-            User user = findUserByNameLastName(nameLastName);
+            User user = getUserFromDatabase(senderEmail);
 
             Message newMessage = new Message(message, user, time);
             addMessage(newMessage);
@@ -127,7 +127,7 @@ public class ChatActivity extends AppCompatActivity {
                 Message newMessage = new Message(message, loggedUser, Utils.getCurrentDateTime());
                 if (addMessage(newMessage) != null) {
 
-                    MessageDTO messageDTO = new MessageDTO(team.getId().longValue(), message, loggedUser.getEmail(), newMessage.getCreatedAt());
+                    MessageDTO messageDTO = new MessageDTO(team.getServerTeamId().longValue(), message, loggedUser.getEmail(), newMessage.getCreatedAt());
 
                     ChatService apiService = ServiceUtils.getClient().create(ChatService.class);
                     Call<ResponseBody> call = apiService.sendMessage(messageDTO);
@@ -177,7 +177,7 @@ public class ChatActivity extends AppCompatActivity {
     public void loadMessages() {
 
         ChatService apiService = ServiceUtils.getClient().create(ChatService.class);
-        Call<List<MessageDTO>> call = apiService.getMessagse(team.getId());
+        Call<List<MessageDTO>> call = apiService.getMessagse(team.getServerTeamId());
 
         call.enqueue(new Callback<List<MessageDTO>>() {
             @Override
@@ -218,7 +218,7 @@ public class ChatActivity extends AppCompatActivity {
 
         Integer in = cursor.getInt(3);
         User creator = getUserFromDB(cursor.getInt(3));
-        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator);
+        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator, cursor.getInt(4));
 
         if (cursor.getString(2) != null) {
             team.setDescription(cursor.getString(2));
@@ -256,30 +256,6 @@ public class ChatActivity extends AppCompatActivity {
         String whereClause = "email = ? ";
         String[] whereArgs = new String[]{
                 email
-        };
-        Cursor cursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, whereClause, whereArgs, null);
-
-        if (cursor.getCount() == 0) {
-            Log.i(tag, "User does not exist!");
-        } else {
-            while (cursor.moveToNext()) {
-                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5));
-            }
-        }
-        cursor.close();
-        return newUser;
-    }
-
-    private User findUserByNameLastName(String nameLastName) {
-        User newUser = null;
-
-        String[] parts = nameLastName.split(" ");
-        String name = parts[0];
-        String lastName = parts[1];
-        String whereClause = "name = ? and last_name = ? ";
-        String[] whereArgs = new String[]{
-                name,
-                lastName
         };
         Cursor cursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, whereClause, whereArgs, null);
 

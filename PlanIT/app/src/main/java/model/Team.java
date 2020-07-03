@@ -7,6 +7,7 @@ import java.util.List;
 public class Team implements Serializable {
 
     private Integer id;
+    private Integer serverTeamId;
     private String name;
     private String description;
     private User teamCreator;
@@ -16,12 +17,13 @@ public class Team implements Serializable {
         this.users = new ArrayList<>();
     }
 
-    public Team(Integer id, String name, String description, User user) {
+    public Team(Integer id, String name, String description, User user, Integer serverTeamId) {
         this.id = id;
         this.users = new ArrayList<>();
         this.name = name;
         this.description = description;
         this.teamCreator = user;
+        this.serverTeamId = serverTeamId;
     }
 
     public Team(Integer id, String name, String description) {
@@ -75,5 +77,13 @@ public class Team implements Serializable {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Integer getServerTeamId() {
+        return serverTeamId;
+    }
+
+    public void setServerTeamId(Integer serverTeamId) {
+        this.serverTeamId = serverTeamId;
     }
 }

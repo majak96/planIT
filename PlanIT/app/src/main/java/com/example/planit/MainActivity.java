@@ -3,7 +3,6 @@ package com.example.planit;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -20,6 +19,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.example.planit.activities.ChatActivity;
 import com.example.planit.activities.ProfileActivity;
 import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.SignInActivity;
@@ -110,6 +110,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
             }
 
+            if (getIntent().getExtras() != null) {
+                if(getIntent().hasExtra("teamId")){
+                    String serverTeamId = getIntent().getStringExtra("teamId");
+                    Integer localId = getLocalTeamId(Integer.parseInt(serverTeamId));
+                    Intent intent = new Intent(this, ChatActivity.class);
+                    intent.putExtra("team", Integer.valueOf(localId));
+                    startActivity(intent);
+                }
+            }
+
         }
 
         //update navigation drawer selection after back
@@ -132,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         */
         getAllTeams();
         for (Team team : myTeams) {
-            FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getId());
+            FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
         }
     }
 
@@ -400,4 +410,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         cursor.close();
     }
 
+    private Integer getLocalTeamId(Integer serverTeamId) {
+        Integer localTeamId = -1;
+
+        String whereClause = "server_team_id = ? ";
+        String[] whereArgs = new String[]{
+                serverTeamId.toString()
+        };
+
+        Cursor cursor = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, whereClause, whereArgs, null);
+
+        if (cursor.getCount() == 0) {
+            Log.i("MainActivity", "Team does not exists!");
+        } else {
+            while (cursor.moveToNext()) {
+                localTeamId = cursor.getInt(0);
+            }
+        }
+
+        cursor.close();
+        return localTeamId;
+    }
 }

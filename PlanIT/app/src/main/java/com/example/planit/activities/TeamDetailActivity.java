@@ -136,7 +136,7 @@ public class TeamDetailActivity extends AppCompatActivity {
         cursor.moveToFirst();
 
         User creator = getUserFromDB(cursor.getInt(3));
-        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator);
+        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator, cursor.getInt(4));
 
         if (cursor.getString(2) != null) {
             team.setDescription(cursor.getString(2));
