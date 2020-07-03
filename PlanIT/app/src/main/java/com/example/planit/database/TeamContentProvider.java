@@ -18,12 +18,14 @@ public class TeamContentProvider extends ContentProvider {
 
     private DatabaseSQLiteHelper database;
 
-    private static final int TEAM = 100;
-    private static final int TEAM_ID = 200;
-    private static final int USER = 300;
-    private static final int USER_ID = 400;
-    private static final int USER_TEAM = 500;
-    private static final int USER_TEAM_ID = 600;
+    private static final int TEAM = 130;
+    private static final int TEAM_ID = 230;
+    private static final int USER = 330;
+    private static final int USER_ID = 430;
+    private static final int USER_TEAM = 530;
+    private static final int USER_TEAM_ID = 630;
+    private static final int MESSAGE = 730;
+    private static final int MESSAGE_ID = 830;
 
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -34,6 +36,8 @@ public class TeamContentProvider extends ContentProvider {
         sURIMatcher.addURI(Contract.AUTHORITY + ".TeamContentProvider", Contract.User.TABLE_NAME + "/#", USER_ID);
         sURIMatcher.addURI(Contract.AUTHORITY + ".TeamContentProvider", Contract.UserTeamConnection.TABLE_NAME, USER_TEAM);
         sURIMatcher.addURI(Contract.AUTHORITY + ".TeamContentProvider", Contract.UserTeamConnection.TABLE_NAME + "/#", USER_TEAM_ID);
+        sURIMatcher.addURI(Contract.AUTHORITY + ".TeamContentProvider", Contract.Message.TABLE_NAME, MESSAGE);
+        sURIMatcher.addURI(Contract.AUTHORITY + ".TeamContentProvider", Contract.Message.TABLE_NAME + "/#", MESSAGE_ID);
     }
 
     @Override
@@ -74,6 +78,7 @@ public class TeamContentProvider extends ContentProvider {
                         + " , u." + Contract.User.COLUMN_EMAIL
                         + " , u." + Contract.User.COLUMN_COLOUR
                         + " , u." + Contract.User.COLUMN_ID
+                        + " , u." + Contract.User.COLUMN_FIREBASE_ID
                         + " FROM "
                         + Contract.User.TABLE_NAME + " u, "
                         + Contract.Team.TABLE_NAME + " t, "
@@ -85,6 +90,12 @@ public class TeamContentProvider extends ContentProvider {
             case USER_TEAM:
                 //set the table
                 queryBuilder.setTables(Contract.UserTeamConnection.TABLE_NAME);
+                break;
+            case MESSAGE_ID:
+                queryBuilder.appendWhere(Contract.Message.COLUMN_ID + "=" + uri.getLastPathSegment());
+            case MESSAGE:
+                //set the table
+                queryBuilder.setTables(Contract.Message.TABLE_NAME);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -126,6 +137,10 @@ public class TeamContentProvider extends ContentProvider {
                 id = db.insert(Contract.UserTeamConnection.TABLE_NAME, null, values);
                 retVal = Uri.parse(Contract.UserTeamConnection.TABLE_NAME + "/" + id);
                 break;
+            case MESSAGE:
+                id = db.insert(Contract.Message.TABLE_NAME, null, values);
+                retVal = Uri.parse(Contract.Message.TABLE_NAME + "/" + id);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -161,9 +176,9 @@ public class TeamContentProvider extends ContentProvider {
             case USER_ID:
                 String userId = uri.getLastPathSegment();
                 if (TextUtils.isEmpty(selection)) {
-                    rowsDeleted = db.delete(Contract.User.TABLE_NAME, Contract.Team.COLUMN_ID + "=" + userId, null);
+                    rowsDeleted = db.delete(Contract.User.TABLE_NAME, Contract.User.COLUMN_ID + "=" + userId, null);
                 } else {
-                    rowsDeleted = db.delete(Contract.User.TABLE_NAME, Contract.Team.COLUMN_ID + "=" + userId + " and " + selection, selectionArgs);
+                    rowsDeleted = db.delete(Contract.User.TABLE_NAME, Contract.User.COLUMN_ID + "=" + userId + " and " + selection, selectionArgs);
                 }
                 break;
             case USER_TEAM:
@@ -175,6 +190,17 @@ public class TeamContentProvider extends ContentProvider {
                     rowsDeleted = db.delete(Contract.UserTeamConnection.TABLE_NAME, Contract.UserTeamConnection.COLUMN_ID + "=" + userTeamId, null);
                 } else {
                     rowsDeleted = db.delete(Contract.User.TABLE_NAME, Contract.UserTeamConnection.COLUMN_ID + "=" + userTeamId + " and " + selection, selectionArgs);
+                }
+                break;
+            case MESSAGE:
+                rowsDeleted = db.delete(Contract.Message.TABLE_NAME, selection, selectionArgs);
+                break;
+            case MESSAGE_ID:
+                String messageId = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection)) {
+                    rowsDeleted = db.delete(Contract.Message.TABLE_NAME, Contract.Message.COLUMN_ID + "=" + messageId, null);
+                } else {
+                    rowsDeleted = db.delete(Contract.Message.TABLE_NAME, Contract.Message.COLUMN_ID + "=" + messageId + " and " + selection, selectionArgs);
                 }
                 break;
             default:
@@ -213,9 +239,9 @@ public class TeamContentProvider extends ContentProvider {
             case USER_ID:
                 String userId = uri.getLastPathSegment();
                 if (TextUtils.isEmpty(selection)) {
-                    rowsUpdated = db.update(Contract.User.TABLE_NAME, values, Contract.Team.COLUMN_ID + "=" + userId, null);
+                    rowsUpdated = db.update(Contract.User.TABLE_NAME, values, Contract.User.COLUMN_ID + "=" + userId, null);
                 } else {
-                    rowsUpdated = db.update(Contract.User.TABLE_NAME, values, Contract.Team.COLUMN_ID + "=" + userId + " and " + selection, selectionArgs);
+                    rowsUpdated = db.update(Contract.User.TABLE_NAME, values, Contract.User.COLUMN_ID + "=" + userId + " and " + selection, selectionArgs);
                 }
                 break;
             case USER_TEAM:
@@ -229,7 +255,17 @@ public class TeamContentProvider extends ContentProvider {
                     rowsUpdated = db.update(Contract.UserTeamConnection.TABLE_NAME, values, Contract.Team.COLUMN_ID + "=" + userTeamId + " and " + selection, selectionArgs);
                 }
                 break;
-
+            case MESSAGE:
+                rowsUpdated = db.update(Contract.Message.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            case MESSAGE_ID:
+                String messageId = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection)) {
+                    rowsUpdated = db.update(Contract.Message.TABLE_NAME, values, Contract.Message.COLUMN_ID + "=" + messageId, null);
+                } else {
+                    rowsUpdated = db.update(Contract.Message.TABLE_NAME, values, Contract.Message.COLUMN_ID + "=" + messageId + " and " + selection, selectionArgs);
+                }
+                break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }

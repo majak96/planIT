@@ -2,7 +2,7 @@ package model;
 
 import com.google.gson.annotations.SerializedName;
 
-public class RegisterDTO {
+public class UserInfoDTO {
 
     @SerializedName("email")
     private String email;
@@ -10,8 +10,8 @@ public class RegisterDTO {
     @SerializedName("password")
     private String password;
 
-    @SerializedName("firstName")
-    private String firstName;
+    @SerializedName("name")
+    private String name;
 
     @SerializedName("lastName")
     private String lastName;
@@ -19,16 +19,20 @@ public class RegisterDTO {
     @SerializedName("colour")
     private String colour;
 
-    public RegisterDTO() {
+    @SerializedName("firebaseId")
+    private String firebaseId;
+
+    public UserInfoDTO() {
 
     }
 
-    public RegisterDTO(String email, String password, String firstName, String lastName, String colour) {
+    public UserInfoDTO(String email, String password, String name, String lastName, String colour, String firebaseId) {
         this.email = email;
         this.password = password;
-        this.firstName = firstName;
+        this.name = name;
         this.lastName = lastName;
         this.colour = colour;
+        this.firebaseId = firebaseId;
     }
 
     public String getColour() {
@@ -39,7 +43,6 @@ public class RegisterDTO {
         this.colour = colour;
     }
 
-
     public String getPassword() {
         return password;
     }
@@ -48,12 +51,12 @@ public class RegisterDTO {
         this.password = password;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public String getName() {
+        return name;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getLastName() {
@@ -62,6 +65,14 @@ public class RegisterDTO {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public String getFirebaseId() {
+        return firebaseId;
+    }
+
+    public void setFirebaseId(String firebaseId) {
+        this.firebaseId = firebaseId;
     }
 
     public String getEmail() {

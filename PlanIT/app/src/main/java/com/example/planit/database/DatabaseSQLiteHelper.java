@@ -3,6 +3,9 @@ package com.example.planit.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+import retrofit2.http.DELETE;
 
 public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
 
@@ -17,6 +20,7 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.Team.COLUMN_TITLE + " text, "
             + Contract.Team.COLUMN_DESCRIPTION + " text , "
             + Contract.Team.COLUMN_CREATOR + " integer , "
+            + Contract.Team.COLUMN_SERVER_TEAM_ID  + " integer , "
             + " foreign key (" + Contract.Team.COLUMN_CREATOR + " ) references "+ Contract.User.TABLE_NAME + " ( " + Contract.User.COLUMN_ID + " ) "
             + ")";
 
@@ -26,7 +30,8 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.User.COLUMN_EMAIL + " text , "
             + Contract.User.COLUMN_NAME + " text , "
             + Contract.User.COLUMN_LAST_NAME + " text , "
-            + Contract.User.COLUMN_COLOUR + " text "
+            + Contract.User.COLUMN_COLOUR + " text , "
+            + Contract.User.COLUMN_FIREBASE_ID + " text "
             + ")";
 
     private static final String TABLE_USER_TEAM_CONNECTION_CREATE = "create table "
@@ -38,6 +43,17 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + " foreign key (" + Contract.UserTeamConnection.COLUMN_TEAM_ID+ " ) references "+ Contract.Team.TABLE_NAME + " ( " + Contract.Team.COLUMN_ID + " ) "
             + " ); ";
 
+    private static final String TABLE_MESSAGE_CREATE = "create table "
+            + Contract.Message.TABLE_NAME + "("
+            + Contract.Message.COLUMN_ID  + " integer primary key autoincrement , "
+            + Contract.Message.COLUMN_MESSAGE + " text , "
+            + Contract.Message.COLUMN_CREATED_AT + " integer , "
+            + Contract.Message.COLUMN_SENDER_ID + " integer , "
+            + Contract.Message.COLUMN_TEAM_ID + " integer , "
+            + " foreign key (" + Contract.Message.COLUMN_SENDER_ID + " ) references "+ Contract.User.TABLE_NAME + " ( " + Contract.User.COLUMN_ID + " ) ,"
+            + " foreign key (" + Contract.Message.COLUMN_TEAM_ID+ " ) references "+ Contract.Team.TABLE_NAME + " ( " + Contract.Team.COLUMN_ID + " ) "
+            + ")";
+            
     private static final String TABLE_REMINDER_CREATE = "create table "
             + Contract.Reminder.TABLE_NAME + "("
             + Contract.Reminder.COLUMN_ID  + " integer primary key autoincrement , "
@@ -132,7 +148,9 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
         db.execSQL(TABLE_TEAM_CREATE);
         db.execSQL(TABLE_USER_CREATE);
         db.execSQL(TABLE_USER_TEAM_CONNECTION_CREATE);
+        db.execSQL(TABLE_MESSAGE_CREATE);
 
+        // executing create table statement for reminders
         db.execSQL(TABLE_REMINDER_CREATE);
     
         // executing create table statement for habits
@@ -156,7 +174,6 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
         db.execSQL("insert into " + Contract.HabitDay.TABLE_NAME + " ( " + Contract.HabitDay.COLUMN_DAY + " ) " + "values( \"SAT\") ;");
         db.execSQL("insert into " + Contract.HabitDay.TABLE_NAME + " ( " + Contract.HabitDay.COLUMN_DAY + " ) " + "values( \"SUN\") ;");
 
-        
     }
 
     @Override
@@ -165,6 +182,7 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + Contract.Team.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + Contract.User.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + Contract.UserTeamConnection.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + Contract.Message.TABLE_NAME);
 
         // drop table queries for habits
         db.execSQL("DROP TABLE IF EXISTS " + Contract.HabitDayConnection.TABLE_NAME);
@@ -187,6 +205,31 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
     public void onConfigure(SQLiteDatabase db) {
         super.onConfigure(db);
         db.setForeignKeyConstraintsEnabled(true);
+    }
+
+    public void truncateDatabase(Context mContext) {
+
+        SQLiteDatabase db = getWritableDatabase();
+
+        db.execSQL("DELETE FROM " + Contract.Message.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.UserTeamConnection.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.Team.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.User.TABLE_NAME);
+
+        // drop table queries for habits
+        db.execSQL("DELETE FROM " + Contract.HabitDayConnection.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.HabitFulfillment.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.HabitReminderConnection.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.Habit.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.HabitDay.TABLE_NAME);
+
+        db.execSQL("DELETE FROM " + Contract.TaskLabel.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.Task.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.Label.TABLE_NAME);
+
+        db.execSQL("DELETE FROM " + Contract.Reminder.TABLE_NAME);
+
+
     }
 
 }

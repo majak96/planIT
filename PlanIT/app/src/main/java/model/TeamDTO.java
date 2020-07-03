@@ -5,6 +5,7 @@ import java.util.List;
 
 public class TeamDTO {
 
+    private Integer id;
     private String title;
     private String description;
     private String creator;
@@ -14,9 +15,10 @@ public class TeamDTO {
         this.members = new ArrayList<>();
     }
 
-    public TeamDTO(String title, String description) {
+    public TeamDTO(String title, String description, Integer id) {
         this.title = title;
         this.description = description;
+        this.id = id;
     }
 
     public TeamDTO(String title, String description, String creator, List<String> members) {
@@ -57,4 +59,13 @@ public class TeamDTO {
     public void setMembers(List<String> members) {
         this.members = members;
     }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
 }
