@@ -41,7 +41,8 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
     private static final String TABLE_REMINDER_CREATE = "create table "
             + Contract.Reminder.TABLE_NAME + "("
             + Contract.Reminder.COLUMN_ID  + " integer primary key autoincrement , "
-            + Contract.Reminder.COLUMN_DATE + " text not null"
+            + Contract.Reminder.COLUMN_DATE + " text not null , "
+            + Contract.Reminder.COLUMN_GLOBAL_ID  + " integer "
             + ");";
 
     private static final String TABLE_HABIT_CREATE = "create table "
@@ -50,7 +51,8 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.Habit.COLUMN_TITLE + " text not null, "
             + Contract.Habit.COLUMN_DESCRIPTION + " text, "
             + Contract.Habit.COLUMN_GOAL + " integer default -1, "
-            + Contract.Habit.COLUMN_NUMBER_OF_DAYS + " integer default -1 "
+            + Contract.Habit.COLUMN_NUMBER_OF_DAYS + " integer default -1 ,"
+            + Contract.Habit.COLUMN_GLOBAL_ID  + " integer "
             + ");";
 
     private static final String TABLE_HABIT_DAY_CREATE = "create table "
@@ -63,6 +65,7 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.HabitFulfillment.TABLE_NAME + "("
             + Contract.HabitFulfillment.COLUMN_ID  + " integer primary key autoincrement , "
             + Contract.HabitFulfillment.COLUMN_DATE + " text not null , "
+            + Contract.HabitFulfillment.COLUMN_GLOBAL_ID  + " integer ,"
             + Contract.HabitFulfillment.COLUMN_HABIT_ID + " integer ,"
             + " foreign key (" + Contract.HabitFulfillment.COLUMN_HABIT_ID + ") references  "+ Contract.Habit.TABLE_NAME + "(" + Contract.Habit.COLUMN_ID + ")"
             + ");";
@@ -70,6 +73,7 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
     private static final String TABLE_HABIT_DAY_CONNECTION_CREATE = "create table "
             + Contract.HabitDayConnection.TABLE_NAME + "("
             + Contract.HabitDayConnection.COLUMN_ID + " integer primary key autoincrement , "
+            + Contract.HabitDayConnection.COLUMN_GLOBAL_ID  + " integer ,"
             + Contract.HabitDayConnection.COLUMN_HABIT_ID + " integer ,"
             + Contract.HabitDayConnection.COLUMN_HABIT_DAY_ID + " integer ,"
             + " foreign key (" + Contract.HabitDayConnection.COLUMN_HABIT_ID + ") references  "+ Contract.Habit.TABLE_NAME + "(" + Contract.Habit.COLUMN_ID + "),"
@@ -79,6 +83,7 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
     private static final String TABLE_HABIT_REMINDER_CONNECTION_CREATE = "create table "
             + Contract.HabitReminderConnection.TABLE_NAME + "("
             + Contract.HabitReminderConnection.COLUMN_ID + " integer primary key autoincrement , "
+            + Contract.HabitReminderConnection.COLUMN_GLOBAL_ID  + " integer ,"
             + Contract.HabitReminderConnection.COLUMN_HABIT_ID + " integer ,"
             + Contract.HabitReminderConnection.COLUMN_REMINDER_ID + " integer UNIQUE ,"
             + " foreign key (" + Contract.HabitReminderConnection.COLUMN_HABIT_ID + ") references  "+ Contract.Habit.TABLE_NAME + "(" + Contract.Habit.COLUMN_ID + "),"

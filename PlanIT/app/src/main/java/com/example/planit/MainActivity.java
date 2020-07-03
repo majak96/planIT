@@ -1,9 +1,12 @@
 package com.example.planit;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -25,6 +28,8 @@ import com.example.planit.fragments.CalendarFragment;
 import com.example.planit.fragments.DailyPreviewFragment;
 import com.example.planit.fragments.HabitsOverviewFragment;
 import com.example.planit.fragments.TeamsOverviewFragment;
+import com.example.planit.synchronization.SyncReceiver;
+import com.example.planit.synchronization.SyncService;
 import com.example.planit.utils.FragmentTransition;
 import com.example.planit.utils.SharedPreference;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -47,6 +52,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private TextView loggedName;
     private TextView loggedFirstChar;
     private LinearLayout profileLayout;
+
+    private PendingIntent pendingIntent;
+    private AlarmManager manager;
+
+    private SyncReceiver sync;
+    public static String SYNC_DATA = "SYNC_DATA";
+
+    private String synctime = "2";
+    private boolean allowSync = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,6 +116,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     currentMenuItem = R.id.nav_calendar;
                 }
             }
+
+            setUpReceiver();
 
         }
 
@@ -190,6 +206,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 SharedPreference.setLoggedName(getApplicationContext(), "");
                 SharedPreference.setLoggedColour(getApplicationContext(), "");
                 SharedPreference.setLoggedLastName(getApplicationContext(), "");
+                SharedPreference.setLastSyncDate(getApplicationContext(), null);
                 Intent intent = new Intent(MainActivity.this, SignInActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
@@ -353,6 +370,57 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 //do nothing
             }
         }
+
+    }
+
+    private void setUpReceiver(){
+        sync = new SyncReceiver();
+        // Retrieve a PendingIntent that will perform a broadcast
+        Intent alarmIntent = new Intent(this, SyncService.class);
+        pendingIntent = PendingIntent.getService(this, 0, alarmIntent, 0);
+        manager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+    }
+
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onResume() {
+
+        super.onResume();
+        if (manager == null) {
+            setUpReceiver();
+        }
+
+        if(allowSync){
+            int interval = calculateTimeTillNextSync(Integer.parseInt(synctime));
+            manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), interval, pendingIntent);
+        }
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(SYNC_DATA);
+
+        registerReceiver(sync, filter);
+    }
+
+    public static int calculateTimeTillNextSync(int minutes){
+        return 1000 * 60 * minutes;
+    }
+
+    @Override
+    protected void onPause() {
+        if (manager != null) {
+            manager.cancel(pendingIntent);
+        }
+
+        if(sync != null){
+            unregisterReceiver(sync);
+        }
+
+        super.onPause();
 
     }
 

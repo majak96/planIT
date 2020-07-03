@@ -193,7 +193,7 @@ public class CreateHabitActivity extends AppCompatActivity {
             String title = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_TITLE));
             String description = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_DESCRIPTION));
             habit = new Habit();
-            habit.setId(id);
+            habit.setLocalId(id);
             habit.setTitle(title);
             habit.setGoal(cursor.getInt(cursor.getColumnIndex(Contract.Habit.COLUMN_GOAL)));
             habit.setNumberOfDays(cursor.getInt(cursor.getColumnIndex(Contract.Habit.COLUMN_NUMBER_OF_DAYS)));
@@ -344,7 +344,7 @@ public class CreateHabitActivity extends AppCompatActivity {
                             updateDays();
                         } else if (!this.habit.getHabitDays().isEmpty()) {
                             for (HabitDayConnection conn : this.habit.getHabitDays())
-                                this.deleteHabitDay(conn.getId());
+                                this.deleteHabitDay(conn.getLocal_id());
                         }
 
                         Toast.makeText(this, "Habit updated", Toast.LENGTH_SHORT).show();
@@ -437,7 +437,7 @@ public class CreateHabitActivity extends AppCompatActivity {
 
             if (!found) {
                 //remove
-                deleteHabitDay(conn.getId());
+                deleteHabitDay(conn.getLocal_id());
             }
         }
 
@@ -626,9 +626,9 @@ public class CreateHabitActivity extends AppCompatActivity {
             HabitDayConnection habitDayConnection = null;
             while (cursor.moveToNext()) {
                 habitDayConnection = new HabitDayConnection();
-                habitDayConnection.setId(cursor.getInt(cursor.getColumnIndex(Contract.HabitDayConnection.COLUMN_ID)));
+                habitDayConnection.setLocal_id(cursor.getInt(cursor.getColumnIndex(Contract.HabitDayConnection.COLUMN_ID)));
                 habitDayConnection.setHabitDayId(cursor.getInt(cursor.getColumnIndex(Contract.HabitDayConnection.COLUMN_HABIT_DAY_ID)));
-                habitDayConnection.setHabitId(cursor.getInt(cursor.getColumnIndex(Contract.HabitDayConnection.COLUMN_HABIT_ID)));
+                habitDayConnection.setHabitId(new Long(cursor.getInt(cursor.getColumnIndex(Contract.HabitDayConnection.COLUMN_HABIT_ID))));
                 this.habit.getHabitDays().add(habitDayConnection);
             }
         }

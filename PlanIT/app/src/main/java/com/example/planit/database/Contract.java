@@ -8,14 +8,15 @@ public final class Contract {
 
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY);
 
-  public static class Habit {
+    public static class Habit {
 
         public static final String TABLE_NAME = "habit";
         public static final String AUTHORITY = Contract.AUTHORITY + ".HabitContentProvider";
 
-        public static final Uri CONTENT_URI_HABIT = Uri.parse("content://" + AUTHORITY  + "/" + TABLE_NAME);
+        public static final Uri CONTENT_URI_HABIT = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
 
         public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_TITLE = "title";
         public static final String COLUMN_DESCRIPTION = "description";
         public static final String COLUMN_GOAL = "goal";
@@ -31,6 +32,7 @@ public final class Contract {
         public static final Uri CONTENT_HABIT_FULFILLMENT = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
 
         public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_DATE = "date";
         public static final String COLUMN_HABIT_ID = "habit_id";
 
@@ -56,11 +58,12 @@ public final class Contract {
         public static final Uri CONTENT_URI_HABIT_DAY_CONN = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
 
         public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_HABIT_ID = "habit_id";
         public static final String COLUMN_HABIT_DAY_ID = "habit_day_id";
     }
-  
-  
+
+
     public static class User {
 
         public static final String TABLE_NAME = "user";
@@ -92,14 +95,14 @@ public final class Contract {
 
         public static final String TABLE_NAME = "user_team_connection";
 
-        public static final Uri CONTENT_URI_USER_TEAM = Uri.parse("content://" + AUTHORITY+ ".TeamContentProvider" + "/" + TABLE_NAME);
+        public static final Uri CONTENT_URI_USER_TEAM = Uri.parse("content://" + AUTHORITY + ".TeamContentProvider" + "/" + TABLE_NAME);
 
         public static final String COLUMN_ID = "_id";
         public static final String COLUMN_USER_ID = "user_id";
         public static final String COLUMN_TEAM_ID = "team_id";
 
     }
-  
+
     public static class Task {
 
         public static final String AUTHORITY = Contract.AUTHORITY + ".TaskContentProvider";
@@ -150,25 +153,27 @@ public final class Contract {
     }
 
     public static class Reminder {
-        public static final String AUTHORITY = Contract.AUTHORITY + ".ReminderContentProvider";
+        public static final String AUTHORITY = Contract.AUTHORITY + ".HabitContentProvider";
 
         public static final String TABLE_NAME = "reminder";
 
         public static final Uri CONTENT_URI_REMINDER = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
 
         public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_DATE = "date";
 
     }
 
     public static class HabitReminderConnection {
-        public static final String AUTHORITY = Contract.AUTHORITY + ".ReminderContentProvider";
+        public static final String AUTHORITY = Contract.AUTHORITY + ".HabitContentProvider";
 
         public static final String TABLE_NAME = "habit_reminder_connection";
 
         public static final Uri CONTENT_URI_HABIT_REMINDER_CONN = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
 
         public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_HABIT_ID = "day_id";
         public static final String COLUMN_REMINDER_ID = "reminder_id";
 
