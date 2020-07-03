@@ -21,6 +21,7 @@ public final class Contract {
         public static final String COLUMN_DESCRIPTION = "description";
         public static final String COLUMN_GOAL = "goal";
         public static final String COLUMN_NUMBER_OF_DAYS = "number_of_days";
+        public static final String COLUMN_DELETED = "deleted";
 
     }
 
@@ -35,6 +36,7 @@ public final class Contract {
         public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_DATE = "date";
         public static final String COLUMN_HABIT_ID = "habit_id";
+        public static final String COLUMN_DELETED = "deleted";
 
     }
 
@@ -61,6 +63,7 @@ public final class Contract {
         public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_HABIT_ID = "habit_id";
         public static final String COLUMN_HABIT_DAY_ID = "habit_day_id";
+        public static final String COLUMN_DELETED = "deleted";
     }
 
 
@@ -91,6 +94,8 @@ public final class Contract {
         public static final String COLUMN_DESCRIPTION = "description";
         public static final String COLUMN_CREATOR = "creator";
 
+
+
     }
 
     public static class UserTeamConnection {
@@ -102,6 +107,7 @@ public final class Contract {
         public static final String COLUMN_ID = "_id";
         public static final String COLUMN_USER_ID = "user_id";
         public static final String COLUMN_TEAM_ID = "team_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
 
     }
 
@@ -116,6 +122,7 @@ public final class Contract {
         public static final String COLUMN_CREATED_AT = "created_at";
         public static final String COLUMN_SENDER_ID = "sender";
         public static final String COLUMN_TEAM_ID = "team_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
 
     }
   
@@ -140,12 +147,14 @@ public final class Contract {
         public static final String COLUMN_USER = "user";
         public static final String COLUMN_LONGITUDE = "longitude";
         public static final String COLUMN_LATITUDE = "latitude";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
+        public static final String COLUMN_DELETED = "deleted";
 
     }
 
     public static class Label {
 
-        public static final String AUTHORITY = Contract.AUTHORITY + ".LabelContentProvider";
+        public static final String AUTHORITY = Contract.AUTHORITY + ".TaskContentProvider";
 
         public static final String TABLE_NAME = "label";
 
@@ -155,11 +164,12 @@ public final class Contract {
         public static final String COLUMN_ID = "_id";
         public static final String COLUMN_NAME = "name";
         public static final String COLUMN_COLOR = "color";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
     }
 
     public static class TaskLabel {
 
-        public static final String AUTHORITY = Contract.AUTHORITY + ".LabelContentProvider";
+        public static final String AUTHORITY = Contract.AUTHORITY + ".TaskContentProvider";
 
         public static final String TABLE_NAME = "task_label";
 
@@ -168,6 +178,8 @@ public final class Contract {
         public static final String COLUMN_ID = "_id";
         public static final String COLUMN_TASK = "task";
         public static final String COLUMN_LABEL = "label";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
+        public static final String COLUMN_DELETED = "deleted";
     }
 
     public static class Reminder {
@@ -180,6 +192,7 @@ public final class Contract {
         public static final String COLUMN_ID = "_id";
         public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_DATE = "date";
+        public static final String COLUMN_DELETED = "deleted";
 
     }
 
@@ -194,6 +207,7 @@ public final class Contract {
         public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_HABIT_ID = "day_id";
         public static final String COLUMN_REMINDER_ID = "reminder_id";
+        public static final String COLUMN_DELETED = "deleted";
 
     }
 }
