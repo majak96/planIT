@@ -5,7 +5,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -17,9 +19,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.planit.MainActivity;
 import com.example.planit.R;
+import com.example.planit.database.Contract;
 import com.example.planit.service.AuthService;
 import com.example.planit.service.ServiceUtils;
+import com.example.planit.utils.SharedPreference;
 import com.example.planit.utils.Utils;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -28,6 +33,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import model.LoginDTO;
+import model.User;
 import model.UserInfoDTO;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -100,14 +107,13 @@ public class SignUpActivity extends AppCompatActivity {
                                             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 
                                                 if (response.code() == 200) {
-                                                    Toast t = Toast.makeText(SignUpActivity.this, "Successfully registered!", Toast.LENGTH_SHORT);
-                                                    t.show();
                                                     String currentUserId = mAuth.getCurrentUser().getUid();
                                                     rootRef.child("Users").child(currentUserId).setValue("");
 
-                                                    loadingBar.dismiss();
-                                                    Intent intent = new Intent(SignUpActivity.this, SignInActivity.class);
-                                                    startActivity(intent);
+                                                    login(userInfoDTO);
+
+                                                    Toast t = Toast.makeText(SignUpActivity.this, "Successfully registered and logged in!", Toast.LENGTH_SHORT);
+                                                    t.show();
 
                                                 } else {
                                                     loadingBar.dismiss();
@@ -158,4 +164,65 @@ public class SignUpActivity extends AppCompatActivity {
         CharSequence str = text.getText().toString();
         return TextUtils.isEmpty(str);
     }
+
+    private void login(UserInfoDTO userInfoDTO) {
+        mAuth.signInWithEmailAndPassword(email.getText().toString(), password.getText().toString())
+                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+
+                            String name = userInfoDTO.getName();
+                            String lastName = userInfoDTO.getLastName();
+                            String colour = userInfoDTO.getColour();
+                            String emailString = userInfoDTO.getEmail();
+                            String currentUserId = userInfoDTO.getFirebaseId();
+
+                            User newUser = new User(name, lastName, emailString, currentUserId);
+                            newUser.setColour(colour);
+
+                            Uri uri = createUser(newUser);
+                            String id = uri.getLastPathSegment();
+
+                            SharedPreference.setLoggedId(SignUpActivity.this, Integer.parseInt(id));
+                            SharedPreference.setLoggedEmail(getApplicationContext(), newUser.getEmail());
+                            SharedPreference.setLoggedName(getApplicationContext(), newUser.getName());
+                            SharedPreference.setLoggedLastName(getApplicationContext(), newUser.getLastName());
+                            SharedPreference.setLoggedColour(getApplicationContext(), newUser.getColour());
+
+                            loadingBar.dismiss();
+
+                            Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+
+                        } else {
+                            loadingBar.dismiss();
+                            Toast t = Toast.makeText(SignUpActivity.this, "Error in login registered user!", Toast.LENGTH_SHORT);
+                            t.show();
+                        }
+                    }
+
+                });
+
+    }
+
+    //inserts a new user into the database
+    public Uri createUser(User user) {
+
+        ContentValues values = new ContentValues();
+
+        values.put(Contract.User.COLUMN_EMAIL, user.getEmail());
+        values.put(Contract.User.COLUMN_NAME, user.getName());
+        values.put(Contract.User.COLUMN_LAST_NAME, user.getLastName());
+        values.put(Contract.User.COLUMN_COLOUR, user.getColour());
+        values.put(Contract.User.COLUMN_FIREBASE_ID, user.getFirebaseId());
+
+        Uri uri = getContentResolver().insert(Contract.User.CONTENT_URI_USER, values);
+
+        return uri;
+
+    }
+
+
 }

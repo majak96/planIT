@@ -2,8 +2,11 @@ package com.example.planit.activities;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -78,6 +81,18 @@ public class CreateTeamActivity extends AppCompatActivity {
             return true;
         }
 
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu (Menu menu) {
+        if (team != null && !isNetworkAvailable()) {
+            menu.findItem(R.id.menu_save).setEnabled(false);
+        }
+        else{
+            if(team!=null)
+                menu.findItem(R.id.menu_save).setEnabled(true);
+        }
+        return true;
     }
 
     @Override
@@ -234,5 +249,11 @@ public class CreateTeamActivity extends AppCompatActivity {
         }
 
         return values;
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }

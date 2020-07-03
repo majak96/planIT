@@ -7,9 +7,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -126,6 +129,21 @@ public class TeamDetailActivity extends AppCompatActivity {
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu (Menu menu) {
+        if (teamId != null && !isNetworkAvailable()) {
+            menu.findItem(R.id.menu_delete_team).setEnabled(false);
+            menu.findItem(R.id.menu_edit_team).setEnabled(false);
+            menu.findItem(R.id.menu_edit_team_members).setEnabled(false);
+        }
+        else{
+            menu.findItem(R.id.menu_delete_team).setEnabled(true);
+            menu.findItem(R.id.menu_edit_team).setEnabled(true);
+            menu.findItem(R.id.menu_edit_team_members).setEnabled(true);
+        }
+        return true;
     }
 
     //get team with the id from the database
@@ -292,6 +310,12 @@ public class TeamDetailActivity extends AppCompatActivity {
         String selection = Contract.UserTeamConnection.COLUMN_USER_ID + " = ? and " + Contract.UserTeamConnection.COLUMN_TEAM_ID + " = ? ";
         String[] selectionArgs = new String[]{userId, teamId};
         return getContentResolver().delete(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM, selection, selectionArgs);
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
 }

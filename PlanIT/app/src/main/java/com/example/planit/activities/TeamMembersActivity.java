@@ -7,8 +7,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -107,6 +111,18 @@ public class TeamMembersActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (!isNetworkAvailable()) {
+            addMemberBtn.setEnabled(false);
+            addMemberBtn.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.lightGray)));
+        } else {
+            addMemberBtn.setEnabled(true);
+            addMemberBtn.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorPrimary)));
+        }
     }
 
     public void addMember(View view) {
@@ -285,6 +301,17 @@ public class TeamMembersActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onPrepareOptionsMenu (Menu menu) {
+        if (teamId != null && !isNetworkAvailable()) {
+            menu.findItem(R.id.menu_save).setEnabled(false);
+        }
+        else{
+            menu.findItem(R.id.menu_save).setEnabled(true);
+        }
+        return true;
+    }
+
+    @Override
     public boolean onSupportNavigateUp() {
         intent = new Intent();
         setResult(Activity.RESULT_CANCELED, intent);
@@ -426,6 +453,12 @@ public class TeamMembersActivity extends AppCompatActivity {
         cursor.close();
 
         return serverTeamId;
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
 }
