@@ -154,7 +154,6 @@ public class SyncService extends Service {
                 } else {
                     // TODO:  update alarms
                     ContentValues values = new ContentValues();
-                    values.put(Contract.Reminder.COLUMN_GLOBAL_ID, reminder.getId().intValue());
                     values.put(Contract.Reminder.COLUMN_DATE, format.format(reminder.getDate()));
                     operation = ContentProviderOperation.newUpdate(uri).withValues(values).build();
                 }
