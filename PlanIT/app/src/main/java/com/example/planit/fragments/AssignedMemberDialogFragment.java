@@ -141,7 +141,7 @@ public class AssignedMemberDialogFragment extends AppCompatDialogFragment {
     private List<User> getTeamMembersFromDatabase(Integer id) {
         ArrayList<User> teamMembers = new ArrayList<>();
 
-        String[] allColumns = {Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_COLOUR, Contract.User.COLUMN_ID};
+        String[] allColumns = {Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_COLOUR, Contract.User.COLUMN_ID, Contract.User.COLUMN_FIREBASE_ID};
         Uri teamMembersUri = Uri.parse(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM + "/" + id);
 
         Cursor cursor = getActivity().getContentResolver().query(teamMembersUri, allColumns, null, null, null);
@@ -155,8 +155,9 @@ public class AssignedMemberDialogFragment extends AppCompatDialogFragment {
                 String lastName = cursor.getString(1);
                 String email = cursor.getString(2);
                 String colour = cursor.getString(3);
+                String firebaseId = cursor.getString(5);
 
-                User newUser = new User(userId, email, name, lastName, colour);
+                User newUser = new User(userId, email, name, lastName, colour, firebaseId);
                 teamMembers.add(newUser);
             }
         }

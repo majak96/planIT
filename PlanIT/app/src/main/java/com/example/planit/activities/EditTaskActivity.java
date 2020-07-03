@@ -888,7 +888,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     private User getUserFromDatabase(Integer id) {
         Uri userUri = Uri.parse(Contract.User.CONTENT_URI_USER + "/" + id);
 
-        String[] allColumns = {Contract.User.COLUMN_ID, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_COLOUR};
+        String[] allColumns = {Contract.User.COLUMN_ID, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_COLOUR, Contract.User.COLUMN_FIREBASE_ID};
 
         Cursor cursor = getContentResolver().query(userUri, allColumns, null, null, null);
         cursor.moveToFirst();
@@ -898,7 +898,8 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         String lastName = cursor.getString(3);
         String email = cursor.getString(1);
         String colour = cursor.getString(4);
-        User user = new User(userId, email, name, lastName, colour);
+        String firebaseId = cursor.getString(5);
+        User user = new User(userId, email, name, lastName, colour, firebaseId);
 
         cursor.close();
 

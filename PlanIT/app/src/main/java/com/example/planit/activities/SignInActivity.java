@@ -163,7 +163,7 @@ public class SignInActivity extends AppCompatActivity {
 
                                                 } else {
                                                     loadingBar.dismiss();
-                                                    Toast t = Toast.makeText(SignInActivity.this, "Credentials does not match!", Toast.LENGTH_SHORT);
+                                                    Toast t = Toast.makeText(SignInActivity.this, "Credentials do not match!", Toast.LENGTH_SHORT);
                                                     t.show();
                                                 }
                                             }
@@ -178,7 +178,7 @@ public class SignInActivity extends AppCompatActivity {
                                         });
                                     } else {
                                         loadingBar.dismiss();
-                                        Toast t = Toast.makeText(SignInActivity.this, "Credentials does not match!", Toast.LENGTH_SHORT);
+                                        Toast t = Toast.makeText(SignInActivity.this, "Credentials do not match!", Toast.LENGTH_SHORT);
                                         t.show();
                                     }
                                 }
@@ -275,6 +275,8 @@ public class SignInActivity extends AppCompatActivity {
                 @Override
                 public void onFailure(Call<ResponseBody> call, Throwable t) {
                     loadingBar.dismiss();
+                    Toast toast = Toast.makeText(SignInActivity.this, "Connection error!", Toast.LENGTH_SHORT);
+                    toast.show();
                     Log.e("tag", "Failed");
                 }
 

@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             loggedEmail.setText(SharedPreference.getLoggedEmail(MainActivity.this));
             loggedName.setText(SharedPreference.getLoggedName(MainActivity.this).concat(" ").concat(SharedPreference.getLoggedLastName(MainActivity.this)));
-            loggedFirstChar.setText(findLoggedUserName().substring(0, 1).concat(findLoggedUserLastName().substring(0, 1)));
+            //loggedFirstChar.setText(findLoggedUserName().substring(0, 1).concat(findLoggedUserLastName().substring(0, 1)));
 
             profileLayout.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
@@ -142,7 +142,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         */
         getAllTeams();
         for (Team team : myTeams) {
-            FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
+            if(mAuth.getCurrentUser() != null)
+                FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
         }
     }
 
