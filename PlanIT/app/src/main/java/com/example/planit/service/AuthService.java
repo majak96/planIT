@@ -2,7 +2,7 @@ package com.example.planit.service;
 
 import model.ChangeProfileDTO;
 import model.LoginDTO;
-import model.RegisterDTO;
+import model.UserInfoDTO;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -18,13 +18,13 @@ public interface AuthService {
     })
 
     @POST("user/register")
-    Call<ResponseBody> register(@Body RegisterDTO registerDTO);
+    Call<ResponseBody> register(@Body UserInfoDTO userInfoDTO);
 
     @POST("user/login")
-    Call<ResponseBody> login(@Body LoginDTO loginDTO);
+    Call<UserInfoDTO> login(@Body LoginDTO loginDTO);
 
     @POST("user/googleLogin")
-    Call<ResponseBody> googleLogin(@Body RegisterDTO googleLoginDTO);
+    Call<ResponseBody> googleLogin(@Body UserInfoDTO googleLoginDTO);
 
     @PUT("user/changeUser")
     Call<ResponseBody> changeUser(@Body ChangeProfileDTO changeProfileDTO);

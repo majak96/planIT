@@ -75,6 +75,7 @@ public final class Contract {
         public static final String COLUMN_NAME = "name";
         public static final String COLUMN_LAST_NAME = "last_name";
         public static final String COLUMN_COLOUR = "colour";
+        public static final String COLUMN_FIREBASE_ID = "firebase_id";
 
     }
 
@@ -84,6 +85,7 @@ public final class Contract {
 
         public static final Uri CONTENT_URI_TEAM = Uri.parse("content://" + AUTHORITY + ".TeamContentProvider" + "/" + TABLE_NAME);
 
+        public static final String COLUMN_SERVER_TEAM_ID = "server_team_id";
         public static final String COLUMN_ID = "_id";
         public static final String COLUMN_TITLE = "title";
         public static final String COLUMN_DESCRIPTION = "description";
@@ -103,6 +105,20 @@ public final class Contract {
 
     }
 
+    public static class Message {
+
+        public static final String TABLE_NAME = "message";
+
+        public static final Uri CONTENT_URI_MESSAGE = Uri.parse("content://" + AUTHORITY + ".TeamContentProvider" + "/" + TABLE_NAME);
+
+        public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_MESSAGE = "message";
+        public static final String COLUMN_CREATED_AT = "created_at";
+        public static final String COLUMN_SENDER_ID = "sender";
+        public static final String COLUMN_TEAM_ID = "team_id";
+
+    }
+  
     public static class Task {
 
         public static final String AUTHORITY = Contract.AUTHORITY + ".TaskContentProvider";
@@ -122,6 +138,8 @@ public final class Contract {
         public static final String COLUMN_REMINDER_ID = "reminder_id";
         public static final String COLUMN_TEAM = "team";
         public static final String COLUMN_USER = "user";
+        public static final String COLUMN_LONGITUDE = "longitude";
+        public static final String COLUMN_LATITUDE = "latitude";
 
     }
 

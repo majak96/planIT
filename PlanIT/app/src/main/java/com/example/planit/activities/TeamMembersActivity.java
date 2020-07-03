@@ -26,17 +26,15 @@ import com.example.planit.database.Contract;
 import com.example.planit.service.ServiceUtils;
 import com.example.planit.service.TeamService;
 import com.example.planit.utils.SharedPreference;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.messaging.FirebaseMessaging;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import model.TeamDTO;
-import model.Team;
 import model.User;
+import model.UserInfoDTO;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -44,16 +42,18 @@ import retrofit2.Response;
 
 public class TeamMembersActivity extends AppCompatActivity {
 
+    private String tag = "TeamMembersActivity";
     private static final String TAG = "TeamMembersActivity";
 
     private EditText newMember;
     private TeamMembersAdapter adapter;
     private ArrayList<User> users;
+    private ArrayList<String> userEmails;
     private ImageButton addMemberBtn;
     private String description;
-    private String tag = "TeamMembersActivity";
     private Integer teamId;
     private Intent intent;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,20 +65,34 @@ public class TeamMembersActivity extends AppCompatActivity {
         this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         this.getSupportActionBar().setDisplayShowHomeEnabled(true);
         this.getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
-
-        if (getIntent().hasExtra("teamId")) {
-            teamId = getIntent().getIntExtra("teamId", -1);
-        }
-
+        mAuth = FirebaseAuth.getInstance();
         newMember = findViewById(R.id.addMember);
+        addMemberBtn = findViewById(R.id.addMemberBtn);
 
-        if (teamId != null && teamId != -1) {
-            users = getUsersFromDatabase(teamId);
-        } else {
+        //check was activity destroyed
+        if (savedInstanceState != null) {
+            teamId = savedInstanceState.getInt("teamId");
+            //check is creating and activity was destroyed (in boundle is default 0 fore teamId)
+            if (teamId == 0) {
+                teamId = null;
+            }
+            userEmails = savedInstanceState.getStringArrayList("userEmails");
             users = new ArrayList<>();
-            String creator = SharedPreference.getLoggedEmail(this);
-            User currentUser = getUserFromDatabase(creator);
-            users.add(currentUser);
+            for (String email : userEmails) {
+                User user = getUserFromDatabase(email);
+                users.add(user);
+            }
+        } else {
+            // if edit
+            if (getIntent().hasExtra("teamId")) {
+                teamId = getIntent().getIntExtra("teamId", -1);
+                users = getUsersFromDatabase(teamId);
+            } else {
+                users = new ArrayList<>();
+                String creator = SharedPreference.getLoggedEmail(this);
+                User currentUser = getUserFromDatabase(creator);
+                users.add(currentUser);
+            }
         }
 
         RecyclerView recyclerView = findViewById(R.id.team_members_recycle_view);
@@ -86,7 +100,6 @@ public class TeamMembersActivity extends AppCompatActivity {
         adapter = new TeamMembersAdapter(this, users, teamId);
         recyclerView.setAdapter(adapter);
 
-        addMemberBtn = findViewById(R.id.addMemberBtn);
         addMemberBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -104,35 +117,23 @@ public class TeamMembersActivity extends AppCompatActivity {
             if (newMember.length() > 0) {
 
                 TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
-                Call<ResponseBody> call = apiService.checkMember(teamUser);
-                call.enqueue(new Callback<ResponseBody>() {
+                Call<UserInfoDTO> call = apiService.checkMember(teamUser);
+                call.enqueue(new Callback<UserInfoDTO>() {
                     @Override
-                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    public void onResponse(Call<UserInfoDTO> call, Response<UserInfoDTO> response) {
 
                         if (response.code() == 200) {
                             User user = getUserFromDatabase(teamUser);
                             if (user == null) {
 
-                                String name = "";
-                                String lastName = "";
-                                String colour = "";
+                                String name = "", lastName = "", colour = "", firebaseId = "";
+                                UserInfoDTO userInfo = response.body();
+                                name = userInfo.getName();
+                                lastName = userInfo.getLastName();
+                                colour = userInfo.getColour();
+                                firebaseId = userInfo.getFirebaseId();
 
-                                String resStr = null;
-                                try {
-                                    resStr = response.body().string();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                try {
-                                    JSONObject json = new JSONObject(resStr);
-                                    name = json.get("name").toString();
-                                    lastName = json.get("lastName").toString();
-                                    colour = json.get("colour").toString();
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-
-                                user = new User(name, lastName, teamUser);
+                                user = new User(name, lastName, teamUser, firebaseId);
                                 user.setColour(colour);
 
                                 Uri userUri = createUser(user);
@@ -157,7 +158,9 @@ public class TeamMembersActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    public void onFailure(Call<UserInfoDTO> call, Throwable t) {
+                        Toast toast = Toast.makeText(TeamMembersActivity.this, "Connection error!", Toast.LENGTH_SHORT);
+                        toast.show();
                         Log.e("tag", "Connection error");
                     }
                 });
@@ -195,17 +198,22 @@ public class TeamMembersActivity extends AppCompatActivity {
                     TeamDTO teamDTO = new TeamDTO(title, description, creator, usersEmails);
 
                     TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
-                    Call<ResponseBody> call = apiService.createTeam(teamDTO);
-                    call.enqueue(new Callback<ResponseBody>() {
+                    Call<Integer> call = apiService.createTeam(teamDTO);
+                    call.enqueue(new Callback<Integer>() {
 
                         @Override
-                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        public void onResponse(Call<Integer> call, Response<Integer> response) {
 
                             if (response.code() == 200) {
 
-                                Uri uri = createTeam(creator, title, description);
+                                Integer serverTeamId = response.body();
+
+                                Uri uri = createTeam(creator, title, description, serverTeamId);
                                 if (uri != null) {
                                     teamId = Integer.parseInt(uri.getLastPathSegment());
+                                    FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid() + "-" + serverTeamId);
+                                }else{
+                                    //TODO: complete
                                 }
 
                                 for (User u : users) {
@@ -224,7 +232,9 @@ public class TeamMembersActivity extends AppCompatActivity {
                         }
 
                         @Override
-                        public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        public void onFailure(Call<Integer> call, Throwable t) {
+                            Toast toast = Toast.makeText(TeamMembersActivity.this, "Connection error!", Toast.LENGTH_SHORT);
+                            toast.show();
                             Log.e("tag", "Connection error!");
                         }
                     });
@@ -237,7 +247,8 @@ public class TeamMembersActivity extends AppCompatActivity {
                     TeamDTO teamDTO = new TeamDTO(null, null, null, usersEmails);
 
                     TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
-                    Call<ResponseBody> call = apiService.updateTeamMembers(teamId, teamDTO);
+                    Integer serverTeamId = findGlobalTeamId(teamId);
+                    Call<ResponseBody> call = apiService.updateTeamMembers(serverTeamId, teamDTO);
                     call.enqueue(new Callback<ResponseBody>() {
                         @Override
                         public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
@@ -281,6 +292,19 @@ public class TeamMembersActivity extends AppCompatActivity {
         return true;
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (teamId != null) {
+            outState.putInt("teamId", teamId);
+        }
+        userEmails = new ArrayList<>();
+        for (User u : users) {
+            userEmails.add(u.getEmail());
+        }
+        outState.putStringArrayList("userEmails", userEmails);
+    }
+
     //inserts a new user_team_connection into the database
     public Uri createUserTeamConnection(Integer userId, Integer teamId) {
 
@@ -312,10 +336,10 @@ public class TeamMembersActivity extends AppCompatActivity {
         Cursor cursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, whereClause, whereArgs, null);
 
         if (cursor.getCount() == 0) {
-            //TODO: do something when there's no data
+            Log.i(tag, "No user in database");
         } else {
             while (cursor.moveToNext()) {
-                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4));
+                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5));
             }
         }
 
@@ -325,7 +349,7 @@ public class TeamMembersActivity extends AppCompatActivity {
 
 
     //inserts a new team into the database
-    public Uri createTeam(String creator, String teamName, String description) {
+    public Uri createTeam(String creator, String teamName, String description, Integer serverTeamId) {
 
         User user = getUserFromDatabase(creator);
         if (user == null) {
@@ -337,6 +361,7 @@ public class TeamMembersActivity extends AppCompatActivity {
         //set the title
         values.put(Contract.Team.COLUMN_TITLE, teamName);
         values.put(Contract.Team.COLUMN_CREATOR, user.getId());
+        values.put(Contract.Team.COLUMN_SERVER_TEAM_ID, serverTeamId);
 
         //set the description
         if (!description.isEmpty()) {
@@ -348,28 +373,6 @@ public class TeamMembersActivity extends AppCompatActivity {
         return uri;
     }
 
-    //get team with the name from the database
-    private Team getTeamFromDatabase(String title) {
-        Team newTeam = null;
-
-        String whereClause = "title = ? ";
-        String[] whereArgs = new String[]{
-                title
-        };
-        Cursor cursor = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, whereClause, whereArgs, null);
-
-        if (cursor.getCount() == 0) {
-            //TODO: do something when there's no data
-        } else {
-            while (cursor.moveToNext()) {
-                newTeam = new Team(cursor.getInt(0), cursor.getString(1));
-            }
-        }
-
-        cursor.close();
-        return newTeam;
-    }
-
     //inserts a new user into the database
     public Uri createUser(User user) {
         ContentValues values = new ContentValues();
@@ -378,6 +381,7 @@ public class TeamMembersActivity extends AppCompatActivity {
         values.put(Contract.User.COLUMN_NAME, user.getName());
         values.put(Contract.User.COLUMN_LAST_NAME, user.getLastName());
         values.put(Contract.User.COLUMN_COLOUR, user.getColour());
+        values.put(Contract.User.COLUMN_FIREBASE_ID, user.getFirebaseId());
 
         Uri uri = getContentResolver().insert(Contract.User.CONTENT_URI_USER, values);
 
@@ -387,10 +391,11 @@ public class TeamMembersActivity extends AppCompatActivity {
     private ArrayList<User> getUsersFromDatabase(Integer teamId) {
 
         users = new ArrayList<>();
-        String[] allColumns = {Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_COLOUR};
-        Uri taskLabelsUri = Uri.parse(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM + "/" + teamId);
 
-        Cursor cursor = getContentResolver().query(taskLabelsUri, allColumns, null, null, null);
+        String[] allColumns = {Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_COLOUR};
+        Uri teamMembersUri = Uri.parse(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM + "/" + teamId);
+
+        Cursor cursor = getContentResolver().query(teamMembersUri, allColumns, null, null, null);
 
         if (cursor.getCount() == 0) {
             Log.i(tag, "There are no users in team");
@@ -401,13 +406,26 @@ public class TeamMembersActivity extends AppCompatActivity {
                 String email = cursor.getString(2);
                 String colour = cursor.getString(3);
                 Integer id = cursor.getInt(4);
-                User newUser = new User(id, email, name, lastName, colour);
+                String firebaseId = cursor.getString(5);
+                User newUser = new User(id, email, name, lastName, colour, firebaseId);
                 users.add(newUser);
             }
         }
 
         cursor.close();
         return users;
+    }
+
+    Integer findGlobalTeamId(Integer teamId){
+        Uri teamUri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamId);
+
+        Cursor cursor = getContentResolver().query(teamUri, null, null, null, null);
+        cursor.moveToFirst();
+
+        Integer serverTeamId = cursor.getInt(4);
+        cursor.close();
+
+        return serverTeamId;
     }
 
 }

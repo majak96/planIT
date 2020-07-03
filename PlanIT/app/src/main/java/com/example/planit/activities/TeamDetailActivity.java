@@ -136,7 +136,7 @@ public class TeamDetailActivity extends AppCompatActivity {
         cursor.moveToFirst();
 
         User creator = getUserFromDB(cursor.getInt(3));
-        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator);
+        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator, cursor.getInt(4));
 
         if (cursor.getString(2) != null) {
             team.setDescription(cursor.getString(2));
@@ -152,7 +152,13 @@ public class TeamDetailActivity extends AppCompatActivity {
         Uri uri = Uri.parse(Contract.User.CONTENT_URI_USER + "/" + userId);
         Cursor cursor = getContentResolver().query(uri, null, null, null, null);
         if (cursor.moveToNext()) {
-            User user = new User(cursor.getInt(cursor.getColumnIndex(Contract.User.COLUMN_ID)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_EMAIL)));
+            Integer id = cursor.getInt(cursor.getColumnIndex(Contract.User.COLUMN_ID));
+            String email = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_EMAIL));
+            String name = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_NAME));
+            String lastName = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_LAST_NAME));
+            String colour = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_COLOUR));
+            String firebaseId = cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_FIREBASE_ID));
+            User user = new User(id, email, name, lastName, colour, firebaseId);
             cursor.close();
             return user;
         }
@@ -177,7 +183,8 @@ public class TeamDetailActivity extends AppCompatActivity {
                 String email = cursor.getString(2);
                 String colour = cursor.getString(3);
                 Integer id = cursor.getInt(4);
-                User newUser = new User(id, email, name, lastName, colour);
+                String firebaseId = cursor.getString(5);
+                User newUser = new User(id, email, name, lastName, colour, firebaseId);
                 users.add(newUser);
             }
         }
@@ -238,13 +245,15 @@ public class TeamDetailActivity extends AppCompatActivity {
 
                                 @Override
                                 public void onFailure(Call<ResponseBody> call, Throwable t) {
+                                    Toast toast = Toast.makeText(TeamDetailActivity.this, "Connection error!", Toast.LENGTH_SHORT);
+                                    toast.show();
                                     Log.e("tag", "Connection error");
                                 }
                             });
 
 
                         } else {
-
+                            Log.i(tag, "Team is not deleted");
                         }
                         break;
                     case DialogInterface.BUTTON_NEGATIVE:

@@ -6,11 +6,18 @@ import android.app.DatePickerDialog;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.location.Address;
+import android.location.Geocoder;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.opengl.Visibility;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -23,6 +30,7 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
@@ -41,6 +49,7 @@ import com.example.planit.fragments.TaskReminderDialogFragment;
 import com.example.planit.utils.SharedPreference;
 import com.example.planit.utils.Utils;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -129,8 +138,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         teamId = getIntent().getIntExtra("team", -1);
         if (teamId == -1) {
             teamId = null;
-        }
-        else {
+        } else {
             assignedMemberLayout.setVisibility(View.VISIBLE);
         }
 
@@ -224,7 +232,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                         }
 
                         // setting alarm if reminder exists
-                        if (reminderUri != null && (assignedMember == null || assignedMember.getId() == SharedPreference.getLoggedId(this) )) {
+                        if (reminderUri != null && (assignedMember == null || assignedMember.getId() == SharedPreference.getLoggedId(this))) {
                             setAlarm(Integer.parseInt(reminderUri.getLastPathSegment()), Integer.parseInt(taskId));
                         }
 
@@ -264,11 +272,11 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                         }
 
                         // reminder should be set if it is a personal task or a team task with no assignee or a team task assigned to the logged user
-                        if (reminderTime != null && (assignedMember == null || assignedMember.getId() == SharedPreference.getLoggedId(this) )) {
+                        if (reminderTime != null && (assignedMember == null || assignedMember.getId() == SharedPreference.getLoggedId(this))) {
                             Integer id = (reminderId == null) ? Integer.parseInt(reminderUri.getLastPathSegment()) : reminderId;
                             setAlarm(id, task.getId());
-                        // reminder should be canceled if other team member is assigned
-                        } else if(reminderTime != null && (task.getUser() == SharedPreference.getLoggedId(this) || task.getUser() == null) ) {
+                            // reminder should be canceled if other team member is assigned
+                        } else if (reminderTime != null && (task.getUser() == SharedPreference.getLoggedId(this) || task.getUser() == null)) {
                             cancelAlarm();
                         }
 
@@ -281,11 +289,11 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
 
                         //if assigned team task changed assigned member -> task must be "removed" from daily preview
                         Integer loggedId = SharedPreference.getLoggedId(this);
-                        if(!fromTeam && task.getUser() != null && (assignedMember == null || assignedMember.getId() != loggedId)){
+                        if (!fromTeam && task.getUser() != null && (assignedMember == null || assignedMember.getId() != loggedId)) {
                             intent.putExtra("deleted", true);
                         }
 
-                      
+
                         if (!startDate.equals(task.getStartDate())) {
                             intent.putExtra("changed_date", true);
                         }
@@ -618,8 +626,37 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         //set the location
         if (!locationEditText.getText().toString().trim().isEmpty()) {
             values.put(Contract.Task.COLUMN_ADDRESS, locationEditText.getText().toString().trim());
+
+            if (isNetworkAvailable()) {
+                //find coordinates of the location
+                Geocoder gc = new Geocoder(this);
+                try {
+                    List<Address> list = gc.getFromLocationName(locationEditText.getText().toString().trim(), 1);
+                    if (!list.isEmpty()) {
+                        Address address = list.get(0);
+
+                        values.put(Contract.Task.COLUMN_LONGITUDE, address.getLongitude());
+                        values.put(Contract.Task.COLUMN_LATITUDE, address.getLatitude());
+                    } else {
+                        values.putNull(Contract.Task.COLUMN_LATITUDE);
+                        values.putNull(Contract.Task.COLUMN_LONGITUDE);
+                    }
+                } catch (IOException e) {
+                    // if location didn't exist or has changed
+                    if (task == null || task.getAddress() == null || !locationEditText.getText().toString().trim().equals(task.getAddress())) {
+                        values.putNull(Contract.Task.COLUMN_LATITUDE);
+                        values.putNull(Contract.Task.COLUMN_LONGITUDE);
+                    }
+                }
+                // if location didn't exist or has changed
+            } else if (task == null || task.getAddress() == null || !locationEditText.getText().toString().trim().equals(task.getAddress())) {
+                values.putNull(Contract.Task.COLUMN_LATITUDE);
+                values.putNull(Contract.Task.COLUMN_LONGITUDE);
+            }
         } else {
             values.putNull(Contract.Task.COLUMN_ADDRESS);
+            values.putNull(Contract.Task.COLUMN_LATITUDE);
+            values.putNull(Contract.Task.COLUMN_LONGITUDE);
         }
 
         if (teamId != null) {
@@ -819,6 +856,30 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     }
 
     /**
+     * Gets label from the database
+     *
+     * @param id of the label
+     * @return the label
+     */
+    private Label getLabelFromDatabase(Integer id) {
+        Uri labelUri = Uri.parse(Contract.Label.CONTENT_URI_LABEL + "/" + id);
+
+        String[] allColumns = {Contract.Label.COLUMN_ID, Contract.Label.COLUMN_NAME, Contract.Label.COLUMN_COLOR};
+
+        Cursor cursor = getContentResolver().query(labelUri, allColumns, null, null, null);
+        cursor.moveToFirst();
+
+        Label label = new Label();
+        label.setId(cursor.getInt(0));
+        label.setName(cursor.getString(1));
+        label.setColor(cursor.getString(2));
+
+        cursor.close();
+
+        return label;
+    }
+
+    /**
      * Gets user from the database
      *
      * @param id of the user
@@ -827,7 +888,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
     private User getUserFromDatabase(Integer id) {
         Uri userUri = Uri.parse(Contract.User.CONTENT_URI_USER + "/" + id);
 
-        String[] allColumns = {Contract.User.COLUMN_ID, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_COLOUR};
+        String[] allColumns = {Contract.User.COLUMN_ID, Contract.User.COLUMN_EMAIL, Contract.User.COLUMN_NAME, Contract.User.COLUMN_LAST_NAME, Contract.User.COLUMN_COLOUR, Contract.User.COLUMN_FIREBASE_ID};
 
         Cursor cursor = getContentResolver().query(userUri, allColumns, null, null, null);
         cursor.moveToFirst();
@@ -837,7 +898,8 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         String lastName = cursor.getString(3);
         String email = cursor.getString(1);
         String colour = cursor.getString(4);
-        User user = new User(userId, email, name, lastName, colour);
+        String firebaseId = cursor.getString(5);
+        User user = new User(userId, email, name, lastName, colour, firebaseId);
 
         cursor.close();
 
@@ -884,13 +946,16 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
      * @param taskId
      */
     public void setAlarm(Integer reminderId, Integer taskId) {
-        String details = (descriptionEditText.getText() == null)? "" : descriptionEditText.getText().toString().trim();
-        Date date = this.startDate;
-        date.setTime(this.reminderTime.getTime());
+        String details = (descriptionEditText.getText() == null) ? "" : descriptionEditText.getText().toString().trim();
+        Calendar startDateCalendar = Calendar.getInstance();
+        startDateCalendar.setTime(startDate);
         Calendar currentTime = Calendar.getInstance();
         Calendar calendar = Calendar.getInstance();
         // setting parameters based on user input
-        calendar.setTime(date);
+        calendar.setTime(reminderTime);
+        calendar.set(Calendar.DAY_OF_MONTH, startDateCalendar.get(Calendar.DAY_OF_MONTH));
+        calendar.set(Calendar.MONTH, startDateCalendar.get(Calendar.MONTH));
+        calendar.set(Calendar.YEAR, startDateCalendar.get(Calendar.YEAR));
 
         if (currentTime.getTimeInMillis() > calendar.getTimeInMillis()) {
             return;
@@ -945,7 +1010,7 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         return false;
     }
 
-    public boolean cancelAlarm(){
+    public boolean cancelAlarm() {
         Intent alarmIntent = new Intent(this, ReminderBroadcastReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, reminderId, alarmIntent, PendingIntent.FLAG_NO_CREATE);
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
@@ -955,5 +1020,142 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         }
 
         return false;
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        String startDateString = savedInstanceState.getString("startDate");
+        if (startDateString != null) {
+            try {
+                startDate = dbDateFormat.parse(startDateString);
+                dateTextView.setText(viewDateFormat.format(startDate));
+                dateTextView.setTextColor(getResources().getColor(R.color.darkGray));
+            } catch (ParseException e) {
+
+            }
+        }
+
+        String startTimeString = savedInstanceState.getString("startTime");
+        if (startTimeString != null) {
+            try {
+                startTime = timeFormat.parse(startTimeString);
+                timeTextView.setText(startTimeString);
+                timeTextView.setTextColor(getResources().getColor(R.color.darkGray));
+                removeTimeImageButton.setVisibility(View.VISIBLE);
+            } catch (ParseException e) {
+
+            }
+        }
+
+        String reminderTimeString = savedInstanceState.getString("reminder");
+        if (reminderTimeString != null) {
+            try {
+                reminderTime = timeFormat.parse(reminderTimeString);
+                reminderTextView.setText(reminderTimeString);
+                reminderTextView.setTextColor(getResources().getColor(R.color.darkGray));
+                removeReminderImageButton.setVisibility(View.VISIBLE);
+            } catch (ParseException e) {
+
+            }
+        }
+
+        String priority = savedInstanceState.getString("priority");
+        if (priority != null) {
+            taskPriority = TaskPriority.valueOf(priority);
+            priorityTextView.setText(String.format(getResources().getString(R.string.priority), taskPriority.getLabel()));
+            priorityTextView.setTextColor(getResources().getColor(R.color.darkGray));
+            removePriorityImageButton.setVisibility(View.VISIBLE);
+        }
+
+        Integer assignedMemberInt = savedInstanceState.getInt("assignedMember", -1);
+        if (assignedMemberInt != -1) {
+            assignedMember = getUserFromDatabase(assignedMemberInt);
+            assignedMemberTextView.setText(assignedMember.getName() + " " + assignedMember.getLastName());
+            assignedMemberTextView.setTextColor(getResources().getColor(R.color.darkGray));
+            removeAssignedMemberImageButton.setVisibility(View.VISIBLE);
+        }
+
+        labels.clear();
+        ArrayList<String> newLabelNames = savedInstanceState.getStringArrayList("newLabelNames");
+        ArrayList<String> newLabelColors = savedInstanceState.getStringArrayList("newLabelColors");
+        if (newLabelNames != null && newLabelColors != null && newLabelNames.size() == newLabelColors.size()) {
+            for (int i = 0; i < newLabelNames.size(); i++) {
+                Label newLabel = new Label(newLabelNames.get(i), newLabelColors.get(i));
+                labels.add(newLabel);
+            }
+            labelTextView.setText("");
+        }
+
+        ArrayList<Integer> existingLabels = savedInstanceState.getIntegerArrayList("existingLabels");
+        if (existingLabels != null) {
+            for (Integer id : existingLabels) {
+                Label label = getLabelFromDatabase(id);
+                if (!labels.contains(label)) {
+                    labels.add(label);
+                }
+            }
+
+            if (labelTextView.getText() != "") {
+                labelTextView.setText("");
+            }
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        String startDateString = dbDateFormat.format(startDate);
+        outState.putString("startDate", startDateString);
+
+        if (startTime != null) {
+            String startTimeString = timeFormat.format(startTime);
+            outState.putString("startTime", startTimeString);
+        }
+
+        if (reminderTime != null) {
+            String reminderTimeString = timeFormat.format(reminderTime);
+            outState.putString("reminder", reminderTimeString);
+        }
+
+        if (taskPriority != null) {
+            outState.putString("priority", taskPriority.toString());
+        }
+
+        if (assignedMember != null) {
+            outState.putInt("assignedMember", assignedMember.getId());
+        }
+
+        if (!labels.isEmpty()) {
+            ArrayList<Integer> existingLabels = new ArrayList<>();
+            ArrayList<String> newLabelNames = new ArrayList<>();
+            ArrayList<String> newLabelColors = new ArrayList<>();
+            for (Label label : labels) {
+                if (label.getId() != null) {
+                    existingLabels.add(label.getId());
+                } else {
+                    newLabelNames.add(label.getName());
+                    newLabelColors.add(label.getColor());
+                }
+            }
+
+            if (existingLabels.size() > 0) {
+                outState.putIntegerArrayList("existingLabels", existingLabels);
+            }
+
+            if (newLabelColors.size() > 0 && newLabelNames.size() > 0) {
+                outState.putStringArrayList("newLabelNames", newLabelNames);
+                outState.putStringArrayList("newLabelColors", newLabelColors);
+            }
+        }
+
     }
 }

@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,9 +22,12 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.example.planit.activities.ChatActivity;
 import com.example.planit.activities.ProfileActivity;
 import com.example.planit.activities.SettingsActivity;
 import com.example.planit.activities.SignInActivity;
+import com.example.planit.database.Contract;
+import com.example.planit.database.DatabaseSQLiteHelper;
 import com.example.planit.fragments.CalendarFragment;
 import com.example.planit.fragments.DailyPreviewFragment;
 import com.example.planit.fragments.HabitsOverviewFragment;
@@ -32,12 +36,15 @@ import com.example.planit.synchronization.SyncReceiver;
 import com.example.planit.synchronization.SyncService;
 import com.example.planit.utils.FragmentTransition;
 import com.example.planit.utils.SharedPreference;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import model.Team;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -45,13 +52,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private static final String TAG = "MainActivity";
 
     private DrawerLayout drawer;
-    private GoogleSignInClient googleSignInClient;
     private NavigationView navigationView;
     private int currentMenuItem;
     private TextView loggedEmail;
     private TextView loggedName;
     private TextView loggedFirstChar;
     private LinearLayout profileLayout;
+    private FirebaseUser currentUser;
+    private FirebaseAuth mAuth;
+    private List<Team> myTeams;
 
     private PendingIntent pendingIntent;
     private AlarmManager manager;
@@ -70,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        myTeams = new ArrayList<>();
         drawer = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -81,11 +91,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         String page = getIntent().getStringExtra("page");
 
-        //google sign out
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
-        googleSignInClient = GoogleSignIn.getClient(this, gso);
+        mAuth = FirebaseAuth.getInstance();
+        currentUser = mAuth.getCurrentUser();
 
         if (SharedPreference.getLoggedEmail(MainActivity.this) == "") {
             startActivity(new Intent(MainActivity.this, SignInActivity.class));
@@ -99,7 +106,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             loggedEmail.setText(SharedPreference.getLoggedEmail(MainActivity.this));
             loggedName.setText(SharedPreference.getLoggedName(MainActivity.this).concat(" ").concat(SharedPreference.getLoggedLastName(MainActivity.this)));
-            loggedFirstChar.setText(findLoggedUserName().substring(0, 1).concat(findLoggedUserLastName().substring(0, 1)));
+            //loggedFirstChar.setText(findLoggedUserName().substring(0, 1).concat(findLoggedUserLastName().substring(0, 1)));
 
             profileLayout.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
@@ -118,6 +125,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
 
             setUpReceiver();
+            if (getIntent().getExtras() != null) {
+                if(getIntent().hasExtra("teamId")){
+                    String serverTeamId = getIntent().getStringExtra("teamId");
+                    Integer localId = getLocalTeamId(Integer.parseInt(serverTeamId));
+                    Intent intent = new Intent(this, ChatActivity.class);
+                    intent.putExtra("team", Integer.valueOf(localId));
+                    startActivity(intent);
+                }
+            }
 
         }
 
@@ -139,6 +155,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     }
                 });
         */
+        getAllTeams();
+        for (Team team : myTeams) {
+            if(mAuth.getCurrentUser() != null)
+                FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        if (currentUser == null) {
+            SharedPreference.setLoggedLastName(MainActivity.this, "");
+            SharedPreference.setLoggedColour(MainActivity.this, "");
+            SharedPreference.setLoggedName(MainActivity.this, "");
+            SharedPreference.setLoggedEmail(MainActivity.this, "");
+            startActivity(new Intent(MainActivity.this, SignInActivity.class));
+        }
     }
 
     @Override
@@ -199,19 +233,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void signOut() {
-        googleSignInClient.signOut().addOnCompleteListener(this, new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                SharedPreference.setLoggedEmail(getApplicationContext(), "");
-                SharedPreference.setLoggedName(getApplicationContext(), "");
-                SharedPreference.setLoggedColour(getApplicationContext(), "");
-                SharedPreference.setLoggedLastName(getApplicationContext(), "");
-                SharedPreference.setLastSyncDate(getApplicationContext(), null);
-                Intent intent = new Intent(MainActivity.this, SignInActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
-            }
-        });
+        SharedPreference.setLoggedEmail(getApplicationContext(), "");
+        SharedPreference.setLoggedName(getApplicationContext(), "");
+        SharedPreference.setLoggedColour(getApplicationContext(), "");
+        SharedPreference.setLoggedLastName(getApplicationContext(), "");
+        SharedPreference.setLastSyncDate(getApplicationContext(), null);
+
+        //unsubscribe of all my topics
+        for (Team team : myTeams) {
+            FirebaseMessaging.getInstance().unsubscribeFromTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getId());
+        }
+        FirebaseAuth.getInstance().signOut();
+
+        //delete all data from db
+        DatabaseSQLiteHelper databaseHelper = new DatabaseSQLiteHelper(this);
+        databaseHelper.truncateDatabase(this);
+
+        Intent intent = new Intent(MainActivity.this, SignInActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 
     public Fragment getCurrentFragment() {
@@ -424,5 +464,43 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
+    private void getAllTeams() {
 
+        myTeams.clear();
+
+        Cursor cursor = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, null, null, null);
+
+        if (cursor.getCount() == 0) {
+            Log.i("MainActivity", "There are no teams");
+        } else {
+            while (cursor.moveToNext()) {
+                Team newTeam = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2));
+                this.myTeams.add(newTeam);
+            }
+        }
+
+        cursor.close();
+    }
+
+    private Integer getLocalTeamId(Integer serverTeamId) {
+        Integer localTeamId = -1;
+
+        String whereClause = "server_team_id = ? ";
+        String[] whereArgs = new String[]{
+                serverTeamId.toString()
+        };
+
+        Cursor cursor = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, whereClause, whereArgs, null);
+
+        if (cursor.getCount() == 0) {
+            Log.i("MainActivity", "Team does not exists!");
+        } else {
+            while (cursor.moveToNext()) {
+                localTeamId = cursor.getInt(0);
+            }
+        }
+
+        cursor.close();
+        return localTeamId;
+    }
 }

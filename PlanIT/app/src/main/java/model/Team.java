@@ -2,13 +2,12 @@ package model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class Team implements Serializable {
 
     private Integer id;
+    private Integer serverTeamId;
     private String name;
     private String description;
     private User teamCreator;
@@ -18,12 +17,13 @@ public class Team implements Serializable {
         this.users = new ArrayList<>();
     }
 
-    public Team(Integer id, String name, String description, User user) {
+    public Team(Integer id, String name, String description, User user, Integer serverTeamId) {
         this.id = id;
         this.users = new ArrayList<>();
         this.name = name;
         this.description = description;
         this.teamCreator = user;
+        this.serverTeamId = serverTeamId;
     }
 
     public Team(Integer id, String name, String description) {
@@ -67,17 +67,6 @@ public class Team implements Serializable {
         return users;
     }
 
-    @Override
-    public String toString() {
-        return "Team{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", teamCreator=" + teamCreator +
-                ", users=" + users +
-                '}';
-    }
-
     public void setUsers(List<User> users) {
         this.users = users;
     }
@@ -88,5 +77,13 @@ public class Team implements Serializable {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Integer getServerTeamId() {
+        return serverTeamId;
+    }
+
+    public void setServerTeamId(Integer serverTeamId) {
+        this.serverTeamId = serverTeamId;
     }
 }

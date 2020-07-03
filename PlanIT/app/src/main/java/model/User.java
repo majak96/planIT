@@ -12,36 +12,35 @@ public class User {
     private String password;
     private String email;
     private String colour;
+    private String firebaseId;
 
     public User(String email) {
         this.email = email;
     }
 
-    public User(Integer id, String email) {
-        this.id = id;
-        this.email = email;
-    }
-
-    public User(Integer id, String email, String name, String lastName, String colour) {
+    public User(Integer id, String email, String name, String lastName, String colour, String firebaseId) {
         this.id = id;
         this.name = name;
         this.lastName = lastName;
         this.colour = colour;
         this.email = email;
+        this.firebaseId = firebaseId;
         this.colour = colour;
     }
 
-    public User(String name, String lastName, String password, String username) {
+    public User(String name, String lastName, String password, String username, String firebaseId) {
         this.name = name;
         this.lastName = lastName;
         this.password = password;
         this.email = username;
+        this.firebaseId = firebaseId;
     }
 
-    public User(String name, String lastName, String email) {
+    public User(String name, String lastName, String email, String firebaseId) {
         this.name = name;
         this.lastName = lastName;
         this.email = email;
+        this.firebaseId = firebaseId;
     }
 
     public String getName() {
@@ -90,6 +89,14 @@ public class User {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public String getFirebaseId() {
+        return firebaseId;
+    }
+
+    public void setFirebaseId(String firebaseId) {
+        this.firebaseId = firebaseId;
     }
 
     @Override

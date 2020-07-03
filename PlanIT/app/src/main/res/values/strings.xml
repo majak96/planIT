@@ -15,6 +15,8 @@
     <string name="new_to_planit">New to PlanIT?</string>
     <string name="btn_logout_from_google">Logout from Google</string>
     <string name="sign_up_now">Sign up now</string>
+    <string name="client_id">91577892135-p36qm4qd9fcekf4s34uj1216bbspk873.apps.googleusercontent.com</string>
+    <string name="api_key">AIzaSyBlbKkcbMIjq7MfITxHbPxTt6TYCCUIFc8</string>
 
     <string name="sign_up">Sign up</string>
     <string name="sign_up_description">Hi there! Welcome to PlanIT.</string>
@@ -119,7 +121,7 @@
 
 
     <string name="reminder">Reminder</string>
-  
+
     <string name="team_no_name">Team name is required!</string>
     <string name="member_to_add">Member to add</string>
 
@@ -131,5 +133,13 @@
 
     <string name="delete_task_text">Are you sure you want to delete %1$s?</string>
     <string name="delete_task_title">Delete task</string>
+
+    //location
+    <string name="location_disabled_title">Location disabled</string>
+    <string name="location_disabled_message">Your location seems to be disabled. Do you want to enable it?</string>
+
+    <string name="location_not_allowed_title">Allow location</string>
+    <string name="location_not_allowed_message">In order to show your current position relative to the location of the task, we need to access your location. Otherwise we will only be able to show you the location of the task.</string>
+    <string name="no_allow">Don\'t allow</string>
 
 </resources>

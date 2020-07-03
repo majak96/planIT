@@ -1,14 +1,30 @@
 package model;
 
 public class Message {
-    String message;
-    User sender;
-    Long createdAt;
+    private Integer id;
+    private String message;
+    private User sender;
+    private Long createdAt;
 
-    public Message(String message, User sender, long createdAt) {
+    public Message(Integer id, String message, User sender, Long createdAt) {
+        this.id = id;
         this.message = message;
         this.sender = sender;
         this.createdAt = createdAt;
+    }
+
+    public Message(String message, User sender, Long createdAt) {
+        this.message = message;
+        this.sender = sender;
+        this.createdAt = createdAt;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public String getMessage() {
