@@ -1,6 +1,7 @@
 package com.example.planit.service;
 
 import model.TeamDTO;
+import model.TeamSyncDTO;
 import model.UserInfoDTO;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -34,5 +35,8 @@ public interface TeamService {
 
     @PUT("team/members/{teamId}")
     Call<ResponseBody> updateTeamMembers(@Path("teamId") Integer teamId, @Body TeamDTO teamDTO);
+
+    @GET("team/sync")
+    Call<TeamSyncDTO> synchronizationTeam(@Query("email") String email, @Query("date") Long date);
 
 }

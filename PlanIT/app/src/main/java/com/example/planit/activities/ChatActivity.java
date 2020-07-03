@@ -1,11 +1,5 @@
 package com.example.planit.activities;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -18,6 +12,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.planit.R;
 import com.example.planit.adapters.MessageListAdapter;
@@ -218,7 +218,7 @@ public class ChatActivity extends AppCompatActivity {
 
         Integer in = cursor.getInt(3);
         User creator = getUserFromDB(cursor.getInt(3));
-        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator, cursor.getInt(4));
+        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator, new Long(cursor.getInt(4)));
 
         if (cursor.getString(2) != null) {
             team.setDescription(cursor.getString(2));

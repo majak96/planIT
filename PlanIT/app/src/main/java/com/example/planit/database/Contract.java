@@ -79,14 +79,15 @@ public final class Contract {
         public static final String COLUMN_LAST_NAME = "last_name";
         public static final String COLUMN_COLOUR = "colour";
         public static final String COLUMN_FIREBASE_ID = "firebase_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
 
     }
 
     public static class Team {
 
         public static final String TABLE_NAME = "team";
-
-        public static final Uri CONTENT_URI_TEAM = Uri.parse("content://" + AUTHORITY + ".TeamContentProvider" + "/" + TABLE_NAME);
+        public static final String AUTHORITY = Contract.AUTHORITY + ".TeamContentProvider";
+        public static final Uri CONTENT_URI_TEAM = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
 
         public static final String COLUMN_SERVER_TEAM_ID = "server_team_id";
         public static final String COLUMN_ID = "_id";

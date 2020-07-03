@@ -1,11 +1,5 @@
 package com.example.planit.activities;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -21,6 +15,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.planit.R;
 import com.example.planit.adapters.TeamDetailAdapter;
@@ -154,7 +154,7 @@ public class TeamDetailActivity extends AppCompatActivity {
         cursor.moveToFirst();
 
         User creator = getUserFromDB(cursor.getInt(3));
-        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator, cursor.getInt(4));
+        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator, new Long(cursor.getInt(4)));
 
         if (cursor.getString(2) != null) {
             team.setDescription(cursor.getString(2));

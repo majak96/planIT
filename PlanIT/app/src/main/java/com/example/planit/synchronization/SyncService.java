@@ -21,6 +21,7 @@ import com.example.planit.broadcastReceivers.ReminderBroadcastReceiver;
 import com.example.planit.database.Contract;
 import com.example.planit.service.HabitService;
 import com.example.planit.service.ServiceUtils;
+import com.example.planit.service.TeamService;
 import com.example.planit.utils.SharedPreference;
 
 import java.text.DateFormat;
@@ -37,7 +38,12 @@ import model.HabitDayConnection;
 import model.HabitFulfillment;
 import model.HabitReminderConnection;
 import model.HabitSyncDTO;
+import model.Message;
 import model.Reminder;
+import model.Team;
+import model.TeamSyncDTO;
+import model.TeamUserConnection;
+import model.User;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -64,18 +70,22 @@ public class SyncService extends Service {
         if (status == TYPE_WIFI || status == TYPE_MOBILE) {
             Log.e("SYNC_SERVICE", "SYNC STARTED");
             String email = SharedPreference.getLoggedEmail(this);
-            HabitService apiService = ServiceUtils.getClient().create(HabitService.class);
+            HabitService apiHabitService = ServiceUtils.getClient().create(HabitService.class);
+            TeamService apiTeamService = ServiceUtils.getClient().create(TeamService.class);
             Date date = null;
-            Call<HabitSyncDTO> call = null;
-            if(SharedPreference.getLastSyncDate(this) != -1) {
+            Call<HabitSyncDTO> callHabits = null;
+            Call<TeamSyncDTO> callTeam = null;
+            if (SharedPreference.getLastSyncDate(this) != -1) {
                 date = new Date(SharedPreference.getLastSyncDate(this));
-                call = apiService.synchronizationHabits(email, date.getTime());
+                callHabits = apiHabitService.synchronizationHabits(email, date.getTime());
+                callTeam = apiTeamService.synchronizationTeam(email, date.getTime());
             } else {
-                call = apiService.synchronizationHabits(email, null);
+                callHabits = apiHabitService.synchronizationHabits(email, null);
+                callTeam = apiTeamService.synchronizationTeam(email, null);
             }
 
 
-            call.enqueue(new Callback<HabitSyncDTO>() {
+            callHabits.enqueue(new Callback<HabitSyncDTO>() {
                 @Override
                 public void onResponse(Call<HabitSyncDTO> call, Response<HabitSyncDTO> response) {
 
@@ -96,8 +106,39 @@ public class SyncService extends Service {
                     Log.e("tag", "Connection error");
                 }
             });
-        }
 
+            callTeam.enqueue(new Callback<TeamSyncDTO>() {
+                @Override
+                public void onResponse(Call<TeamSyncDTO> call, Response<TeamSyncDTO> response) {
+
+                    if (response.code() == 200) {
+                        Log.e("team", "200");
+                        syncTeams(response.body());
+                       /* Call<TaskSyncDTO> callTask;
+                        TaskService taskService = ServiceUtils.getClient().create(TaskService.class);
+                        if (SharedPreference.getLastSyncDate(SyncService.this) != -1) {
+                            date = new Date(SharedPreference.getLastSyncDate(this));
+                            callHabits = apiHabitService.synchronizationHabits(email, date.getTime());
+                        } else {
+                            callHabits = apiHabitService.synchronizationHabits(email, null);
+                        }*/
+
+                        success = true;
+                    } else {
+                        Log.e("team", "400");
+                        success = false;
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<TeamSyncDTO> call, Throwable t) {
+                    success = false;
+                    Log.e("team", "Connection error");
+                }
+            });
+
+
+        }
 
 
         sendBroadcast(intent2);
@@ -107,11 +148,267 @@ public class SyncService extends Service {
         return START_NOT_STICKY;
     }
 
+    public void syncTeams(TeamSyncDTO teamSyncDTO) {
+        List<ContentProviderOperation> batchTeams = syncTeamContentProvider(teamSyncDTO);
+        if (batchTeams.size() == 0) {
+            Log.e("TEAM_SYNC", "EMPTY");
+            return;
+        }
+
+        try {
+            getContentResolver().applyBatch(Contract.Team.AUTHORITY, (ArrayList<ContentProviderOperation>) batchTeams);
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<ContentProviderOperation> syncTeamContentProvider(TeamSyncDTO syncDTO) {
+        List<ContentProviderOperation> batch = new ArrayList<>();
+        Map<Long, Integer> teamInsertedIndex = new HashMap<>();
+        Map<Long, Integer> userInsertedIndex = new HashMap<>();
+
+        for (User user : syncDTO.getUsers()) {
+            String selection = Contract.User.COLUMN_GLOBAL_ID + " = ?";
+            String[] selectionArgs = new String[]{Long.toString(user.getGlobalId())};
+            Cursor userCursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, selection, selectionArgs, null);
+            // user needs to be updated in the local storage
+            ContentProviderOperation operation = null;
+            if (userCursor.getCount() > 0) {
+                userCursor.moveToFirst();
+                Uri uri = Uri.parse(Contract.User.CONTENT_URI_USER + "/" + userCursor.getInt(userCursor.getColumnIndex(Contract.User.COLUMN_ID)));
+                ContentValues values = new ContentValues();
+                values.put(Contract.User.COLUMN_EMAIL, user.getEmail());
+                values.put(Contract.User.COLUMN_NAME, user.getName());
+                values.put(Contract.User.COLUMN_LAST_NAME, user.getLastName());
+                values.put(Contract.User.COLUMN_COLOUR, user.getColour());
+                values.put(Contract.User.COLUMN_FIREBASE_ID, user.getFirebaseId());
+                operation = ContentProviderOperation.newUpdate(uri).withValues(values).build();
+
+            } else {
+                ContentValues values = new ContentValues();
+                values.put(Contract.User.COLUMN_EMAIL, user.getEmail());
+                values.put(Contract.User.COLUMN_NAME, user.getName());
+                values.put(Contract.User.COLUMN_LAST_NAME, user.getLastName());
+                values.put(Contract.User.COLUMN_COLOUR, user.getColour());
+                values.put(Contract.User.COLUMN_FIREBASE_ID, user.getFirebaseId());
+                values.put(Contract.User.COLUMN_GLOBAL_ID, user.getGlobalId());
+                userInsertedIndex.put(user.getGlobalId(), batch.size());
+                operation = ContentProviderOperation.newInsert(Contract.User.CONTENT_URI_USER).withValues(values).build();
+
+            }
+            userCursor.close();
+            batch.add(operation);
+        }
+
+        for (Team team : syncDTO.getTeams()) {
+            Log.e("TEAM ID", team.getServerTeamId().toString());
+            Log.e("TEAM CREATOR ID", team.getCreatorId().toString());
+            String selection = Contract.Team.COLUMN_SERVER_TEAM_ID + " = ?";
+            String[] selectionArgs = new String[]{Long.toString(team.getServerTeamId())};
+            Cursor teamCursor = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, selection, selectionArgs, null);
+            // team needs to be updated in the local storage
+            ContentProviderOperation operation = null;
+            if (teamCursor.getCount() > 0) {
+                teamCursor.moveToFirst();
+                Uri uri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamCursor.getInt(teamCursor.getColumnIndex(Contract.Team.COLUMN_ID)));
+                // if team is deleted
+                // TODO: DELETED CONNECTED OBJECT
+                if (team.isDeleted()) {
+                    operation = ContentProviderOperation.newDelete(uri).build();
+                    // update if needed
+                } else {
+                    ContentValues values = new ContentValues();
+                    values.put(Contract.Team.COLUMN_TITLE, team.getName());
+                    values.put(Contract.Team.COLUMN_DESCRIPTION, team.getDescription());
+                    operation = ContentProviderOperation.newUpdate(uri).withValues(values).build();
+                }
+            } else {
+                ContentValues values = new ContentValues();
+                values.put(Contract.Team.COLUMN_TITLE, team.getName());
+                values.put(Contract.Team.COLUMN_DESCRIPTION, team.getDescription());
+                values.put(Contract.Team.COLUMN_SERVER_TEAM_ID, team.getServerTeamId());
+                if (userInsertedIndex.containsKey(team.getCreatorId())) {
+                    operation = ContentProviderOperation.newInsert(Contract.Team.CONTENT_URI_TEAM)
+                            .withValues(values)
+                            .withValueBackReference(Contract.Team.COLUMN_CREATOR, userInsertedIndex.get(team.getCreatorId()))
+                            .build();
+                } else {
+                    selection = Contract.User.COLUMN_GLOBAL_ID + " = ?";
+                    selectionArgs = new String[]{Long.toString(team.getCreatorId())};
+                    Cursor userCursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, selection, selectionArgs, null);
+                    userCursor.moveToFirst();
+                    values.put(Contract.Team.COLUMN_CREATOR, userCursor.getInt(userCursor.getColumnIndex(Contract.User.COLUMN_ID)));
+                    userCursor.close();
+                    operation = ContentProviderOperation.newInsert(Contract.Team.CONTENT_URI_TEAM).withValues(values).build();
+                }
+
+                teamInsertedIndex.put(team.getServerTeamId(), batch.size());
+
+
+            }
+            teamCursor.close();
+            batch.add(operation);
+        }
+
+        for (TeamUserConnection conn : syncDTO.getTeamUserConnections()) {
+            String selection = Contract.UserTeamConnection.COLUMN_GLOBAL_ID + " = ?";
+            String[] selectionArgs = new String[]{Long.toString(conn.getId())};
+            Cursor connCursor = getContentResolver().query(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM, null, selection, selectionArgs, null);
+            // team needs to be updated in the local storage
+            ContentProviderOperation operation = null;
+            if (connCursor.getCount() > 0) {
+                connCursor.moveToFirst();
+                Uri uri = Uri.parse(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM + "/" + connCursor.getInt(connCursor.getColumnIndex(Contract.Team.COLUMN_ID)));
+                // if team is deleted
+                // TODO: DELETED BOOLEAN VALUE SEE
+                if (conn.isDeleted()) {
+                    operation = ContentProviderOperation.newDelete(uri).build();
+                    // update if needed
+                } else {
+                    /*
+                    ContentValues values = new ContentValues();
+                    operation = ContentProviderOperation.newUpdate(uri).withValues(values).build();
+                     */
+                }
+            } else {
+                if (!conn.isDeleted()) {
+                    ContentValues values = new ContentValues();
+                    values.put(Contract.UserTeamConnection.COLUMN_GLOBAL_ID, conn.getId());
+
+                    if (teamInsertedIndex.containsKey(conn.getTeamId()) && userInsertedIndex.containsKey(conn.getUser().getGlobalId())) {
+                        operation = ContentProviderOperation.newInsert(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM)
+                                .withValues(values)
+                                .withValueBackReference(Contract.UserTeamConnection.COLUMN_TEAM_ID, teamInsertedIndex.get(conn.getTeamId()))
+                                .withValueBackReference(Contract.UserTeamConnection.COLUMN_USER_ID, userInsertedIndex.get(conn.getUser().getGlobalId()))
+                                .build();
+                    } else if (teamInsertedIndex.containsKey(conn.getTeamId()) && !userInsertedIndex.containsKey(conn.getUser().getGlobalId())) {
+                        values.put(Contract.UserTeamConnection.COLUMN_USER_ID, conn.getUser().getEmail());
+                        operation = ContentProviderOperation.newInsert(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM)
+                                .withValues(values)
+                                .withValueBackReference(Contract.UserTeamConnection.COLUMN_TEAM_ID, teamInsertedIndex.get(conn.getTeamId()))
+                                .build();
+                    } else if (!teamInsertedIndex.containsKey(conn.getTeamId()) && userInsertedIndex.containsKey(conn.getUser().getGlobalId())) {
+                        selection = Contract.Team.COLUMN_SERVER_TEAM_ID + " = ?";
+                        selectionArgs = new String[]{Long.toString(conn.getTeamId())};
+                        Cursor cursorTeam = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, selection, selectionArgs, null);
+                        values.put(Contract.UserTeamConnection.COLUMN_TEAM_ID, cursorTeam.getInt(cursorTeam.getColumnIndex(Contract.Team.COLUMN_ID)));
+                        cursorTeam.close();
+                        operation = ContentProviderOperation.newInsert(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM)
+                                .withValues(values)
+                                .withValueBackReference(Contract.UserTeamConnection.COLUMN_USER_ID, userInsertedIndex.get(conn.getUser().getEmail()))
+                                .build();
+                    } else {
+                        selection = Contract.Team.COLUMN_SERVER_TEAM_ID + " = ?";
+                        selectionArgs = new String[]{Long.toString(conn.getTeamId())};
+                        Cursor cursorTeam = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, selection, selectionArgs, null);
+                        values.put(Contract.UserTeamConnection.COLUMN_TEAM_ID, cursorTeam.getInt(cursorTeam.getColumnIndex(Contract.Team.COLUMN_ID)));
+                        cursorTeam.close();
+                        values.put(Contract.UserTeamConnection.COLUMN_USER_ID, conn.getUser().getEmail());
+                        operation = ContentProviderOperation.newInsert(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM)
+                                .withValues(values)
+                                .build();
+                    }
+
+                }
+
+            }
+
+            if (operation != null)
+                batch.add(operation);
+
+            connCursor.close();
+
+        }
+
+        for (Message message : syncDTO.getMessages()) {
+            String selection = Contract.Message.COLUMN_GLOBAL_ID + " = ?";
+            String[] selectionArgs = new String[]{Long.toString(message.getGlobalId())};
+            Cursor messageCursor = getContentResolver().query(Contract.Message.CONTENT_URI_MESSAGE, null, selection, selectionArgs, null);
+            // user needs to be updated in the local storage
+            ContentProviderOperation operation = null;
+            if (messageCursor.getCount() > 0) {
+                messageCursor.moveToFirst();
+                if (message.isDeleted()) {
+                    operation = ContentProviderOperation.newDelete(Contract.Message.CONTENT_URI_MESSAGE)
+                            .withSelection(selection, selectionArgs)
+                            .build();
+                } else {
+                   /* ContentValues values = new ContentValues();
+                    operation = ContentProviderOperation.newUpdate(uri).withValues(values).build();*/
+                }
+
+
+            } else {
+                ContentValues values = new ContentValues();
+                values.put(Contract.Message.COLUMN_CREATED_AT, message.getCreatedAt());
+                values.put(Contract.Message.COLUMN_GLOBAL_ID, message.getGlobalId());
+                values.put(Contract.Message.COLUMN_MESSAGE, message.getMessage());
+                if (teamInsertedIndex.containsKey(message.getTeamId()) && userInsertedIndex.containsKey(message.getSender().getGlobalId())) {
+                    operation = ContentProviderOperation.newInsert(Contract.Message.CONTENT_URI_MESSAGE)
+                            .withValues(values)
+                            .withValueBackReference(Contract.Message.COLUMN_TEAM_ID, teamInsertedIndex.get(message.getTeamId()))
+                            .withValueBackReference(Contract.Message.COLUMN_SENDER_ID, userInsertedIndex.get(message.getSender().getGlobalId()))
+                            .build();
+                } else if (teamInsertedIndex.containsKey(message.getTeamId()) && !userInsertedIndex.containsKey(message.getSender().getGlobalId())) {
+                    selection = Contract.User.COLUMN_GLOBAL_ID + " = ?";
+                    selectionArgs = new String[]{Long.toString(message.getSender().getGlobalId())};
+                    Cursor userCursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, selection, selectionArgs, null);
+                    userCursor.moveToFirst();
+                    values.put(Contract.Message.COLUMN_SENDER_ID, userCursor.getInt(userCursor.getColumnIndex(Contract.User.COLUMN_ID)));
+                    userCursor.close();
+                    operation = ContentProviderOperation.newInsert(Contract.Message.CONTENT_URI_MESSAGE)
+                            .withValues(values)
+                            .withValueBackReference(Contract.UserTeamConnection.COLUMN_TEAM_ID, teamInsertedIndex.get(message.getTeamId()))
+                            .build();
+                } else if (!teamInsertedIndex.containsKey(message.getTeamId()) && userInsertedIndex.containsKey(message.getSender().getGlobalId())) {
+                    selection = Contract.Team.COLUMN_SERVER_TEAM_ID + " = ?";
+                    selectionArgs = new String[]{Long.toString(message.getTeamId())};
+                    Cursor cursorTeam = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, selection, selectionArgs, null);
+                    cursorTeam.moveToFirst();
+                    values.put(Contract.Message.COLUMN_TEAM_ID, cursorTeam.getInt(cursorTeam.getColumnIndex(Contract.Team.COLUMN_ID)));
+                    cursorTeam.close();
+
+                    operation = ContentProviderOperation.newInsert(Contract.Message.CONTENT_URI_MESSAGE)
+                            .withValues(values)
+                            .withValueBackReference(Contract.UserTeamConnection.COLUMN_USER_ID, userInsertedIndex.get(message.getSender().getGlobalId()))
+                            .build();
+                } else {
+                    selection = Contract.Team.COLUMN_SERVER_TEAM_ID + " = ?";
+                    selectionArgs = new String[]{Long.toString(message.getTeamId())};
+                    Cursor cursorTeam = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, selection, selectionArgs, null);
+                    cursorTeam.moveToFirst();
+                    values.put(Contract.Message.COLUMN_TEAM_ID, cursorTeam.getInt(cursorTeam.getColumnIndex(Contract.Team.COLUMN_ID)));
+                    cursorTeam.close();
+                    selection = Contract.User.COLUMN_GLOBAL_ID + " = ?";
+                    selectionArgs = new String[]{Long.toString(message.getSender().getGlobalId())};
+                    Cursor userCursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, selection, selectionArgs, null);
+                    userCursor.moveToFirst();
+                    values.put(Contract.Message.COLUMN_SENDER_ID, userCursor.getInt(userCursor.getColumnIndex(Contract.User.COLUMN_ID)));
+                    userCursor.close();
+                    operation = ContentProviderOperation.newInsert(Contract.Message.CONTENT_URI_MESSAGE)
+                            .withValues(values)
+                            .build();
+                }
+
+
+            }
+
+            messageCursor.close();
+            if (operation != null)
+                batch.add(operation);
+        }
+
+
+        return batch;
+    }
+
     public void syncHabits(HabitSyncDTO syncDTO) {
         // TODO: ADD COLUMN DELETED
         List<ContentProviderOperation> batchReminders = syncHabitContentProvider(syncDTO);
 
-        if(batchReminders.size() == 0) {
+        if (batchReminders.size() == 0) {
             Log.e("HABIT_SYNC", "EMPTY");
             return;
         }
@@ -148,7 +445,7 @@ public class SyncService extends Service {
                     selection = Contract.HabitReminderConnection.COLUMN_REMINDER_ID + " = ?";
                     selectionArgs = new String[]{Long.toString(reminder.getId())};
                     batch.add(ContentProviderOperation.newDelete(Contract.HabitReminderConnection.CONTENT_URI_HABIT_REMINDER_CONN)
-                            .withSelection(selection,selectionArgs).build());
+                            .withSelection(selection, selectionArgs).build());
                     operation = ContentProviderOperation.newDelete(uri).build();
                     // update if needed
                 } else {
@@ -253,7 +550,7 @@ public class SyncService extends Service {
 
             }
             cursorHabitFulfillment.close();
-            if(operation != null)
+            if (operation != null)
                 batch.add(operation);
         }
 
@@ -300,7 +597,7 @@ public class SyncService extends Service {
                 }
             }
             cursorHabitDayConnection.close();
-            if(operation != null)
+            if (operation != null)
                 batch.add(operation);
         }
 
@@ -367,7 +664,7 @@ public class SyncService extends Service {
             }
             cursorHabitReminderConnection.close();
 
-            if(operation != null)
+            if (operation != null)
                 batch.add(operation);
 
         }
@@ -375,7 +672,7 @@ public class SyncService extends Service {
         return batch;
     }
 
-    private List<ContentProviderOperation>  deleteAndCancelReminders(Integer habitId, List<ContentProviderOperation> batch) {
+    private List<ContentProviderOperation> deleteAndCancelReminders(Integer habitId, List<ContentProviderOperation> batch) {
         Uri uri = Uri.parse(Contract.HabitReminderConnection.CONTENT_URI_HABIT_REMINDER_CONN + "/" + Contract.Habit.TABLE_NAME + "/" + habitId);
         Cursor cursor = this.getContentResolver().query(uri, null, null, null, null);
         if (cursor.getCount() > 0) {
@@ -399,7 +696,7 @@ public class SyncService extends Service {
         return batch;
     }
 
-    private List<ContentProviderOperation> deleteHabitFulfillmentByHabit(Integer id , List<ContentProviderOperation> batch) {
+    private List<ContentProviderOperation> deleteHabitFulfillmentByHabit(Integer id, List<ContentProviderOperation> batch) {
         Uri uri = Uri.parse(Contract.HabitFulfillment.CONTENT_HABIT_FULFILLMENT + "/" + Contract.Habit.TABLE_NAME + "/" + id);
         batch.add(ContentProviderOperation.newDelete(uri).build());
         return batch;
