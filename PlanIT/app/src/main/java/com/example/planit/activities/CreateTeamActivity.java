@@ -112,11 +112,11 @@ public class CreateTeamActivity extends AppCompatActivity {
                     if (team != null) {
 
                         //send serverId...
-                        TeamDTO teamDTO = new TeamDTO(teamName.getText().toString().trim(), teamDescription.getText().toString(), team.getServerTeamId());
+                        TeamDTO teamDTO = new TeamDTO(teamName.getText().toString().trim(), teamDescription.getText().toString(), team.getServerTeamId().intValue());
 
                         TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
                         //send serverId...
-                        Call<ResponseBody> call = apiService.updateTeam(team.getServerTeamId(), teamDTO);
+                        Call<ResponseBody> call = apiService.updateTeam(team.getServerTeamId().intValue(), teamDTO);
 
                         call.enqueue(new Callback<ResponseBody>() {
 
@@ -205,7 +205,7 @@ public class CreateTeamActivity extends AppCompatActivity {
         team.setId(cursor.getInt(0));
         team.setName(cursor.getString(1));
         team.setDescription(cursor.getString(2));
-        team.setServerTeamId(cursor.getInt(3));
+        team.setServerTeamId(new Long(cursor.getInt(3)));
 
         cursor.close();
 

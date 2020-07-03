@@ -27,6 +27,7 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.User.COLUMN_EMAIL + " text , "
             + Contract.User.COLUMN_NAME + " text , "
             + Contract.User.COLUMN_LAST_NAME + " text , "
+            + Contract.User.COLUMN_GLOBAL_ID  + " integer ,"
             + Contract.User.COLUMN_COLOUR + " text , "
             + Contract.User.COLUMN_FIREBASE_ID + " text "
             + ")";
@@ -230,7 +231,6 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
         db.execSQL("DELETE FROM " + Contract.HabitFulfillment.TABLE_NAME);
         db.execSQL("DELETE FROM " + Contract.HabitReminderConnection.TABLE_NAME);
         db.execSQL("DELETE FROM " + Contract.Habit.TABLE_NAME);
-        db.execSQL("DELETE FROM " + Contract.HabitDay.TABLE_NAME);
 
         db.execSQL("DELETE FROM " + Contract.TaskLabel.TABLE_NAME);
         db.execSQL("DELETE FROM " + Contract.Task.TABLE_NAME);
