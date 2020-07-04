@@ -1,11 +1,5 @@
 package com.example.planit.activities;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -18,6 +12,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.planit.R;
 import com.example.planit.adapters.MessageListAdapter;
@@ -36,7 +36,6 @@ import model.Message;
 import model.MessageDTO;
 import model.Team;
 import model.User;
-import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -62,7 +61,7 @@ public class ChatActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         if (getIntent().hasExtra("team")) {
-            Integer teamId = getIntent().getIntExtra("team", 1);
+            Integer teamId = getIntent().getIntExtra("team", -1);
             team = getTeamFromDatabase(teamId);
             setTitle(team.getName());
         }
@@ -107,11 +106,14 @@ public class ChatActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             String message = intent.getStringExtra("message");
             Long time = intent.getLongExtra("time", 1);
+            String globalMessageId = intent.getStringExtra("globalMessageId");
             String senderEmail = intent.getStringExtra("senderEmail");
 
             User user = getUserFromDatabase(senderEmail);
 
             Message newMessage = new Message(message, user, time);
+            newMessage.setGlobalId(Long.parseLong(globalMessageId));
+            SharedPreference.setLastMessageSync(ChatActivity.this, globalMessageId);
             addMessage(newMessage);
             messages.add(newMessage);
             mMessageAdapter.notifyItemInserted(messages.size() + 1);
@@ -125,40 +127,44 @@ public class ChatActivity extends AppCompatActivity {
             User loggedUser = getUserFromDatabase(SharedPreference.getLoggedEmail(ChatActivity.this));
             if (loggedUser != null) {
                 Message newMessage = new Message(message, loggedUser, Utils.getCurrentDateTime());
-                if (addMessage(newMessage) != null) {
 
-                    MessageDTO messageDTO = new MessageDTO(team.getServerTeamId().longValue(), message, loggedUser.getEmail(), newMessage.getCreatedAt());
+                MessageDTO messageDTO = new MessageDTO(team.getServerTeamId().longValue(), message, loggedUser.getEmail(), newMessage.getCreatedAt());
 
-                    ChatService apiService = ServiceUtils.getClient().create(ChatService.class);
-                    Call<ResponseBody> call = apiService.sendMessage(messageDTO);
-                    call.enqueue(new Callback<ResponseBody>() {
+                ChatService apiService = ServiceUtils.getClient().create(ChatService.class);
+                Call<Long> call = apiService.sendMessage(messageDTO);
+                call.enqueue(new Callback<Long>() {
 
-                        @Override
-                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    @Override
+                    public void onResponse(Call<Long> call, Response<Long> response) {
 
-                            if (response.code() == 200) {
+                        if (response.code() == 200) {
+                            Long globalMessageId = response.body();
+                            newMessage.setGlobalId(globalMessageId);
+                            if (addMessage(newMessage) != null) {
+                                SharedPreference.setLastMessageSync(ChatActivity.this, globalMessageId.toString());
                                 messages.add(newMessage);
                                 mMessageAdapter.notifyItemInserted(messages.size() + 1);
                                 messageText.getText().clear();
                                 mMessageRecycler.scrollToPosition(messages.size() - 1);
                             } else {
-                                Toast t = Toast.makeText(ChatActivity.this, "Error in sending message!", Toast.LENGTH_SHORT);
-                                t.show();
+                                Log.i(tag, "Can not find logged user!");
                             }
+                        } else {
+                            Toast t = Toast.makeText(ChatActivity.this, "Error in sending message!", Toast.LENGTH_SHORT);
+                            t.show();
                         }
+                    }
 
-                        @Override
-                        public void onFailure(Call<ResponseBody> call, Throwable t) {
-                            Toast toast = Toast.makeText(ChatActivity.this, "Connection error!", Toast.LENGTH_SHORT);
-                            toast.show();
-                            Log.e(tag, "Connection error!");
-                        }
-                    });
+                    @Override
+                    public void onFailure(Call<Long> call, Throwable t) {
+                        Toast toast = Toast.makeText(ChatActivity.this, "Connection error!", Toast.LENGTH_SHORT);
+                        toast.show();
+                        Log.e(tag, "Connection error!");
+                    }
+                });
 
-                }
-            } else {
-                Log.i(tag, "Can not find logged user!");
             }
+
         }
     }
 
@@ -177,23 +183,32 @@ public class ChatActivity extends AppCompatActivity {
     public void loadMessages() {
 
         ChatService apiService = ServiceUtils.getClient().create(ChatService.class);
-        Call<List<MessageDTO>> call = apiService.getMessagse(team.getServerTeamId());
+
+        String lastId;
+        if(SharedPreference.getLastMessageSync(ChatActivity.this).equals("")){
+            lastId="0";
+        }
+        else{
+            lastId = SharedPreference.getLastMessageSync(ChatActivity.this);
+        }
+        Call<List<MessageDTO>> call = apiService.getMessages(team.getServerTeamId(), Long.parseLong(lastId));
 
         call.enqueue(new Callback<List<MessageDTO>>() {
             @Override
             public void onResponse(Call<List<MessageDTO>> call, Response<List<MessageDTO>> response) {
-
-                for (Message m : messages) {
-                    deleteMessage(m);
-                }
-                messages.clear();
 
                 List<MessageDTO> data = response.body();
                 if (data != null) {
                     for (MessageDTO messageDTO : data) {
                         User sender = getUserFromDatabase(messageDTO.getSender());
                         Message newMessage = new Message(messageDTO.getMessage(), sender, messageDTO.getCreatedAt());
-                        addMessage(newMessage);
+                        newMessage.setGlobalId(messageDTO.getMessageId());
+                        SharedPreference.setLastMessageSync(ChatActivity.this, messageDTO.getMessageId().toString());
+                        for(Message m : messages){
+                            if(m.getGlobalId() != messageDTO.getMessageId()){
+                                addMessage(newMessage);
+                            }
+                        }
                         messages.add(newMessage);
                     }
                 }
@@ -218,7 +233,7 @@ public class ChatActivity extends AppCompatActivity {
 
         Integer in = cursor.getInt(3);
         User creator = getUserFromDB(cursor.getInt(3));
-        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator, cursor.getInt(4));
+        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator, new Long(cursor.getInt(4)));
 
         if (cursor.getString(2) != null) {
             team.setDescription(cursor.getString(2));
@@ -263,7 +278,7 @@ public class ChatActivity extends AppCompatActivity {
             Log.i(tag, "User does not exist!");
         } else {
             while (cursor.moveToNext()) {
-                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5));
+                newUser = new User(cursor.getInt(cursor.getColumnIndex(Contract.User.COLUMN_ID)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_EMAIL)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_NAME)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_LAST_NAME)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_COLOUR)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_FIREBASE_ID)));
             }
         }
         cursor.close();
@@ -283,10 +298,10 @@ public class ChatActivity extends AppCompatActivity {
             Log.i(tag, "There are no messages in team chat");
         } else {
             while (cursor.moveToNext()) {
-                Integer id = cursor.getInt(0);
-                String message = cursor.getString(1);
-                Integer createdAt = cursor.getInt(2);
-                Integer senderId = cursor.getInt(3);
+                Integer id = cursor.getInt(cursor.getColumnIndex(Contract.Message.COLUMN_ID));
+                String message = cursor.getString(cursor.getColumnIndex(Contract.Message.COLUMN_MESSAGE));
+                Long createdAt = cursor.getLong(cursor.getColumnIndex(Contract.Message.COLUMN_CREATED_AT));
+                Integer senderId = cursor.getInt(cursor.getColumnIndex(Contract.Message.COLUMN_SENDER_ID));
                 User sender = getUserFromDB(senderId);
 
                 Message newMessage = new Message(id, message, sender, createdAt.longValue());
@@ -304,15 +319,11 @@ public class ChatActivity extends AppCompatActivity {
         values.put(Contract.Message.COLUMN_CREATED_AT, message.getCreatedAt());
         values.put(Contract.Message.COLUMN_SENDER_ID, message.getSender().getId());
         values.put(Contract.Message.COLUMN_TEAM_ID, team.getId());
+        values.put(Contract.Message.COLUMN_GLOBAL_ID, message.getGlobalId());
 
         Uri uri = getContentResolver().insert(Contract.Message.CONTENT_URI_MESSAGE, values);
 
         return uri;
-    }
-
-    private int deleteMessage(Message message) {
-        Uri uri = Uri.parse(Contract.Message.CONTENT_URI_MESSAGE + "/" + message.getId());
-        return getContentResolver().delete(uri, null, null);
     }
 
 }

@@ -8,18 +8,20 @@ public final class Contract {
 
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY);
 
-  public static class Habit {
+    public static class Habit {
 
         public static final String TABLE_NAME = "habit";
         public static final String AUTHORITY = Contract.AUTHORITY + ".HabitContentProvider";
 
-        public static final Uri CONTENT_URI_HABIT = Uri.parse("content://" + AUTHORITY  + "/" + TABLE_NAME);
+        public static final Uri CONTENT_URI_HABIT = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
 
         public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_TITLE = "title";
         public static final String COLUMN_DESCRIPTION = "description";
         public static final String COLUMN_GOAL = "goal";
         public static final String COLUMN_NUMBER_OF_DAYS = "number_of_days";
+        public static final String COLUMN_DELETED = "deleted";
 
     }
 
@@ -31,8 +33,10 @@ public final class Contract {
         public static final Uri CONTENT_HABIT_FULFILLMENT = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
 
         public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_DATE = "date";
         public static final String COLUMN_HABIT_ID = "habit_id";
+        public static final String COLUMN_DELETED = "deleted";
 
     }
 
@@ -56,11 +60,13 @@ public final class Contract {
         public static final Uri CONTENT_URI_HABIT_DAY_CONN = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
 
         public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_HABIT_ID = "habit_id";
         public static final String COLUMN_HABIT_DAY_ID = "habit_day_id";
+        public static final String COLUMN_DELETED = "deleted";
     }
-  
-  
+
+
     public static class User {
 
         public static final String TABLE_NAME = "user";
@@ -73,14 +79,15 @@ public final class Contract {
         public static final String COLUMN_LAST_NAME = "last_name";
         public static final String COLUMN_COLOUR = "colour";
         public static final String COLUMN_FIREBASE_ID = "firebase_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
 
     }
 
     public static class Team {
 
         public static final String TABLE_NAME = "team";
-
-        public static final Uri CONTENT_URI_TEAM = Uri.parse("content://" + AUTHORITY + ".TeamContentProvider" + "/" + TABLE_NAME);
+        public static final String AUTHORITY = Contract.AUTHORITY + ".TeamContentProvider";
+        public static final Uri CONTENT_URI_TEAM = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
 
         public static final String COLUMN_SERVER_TEAM_ID = "server_team_id";
         public static final String COLUMN_ID = "_id";
@@ -88,17 +95,20 @@ public final class Contract {
         public static final String COLUMN_DESCRIPTION = "description";
         public static final String COLUMN_CREATOR = "creator";
 
+
+
     }
 
     public static class UserTeamConnection {
 
         public static final String TABLE_NAME = "user_team_connection";
 
-        public static final Uri CONTENT_URI_USER_TEAM = Uri.parse("content://" + AUTHORITY+ ".TeamContentProvider" + "/" + TABLE_NAME);
+        public static final Uri CONTENT_URI_USER_TEAM = Uri.parse("content://" + AUTHORITY + ".TeamContentProvider" + "/" + TABLE_NAME);
 
         public static final String COLUMN_ID = "_id";
         public static final String COLUMN_USER_ID = "user_id";
         public static final String COLUMN_TEAM_ID = "team_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
 
     }
 
@@ -113,6 +123,7 @@ public final class Contract {
         public static final String COLUMN_CREATED_AT = "created_at";
         public static final String COLUMN_SENDER_ID = "sender";
         public static final String COLUMN_TEAM_ID = "team_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
 
     }
   
@@ -137,12 +148,14 @@ public final class Contract {
         public static final String COLUMN_USER = "user";
         public static final String COLUMN_LONGITUDE = "longitude";
         public static final String COLUMN_LATITUDE = "latitude";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
+        public static final String COLUMN_DELETED = "deleted";
 
     }
 
     public static class Label {
 
-        public static final String AUTHORITY = Contract.AUTHORITY + ".LabelContentProvider";
+        public static final String AUTHORITY = Contract.AUTHORITY + ".TaskContentProvider";
 
         public static final String TABLE_NAME = "label";
 
@@ -152,11 +165,12 @@ public final class Contract {
         public static final String COLUMN_ID = "_id";
         public static final String COLUMN_NAME = "name";
         public static final String COLUMN_COLOR = "color";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
     }
 
     public static class TaskLabel {
 
-        public static final String AUTHORITY = Contract.AUTHORITY + ".LabelContentProvider";
+        public static final String AUTHORITY = Contract.AUTHORITY + ".TaskContentProvider";
 
         public static final String TABLE_NAME = "task_label";
 
@@ -165,30 +179,36 @@ public final class Contract {
         public static final String COLUMN_ID = "_id";
         public static final String COLUMN_TASK = "task";
         public static final String COLUMN_LABEL = "label";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
+        public static final String COLUMN_DELETED = "deleted";
     }
 
     public static class Reminder {
-        public static final String AUTHORITY = Contract.AUTHORITY + ".ReminderContentProvider";
+        public static final String AUTHORITY = Contract.AUTHORITY + ".HabitContentProvider";
 
         public static final String TABLE_NAME = "reminder";
 
         public static final Uri CONTENT_URI_REMINDER = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
 
         public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_DATE = "date";
+        public static final String COLUMN_DELETED = "deleted";
 
     }
 
     public static class HabitReminderConnection {
-        public static final String AUTHORITY = Contract.AUTHORITY + ".ReminderContentProvider";
+        public static final String AUTHORITY = Contract.AUTHORITY + ".HabitContentProvider";
 
         public static final String TABLE_NAME = "habit_reminder_connection";
 
         public static final Uri CONTENT_URI_HABIT_REMINDER_CONN = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
 
         public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_GLOBAL_ID = "global_id";
         public static final String COLUMN_HABIT_ID = "day_id";
         public static final String COLUMN_REMINDER_ID = "reminder_id";
+        public static final String COLUMN_DELETED = "deleted";
 
     }
 }

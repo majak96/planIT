@@ -1,7 +1,11 @@
 package com.example.planit;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
@@ -29,12 +33,14 @@ import com.example.planit.fragments.CalendarFragment;
 import com.example.planit.fragments.DailyPreviewFragment;
 import com.example.planit.fragments.HabitsOverviewFragment;
 import com.example.planit.fragments.TeamsOverviewFragment;
+import com.example.planit.synchronization.SyncReceiver;
+import com.example.planit.synchronization.SyncService;
 import com.example.planit.utils.FragmentTransition;
 import com.example.planit.utils.SharedPreference;
-import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +62,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private FirebaseUser currentUser;
     private FirebaseAuth mAuth;
     private List<Team> myTeams;
+
+    private PendingIntent pendingIntent;
+    private AlarmManager manager;
+
+    private SyncReceiver sync;
+    public static String SYNC_DATA = "SYNC_DATA";
+
+    private String synctime = "1";
+    private boolean allowSync = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             loggedEmail.setText(SharedPreference.getLoggedEmail(MainActivity.this));
             loggedName.setText(SharedPreference.getLoggedName(MainActivity.this).concat(" ").concat(SharedPreference.getLoggedLastName(MainActivity.this)));
-            //loggedFirstChar.setText(findLoggedUserName().substring(0, 1).concat(findLoggedUserLastName().substring(0, 1)));
+            loggedFirstChar.setText(findLoggedUserName().substring(0, 1).concat(findLoggedUserLastName().substring(0, 1)));
 
             profileLayout.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
@@ -110,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
             }
 
+            setUpReceiver();
             if (getIntent().getExtras() != null) {
                 if(getIntent().hasExtra("teamId")){
                     String serverTeamId = getIntent().getStringExtra("teamId");
@@ -142,8 +158,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         */
         getAllTeams();
         for (Team team : myTeams) {
-            if(mAuth.getCurrentUser() != null)
+            if(mAuth.getCurrentUser() != null){
                 FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
+                Log.e("SUBSCRIBE TO ", mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
+            }
+
         }
     }
 
@@ -173,6 +192,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         switch (id) {
             case R.id.nav_calendar:
+                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 FragmentTransition.replaceFragment(this, CalendarFragment.newInstance(null, null, null), R.id.fragment_container, false);
                 break;
             case R.id.nav_habits:
@@ -222,12 +242,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         SharedPreference.setLoggedName(getApplicationContext(), "");
         SharedPreference.setLoggedColour(getApplicationContext(), "");
         SharedPreference.setLoggedLastName(getApplicationContext(), "");
-
+        SharedPreference.setLastSyncDate(getApplicationContext(), null);
+        SharedPreference.setPrefLastSyncDateH(getApplicationContext(), null);
         //unsubscribe of all my topics
+        getAllTeams();
         for (Team team : myTeams) {
-            FirebaseMessaging.getInstance().unsubscribeFromTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getId());
+            FirebaseMessaging.getInstance().unsubscribeFromTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
+            Log.e("UNSUBSCRTIBE FROM ", mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
         }
-        FirebaseAuth.getInstance().signOut();
 
         //delete all data from db
         DatabaseSQLiteHelper databaseHelper = new DatabaseSQLiteHelper(this);
@@ -397,6 +419,57 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
+    private void setUpReceiver(){
+        sync = new SyncReceiver();
+        // Retrieve a PendingIntent that will perform a broadcast
+        Intent alarmIntent = new Intent(this, SyncService.class);
+        pendingIntent = PendingIntent.getService(this, 0, alarmIntent, 0);
+        manager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+    }
+
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onResume() {
+
+        super.onResume();
+        if (manager == null) {
+            setUpReceiver();
+        }
+
+        if(allowSync){
+            int interval = calculateTimeTillNextSync(Integer.parseInt(synctime));
+            manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() - 1000, interval, pendingIntent);
+        }
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(SYNC_DATA);
+
+        registerReceiver(sync, filter);
+    }
+
+    public static int calculateTimeTillNextSync(int minutes){
+        return 1000 * 60 * minutes;
+    }
+
+    @Override
+    protected void onPause() {
+        if (manager != null) {
+            manager.cancel(pendingIntent);
+        }
+
+        if(sync != null){
+            unregisterReceiver(sync);
+        }
+
+        super.onPause();
+
+    }
+
     private void getAllTeams() {
 
         myTeams.clear();
@@ -407,7 +480,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             Log.i("MainActivity", "There are no teams");
         } else {
             while (cursor.moveToNext()) {
-                Team newTeam = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2));
+                Integer id= cursor.getInt(cursor.getColumnIndex(Contract.Team.COLUMN_ID));
+                String name= cursor.getString(cursor.getColumnIndex(Contract.Team.COLUMN_TITLE));
+                String description=cursor.getString(cursor.getColumnIndex(Contract.Team.COLUMN_TITLE));
+                Integer serverTeamId= cursor.getInt(cursor.getColumnIndex(Contract.Team.COLUMN_SERVER_TEAM_ID));
+
+                Team newTeam = new Team(id, name, description, null, serverTeamId.longValue());
                 this.myTeams.add(newTeam);
             }
         }

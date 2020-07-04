@@ -85,7 +85,7 @@ public class HabitsOverviewFragment extends Fragment {
                 Uri uri = Uri.parse(Contract.HabitFulfillment.CONTENT_HABIT_FULFILLMENT + "/" + Contract.Habit.TABLE_NAME + "/" + id);
                 Cursor cursorFulfillment = getActivity().getContentResolver().query(uri, null, null, null, null);
                 Habit habit = new Habit();
-                habit.setId(id);
+                habit.setLocalId(id);
                 habit.setTitle(title);
                 habit.setTotalNumberOfDays(cursorFulfillment.getCount());
                 cursorFulfillment.close();
@@ -106,7 +106,7 @@ public class HabitsOverviewFragment extends Fragment {
             String title = cursor.getString(cursor.getColumnIndex(Contract.Habit.COLUMN_TITLE));
             Uri uriFulfillment = Uri.parse(Contract.HabitFulfillment.CONTENT_HABIT_FULFILLMENT + "/" + Contract.Habit.TABLE_NAME + "/" + id);
             Cursor cursorFulfillment = getActivity().getContentResolver().query(uriFulfillment, null, null, null, null);
-            habit.setId(id);
+            habit.setLocalId(id);
             habit.setTitle(title);
             habit.setTotalNumberOfDays(cursorFulfillment.getCount());
             cursorFulfillment.close();

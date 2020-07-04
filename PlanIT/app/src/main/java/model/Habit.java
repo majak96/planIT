@@ -6,24 +6,26 @@ import java.util.List;
 
 public class Habit implements Serializable {
 
-    private Integer id;
+    private Long id;
+    private Integer localId;
     private String title;
     private String description;
     private Integer goal;
     private Integer numberOfDays;
     private Integer totalNumberOfDays;
+    private Boolean deleted;
     private List<HabitDayConnection> habitDays;
 
     public Habit() {
         this.habitDays = new ArrayList<>();
     }
 
-    public Integer getId() {
-        return id;
+    public Integer getLocalId() {
+        return localId;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public void setLocalId(Integer localId) {
+        this.localId = localId;
     }
 
     public String getTitle() {
@@ -70,5 +72,21 @@ public class Habit implements Serializable {
 
     public void setHabitDays(List<HabitDayConnection> habitDays) {
         this.habitDays = habitDays;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
     }
 }

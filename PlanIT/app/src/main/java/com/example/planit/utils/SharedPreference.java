@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import java.util.Date;
+
 public class SharedPreference {
 
     static final String PREF_EMAIL_NAME = "email";
@@ -11,6 +13,10 @@ public class SharedPreference {
     static final String PREF_USER_LAST_NAME = "lastName";
     static final String PREF_USER_COLOUR = "colour";
     static final String PREF_USER_ID = "id";
+    static final String PREF_LAST_SYNC_DATE_T = "syncDateT";
+    static final String PREF_LAST_SYNC_DATE_H = "syncDateHabit";
+    static final String LAST_MESSAGE_SYNC = "lastMessageSync";
+
 
     static SharedPreferences getSharedPreferences(Context ctx) {
         return PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -65,6 +71,44 @@ public class SharedPreference {
 
     public static String getLoggedColour(Context ctx) {
         return getSharedPreferences(ctx).getString(PREF_USER_COLOUR, "");
+    }
+
+    public static void setLastSyncDate(Context ctx, Date date) {
+        SharedPreferences.Editor editor = getSharedPreferences(ctx).edit();
+        if(date == null){
+            editor.remove(PREF_LAST_SYNC_DATE_T);
+        } else {
+            editor.putLong(PREF_LAST_SYNC_DATE_T, date.getTime());
+        }
+        editor.apply();
+    }
+
+    public static Long getLastSyncDate(Context ctx) {
+        return getSharedPreferences(ctx).getLong(PREF_LAST_SYNC_DATE_T, -1);
+    }
+
+    public static void setPrefLastSyncDateH(Context ctx, Date date) {
+        SharedPreferences.Editor editor = getSharedPreferences(ctx).edit();
+        if(date == null){
+            editor.remove(PREF_LAST_SYNC_DATE_H);
+        } else {
+            editor.putLong(PREF_LAST_SYNC_DATE_H, date.getTime());
+        }
+        editor.apply();
+    }
+
+    public static Long getLastSyncDateH(Context ctx) {
+        return getSharedPreferences(ctx).getLong(PREF_LAST_SYNC_DATE_H, -1);
+    }
+
+    public static void setLastMessageSync(Context ctx, String lastSync) {
+        SharedPreferences.Editor editor = getSharedPreferences(ctx).edit();
+        editor.putString(LAST_MESSAGE_SYNC, lastSync);
+        editor.apply();
+    }
+
+    public static String getLastMessageSync(Context ctx) {
+        return getSharedPreferences(ctx).getString(LAST_MESSAGE_SYNC, "");
     }
 
 }

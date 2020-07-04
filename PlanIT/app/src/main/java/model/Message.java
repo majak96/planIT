@@ -6,6 +6,11 @@ public class Message {
     private User sender;
     private Long createdAt;
 
+    private Long globalId;
+    private boolean deleted;
+    private Long teamId;
+    private String senderEmail;
+
     public Message(Integer id, String message, User sender, Long createdAt) {
         this.id = id;
         this.message = message;
@@ -49,5 +54,37 @@ public class Message {
 
     public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Long getGlobalId() {
+        return globalId;
+    }
+
+    public void setGlobalId(Long globalId) {
+        this.globalId = globalId;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public Long getTeamId() {
+        return teamId;
+    }
+
+    public void setTeamId(Long teamId) {
+        this.teamId = teamId;
+    }
+
+    public String getSenderEmail() {
+        return senderEmail;
+    }
+
+    public void setSenderEmail(String senderEmail) {
+        this.senderEmail = senderEmail;
     }
 }

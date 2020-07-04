@@ -54,7 +54,7 @@ public class HabitPreviewAdapter extends RecyclerView.Adapter<HabitPreviewAdapte
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(context, HabitDetailsActivity.class);
-                intent.putExtra("habitId", habitList.get(position).getId());
+                intent.putExtra("habitId", habitList.get(position).getLocalId());
                 intent.putExtra("index", position);
 
                 ((Activity) context).startActivityForResult(intent, 4);
