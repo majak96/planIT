@@ -442,7 +442,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if(allowSync){
             int interval = calculateTimeTillNextSync(Integer.parseInt(synctime));
-            manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), interval, pendingIntent);
+            manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() - 1000, interval, pendingIntent);
         }
 
         IntentFilter filter = new IntentFilter();

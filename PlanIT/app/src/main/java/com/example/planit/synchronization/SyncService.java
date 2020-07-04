@@ -320,15 +320,19 @@ public class SyncService extends Service {
                     if (task.getStartDate() == null) {
                         values.putNull(Contract.Task.COLUMN_START_DATE);
                     } else {
-                        values.put(Contract.Task.COLUMN_START_DATE, task.getStartDate().toString());
+                        values.put(Contract.Task.COLUMN_START_DATE, format.format(task.getStartDate()));
                     }
                     if (task.getStartTime() == null) {
                         values.putNull(Contract.Task.COLUMN_START_TIME);
                     } else {
-                        values.put(Contract.Task.COLUMN_START_TIME, task.getStartTime().toString());
+                        values.put(Contract.Task.COLUMN_START_TIME, timeFormat.format(task.getStartTime()));
                     }
 
-                    values.put(Contract.Task.COLUMN_PRIORITY, task.getPriority().toString());
+                    if(task.getPriority() == null)
+                        values.putNull(Contract.Task.COLUMN_PRIORITY);
+                    else
+                        values.put(Contract.Task.COLUMN_PRIORITY, task.getPriority().toString());
+
                     values.put(Contract.Task.COLUMN_ADDRESS, task.getAddress());
                     values.put(Contract.Task.COLUMN_DONE, task.getDone());
                     if (task.getUserEmail() != null) {
@@ -376,19 +380,22 @@ public class SyncService extends Service {
                     values.put(Contract.Task.COLUMN_TITLE, task.getTitle());
                     values.put(Contract.Task.COLUMN_GLOBAL_ID, task.getGlobalId());
                     values.put(Contract.Task.COLUMN_DESCRIPTION, task.getDescription());
+                    if(task.getPriority() == null)
+                        values.putNull(Contract.Task.COLUMN_PRIORITY);
+                    else
+                        values.put(Contract.Task.COLUMN_PRIORITY, task.getPriority().toString());
 
                     if (task.getStartDate() == null) {
                         values.putNull(Contract.Task.COLUMN_START_DATE);
                     } else {
-                        values.put(Contract.Task.COLUMN_START_DATE, task.getStartDate().toString());
+                        values.put(Contract.Task.COLUMN_START_DATE, format.format(task.getStartDate()));
                     }
                     if (task.getStartTime() == null) {
                         values.putNull(Contract.Task.COLUMN_START_TIME);
                     } else {
-                        values.put(Contract.Task.COLUMN_START_TIME, task.getStartTime().toString());
+                        values.put(Contract.Task.COLUMN_START_TIME, timeFormat.format(task.getStartTime()));
                     }
 
-                    values.put(Contract.Task.COLUMN_PRIORITY, task.getPriority().toString());
                     values.put(Contract.Task.COLUMN_ADDRESS, task.getAddress());
                     values.put(Contract.Task.COLUMN_DONE, task.getDone());
 
