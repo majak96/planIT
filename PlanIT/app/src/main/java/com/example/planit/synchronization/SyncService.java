@@ -210,8 +210,8 @@ public class SyncService extends Service {
     public List<ContentProviderOperation> syncTaskContentProvider(TaskSyncDTO taskSyncDTO) {
         List<ContentProviderOperation> batch = new ArrayList<>();
         Map<Long, Integer> reminderInsertedIndex = new HashMap<>();
-        Map<Long, Integer> taskInsertedIndex = new HashMap<>();
-        Map<Long, Integer> labelInsertedIndex = new HashMap<>();
+        Map<Integer, Integer> taskInsertedIndex = new HashMap<>();
+        Map<Integer, Integer> labelInsertedIndex = new HashMap<>();
         // reminders connected to tasks
         for (Reminder reminder : taskSyncDTO.getTaskReminders()) {
             String selection = Contract.Reminder.COLUMN_GLOBAL_ID + " = ?";

@@ -3,8 +3,8 @@ package model;
 public class TaskLabelConnection {
 
 	private Long id;
-	private Long taskId;
-	private Long labelId;
+	private Integer taskId;
+	private Integer labelId;
 	private boolean deleted;
 
 	public TaskLabelConnection() {
@@ -19,19 +19,19 @@ public class TaskLabelConnection {
 		this.id = id;
 	}
 
-	public Long getTaskId() {
+	public Integer getTaskId() {
 		return taskId;
 	}
 
-	public void setTaskId(Long taskId) {
+	public void setTaskId(Integer taskId) {
 		this.taskId = taskId;
 	}
 
-	public Long getLabelId() {
+	public Integer getLabelId() {
 		return labelId;
 	}
 
-	public void setLabelId(Long labelId) {
+	public void setLabelId(Integer labelId) {
 		this.labelId = labelId;
 	}
 
