@@ -22,6 +22,6 @@ public interface ChatService {
     Call<ResponseBody> sendMessage(@Body MessageDTO messageDTO);
 
     @GET("chat/all")
-    Call<List<MessageDTO>> getMessagse(@Query("teamId") Long teamId);
+    Call<List<MessageDTO>> getMessages(@Query("teamId") Long teamId, @Query("lastDate") Long lastDate);
 
 }

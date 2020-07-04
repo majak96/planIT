@@ -63,7 +63,6 @@ public class ChatActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         if (getIntent().hasExtra("team")) {
             Integer teamId = getIntent().getIntExtra("team", -1);
-            Log.e("TEAM ID", teamId.toString());
             team = getTeamFromDatabase(teamId);
             setTitle(team.getName());
         }
@@ -178,16 +177,15 @@ public class ChatActivity extends AppCompatActivity {
     public void loadMessages() {
 
         ChatService apiService = ServiceUtils.getClient().create(ChatService.class);
-        Call<List<MessageDTO>> call = apiService.getMessagse(team.getServerTeamId());
+        Long lastTime = 0l;
+        if (messages.size() > 0) {
+            lastTime = messages.get(messages.size() - 1).getCreatedAt();
+        }
+        Call<List<MessageDTO>> call = apiService.getMessages(team.getServerTeamId(), lastTime);
 
         call.enqueue(new Callback<List<MessageDTO>>() {
             @Override
             public void onResponse(Call<List<MessageDTO>> call, Response<List<MessageDTO>> response) {
-
-                for (Message m : messages) {
-                    deleteMessage(m);
-                }
-                messages.clear();
 
                 List<MessageDTO> data = response.body();
                 if (data != null) {
@@ -286,7 +284,7 @@ public class ChatActivity extends AppCompatActivity {
             while (cursor.moveToNext()) {
                 Integer id = cursor.getInt(cursor.getColumnIndex(Contract.Message.COLUMN_ID));
                 String message = cursor.getString(cursor.getColumnIndex(Contract.Message.COLUMN_MESSAGE));
-                Integer createdAt = cursor.getInt(cursor.getColumnIndex(Contract.Message.COLUMN_CREATED_AT));
+                Long createdAt = cursor.getLong(cursor.getColumnIndex(Contract.Message.COLUMN_CREATED_AT));
                 Integer senderId = cursor.getInt(cursor.getColumnIndex(Contract.Message.COLUMN_SENDER_ID));
                 User sender = getUserFromDB(senderId);
 
@@ -309,11 +307,6 @@ public class ChatActivity extends AppCompatActivity {
         Uri uri = getContentResolver().insert(Contract.Message.CONTENT_URI_MESSAGE, values);
 
         return uri;
-    }
-
-    private int deleteMessage(Message message) {
-        Uri uri = Uri.parse(Contract.Message.CONTENT_URI_MESSAGE + "/" + message.getId());
-        return getContentResolver().delete(uri, null, null);
     }
 
 }

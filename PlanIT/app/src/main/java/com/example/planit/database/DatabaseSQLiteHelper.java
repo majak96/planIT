@@ -46,7 +46,7 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.Message.TABLE_NAME + "("
             + Contract.Message.COLUMN_ID  + " integer primary key autoincrement , "
             + Contract.Message.COLUMN_MESSAGE + " text , "
-            + Contract.Message.COLUMN_CREATED_AT + " integer , "
+            + Contract.Message.COLUMN_CREATED_AT + " long , "
             + Contract.Message.COLUMN_GLOBAL_ID  + " integer , "
             + Contract.Message.COLUMN_SENDER_ID + " integer , "
             + Contract.Message.COLUMN_TEAM_ID + " integer , "
