@@ -1,17 +1,16 @@
 package model;
 
-public class Label {
+public class LabelDTO {
+
     private Integer id;
     private String name;
     private String color;
     private Integer globalId;
-    private boolean deleted;
+    private Long connectionId;
 
-    public Label() {
-
-    }
-
-    public Label(String name, String color) {
+    public LabelDTO(Integer id, Integer globalId, String name, String color) {
+        this.globalId = globalId;
+        this.id = id;
         this.name = name;
         this.color = color;
     }
@@ -36,10 +35,6 @@ public class Label {
         return color;
     }
 
-    public void setColor(String color) {
-        this.color = color;
-    }
-
     public Integer getGlobalId() {
         return globalId;
     }
@@ -48,16 +43,15 @@ public class Label {
         this.globalId = globalId;
     }
 
-    public boolean isDeleted() {
-        return deleted;
+    public Long getConnectionId() {
+        return connectionId;
     }
 
-    public void setDeleted(boolean deleted) {
-        this.deleted = deleted;
+    public void setConnectionId(Long connectionId) {
+        this.connectionId = connectionId;
     }
 
-    @Override
-    public String toString() {
-        return name;
+    public void setColor(String color) {
+        this.color = color;
     }
 }

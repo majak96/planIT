@@ -112,7 +112,7 @@ public class SignInActivity extends AppCompatActivity {
                     t.show();
                 } else {
 
-                    loadingBar.setTitle("Sing in");
+                    loadingBar.setTitle("Sign in");
                     loadingBar.setMessage("Please wait...");
                     loadingBar.setCanceledOnTouchOutside(true);
                     loadingBar.show();
@@ -210,8 +210,8 @@ public class SignInActivity extends AppCompatActivity {
 
     private void firebaseAuthWithGoogle(String idToken, Intent data) {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
-        loadingBar.setTitle("Sing in");
-        loadingBar.setMessage("Pleas wait...");
+        loadingBar.setTitle("Sign in");
+        loadingBar.setMessage("Please wait...");
         loadingBar.setCanceledOnTouchOutside(true);
         loadingBar.show();
         mAuth.signInWithCredential(credential)

@@ -13,10 +13,14 @@ import com.prolificinteractive.materialcalendarview.CalendarDay;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 import com.prolificinteractive.materialcalendarview.OnDateSelectedListener;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -47,6 +51,7 @@ public class CalendarFragment extends Fragment {
     private ArrayList<CalendarDay> eventDates = new ArrayList<>();
     private MaterialCalendarView calendarView;
     private Integer teamId;
+    private FloatingActionButton floatingActionButton;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -133,7 +138,7 @@ public class CalendarFragment extends Fragment {
         });
 
         //floating action button for creating a new task
-        FloatingActionButton floatingActionButton = view.findViewById(R.id.fab);
+        floatingActionButton = view.findViewById(R.id.fab);
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -144,6 +149,20 @@ public class CalendarFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if(teamId != null && !isNetworkAvailable()){
+            floatingActionButton.setEnabled(false);
+            floatingActionButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.gray)));
+        }
+        else {
+            floatingActionButton.setEnabled(true);
+            floatingActionButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorPrimary)));
+        }
     }
 
     @Override
@@ -246,5 +265,11 @@ public class CalendarFragment extends Fragment {
         }
 
         cursor.close();
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }

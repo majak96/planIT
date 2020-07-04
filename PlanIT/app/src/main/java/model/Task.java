@@ -20,8 +20,8 @@ public class Task {
     private Double latitude;
     private String userEmail;
     private Long reminderId;
+    private Integer globalId;
     private boolean deleted;
-    private Long globalId;
 
     private List<Label> labels = new ArrayList<Label>();
 
@@ -165,11 +165,11 @@ public class Task {
         this.reminderId = reminderId;
     }
 
-    public Long getGlobalId() {
+    public Integer getGlobalId() {
         return globalId;
     }
 
-    public void setGlobalId(Long globalId) {
+    public void setGlobalId(Integer globalId) {
         this.globalId = globalId;
     }
 
