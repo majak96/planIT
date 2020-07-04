@@ -1211,10 +1211,11 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
             taskDTO.setTeamId(Long.valueOf(team.getServerTeamId()));
         }
 
-        Integer lastSyncDate = SharedPreference.getLastSyncDate(this);
+        Long lastSyncDate = SharedPreference.getLastSyncDate(this);
+
         Log.d(TAG, "updateTeamTaskServer: LAST SYNC DATE: " + lastSyncDate);
         TaskService taskService = ServiceUtils.getClient().create(TaskService.class);
-        Call<CreateTaskResponseDTO> call = taskService.updateTask(task.getGlobalId(), taskDTO, Long.valueOf(lastSyncDate));
+        Call<CreateTaskResponseDTO> call = taskService.updateTask(task.getGlobalId(), taskDTO, lastSyncDate);
         call.enqueue(new Callback<CreateTaskResponseDTO>() {
             @Override
             public void onResponse(Call<CreateTaskResponseDTO> call, Response<CreateTaskResponseDTO> response) {
