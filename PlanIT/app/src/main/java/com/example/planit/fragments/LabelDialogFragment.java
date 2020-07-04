@@ -29,6 +29,7 @@ public class LabelDialogFragment extends AppCompatDialogFragment {
 
     public interface LabelDialogListener {
         void addNewLabel(String labelString);
+
         void addExistingLabel(Label label);
     }
 
@@ -78,8 +79,8 @@ public class LabelDialogFragment extends AppCompatDialogFragment {
 
                         //check if label with this name already exists
                         Log.d(TAG, "onClick: labels" + labels.size());
-                        for(Label lab : labels) {
-                            if(lab.getName().equals(label)){
+                        for (Label lab : labels) {
+                            if (lab.getName().equals(label)) {
                                 //add the existing label
                                 listener.addExistingLabel(lab);
                                 return;
@@ -116,7 +117,7 @@ public class LabelDialogFragment extends AppCompatDialogFragment {
     private List<Label> getAllLabelsFromDatabase() {
         List<Label> labels = new ArrayList<>();
 
-        String[] allColumns = {Contract.Label.COLUMN_ID, Contract.Label.COLUMN_NAME, Contract.Label.COLUMN_COLOR};
+        String[] allColumns = {Contract.Label.COLUMN_ID, Contract.Label.COLUMN_NAME, Contract.Label.COLUMN_COLOR, Contract.Label.COLUMN_GLOBAL_ID};
 
         Cursor cursor = getActivity().getContentResolver().query(Contract.Label.CONTENT_URI_LABEL, allColumns, null, null, null);
 
@@ -128,7 +129,9 @@ public class LabelDialogFragment extends AppCompatDialogFragment {
                 label.setId(cursor.getInt(0));
                 label.setName(cursor.getString(1));
                 label.setColor(cursor.getString(2));
-
+                if (!cursor.isNull(3)) {
+                    label.setGlobalId(cursor.getInt(3));
+                }
                 labels.add(label);
             }
         }

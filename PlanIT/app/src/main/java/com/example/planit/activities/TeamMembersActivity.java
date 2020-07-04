@@ -7,8 +7,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import model.TeamDTO;
+import model.TeamMemebershipDTO;
 import model.User;
 import model.UserInfoDTO;
 import okhttp3.ResponseBody;
@@ -107,6 +112,18 @@ public class TeamMembersActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (!isNetworkAvailable()) {
+            addMemberBtn.setEnabled(false);
+            addMemberBtn.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.lightGray)));
+        } else {
+            addMemberBtn.setEnabled(true);
+            addMemberBtn.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorPrimary)));
+        }
     }
 
     public void addMember(View view) {
@@ -198,27 +215,37 @@ public class TeamMembersActivity extends AppCompatActivity {
                     TeamDTO teamDTO = new TeamDTO(title, description, creator, usersEmails);
 
                     TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
-                    Call<Integer> call = apiService.createTeam(teamDTO);
-                    call.enqueue(new Callback<Integer>() {
+                    Call<List<TeamMemebershipDTO>> call = apiService.createTeam(teamDTO);
+                    call.enqueue(new Callback<List<TeamMemebershipDTO>>() {
 
                         @Override
-                        public void onResponse(Call<Integer> call, Response<Integer> response) {
+                        public void onResponse(Call<List<TeamMemebershipDTO>> call, Response<List<TeamMemebershipDTO>> response) {
 
                             if (response.code() == 200) {
 
-                                Integer serverTeamId = response.body();
+                                List<TeamMemebershipDTO> teamMemberResponseDTO = response.body();
 
+                                Integer serverTeamId = teamMemberResponseDTO.get(0).getTeamId().intValue();
                                 Uri uri = createTeam(creator, title, description, serverTeamId);
                                 if (uri != null) {
                                     teamId = Integer.parseInt(uri.getLastPathSegment());
                                     FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid() + "-" + serverTeamId);
+                                    Log.e("SUBSCRIBE TO ", mAuth.getCurrentUser().getUid() + "-" + serverTeamId);
+
                                 }else{
                                     //TODO: complete
                                 }
 
-                                for (User u : users) {
-                                    createUserTeamConnection(u.getId(), teamId);
-                                }
+                               for(TeamMemebershipDTO con : teamMemberResponseDTO){
+                                   Log.e("MAJA", con.toString());
+                                   Log.e("con.getUserEmail() ", con.getUserEmail());
+                                   Integer a = con.getTeamId().intValue();
+                                   Log.e("con.getTeamId()", a.toString());
+                                   Integer b = con.getGlobalId().intValue();
+                                   Log.e("con.getGlobalId()", b.toString());
+
+                                   createUserTeamConnection(con.getUserEmail(), con.getTeamId().intValue(), con.getGlobalId().intValue());
+                               }
 
                                 intent = new Intent();
                                 intent.putExtra("teamId", teamId);
@@ -232,7 +259,7 @@ public class TeamMembersActivity extends AppCompatActivity {
                         }
 
                         @Override
-                        public void onFailure(Call<Integer> call, Throwable t) {
+                        public void onFailure(Call<List<TeamMemebershipDTO>> call, Throwable t) {
                             Toast toast = Toast.makeText(TeamMembersActivity.this, "Connection error!", Toast.LENGTH_SHORT);
                             toast.show();
                             Log.e("tag", "Connection error!");
@@ -248,16 +275,19 @@ public class TeamMembersActivity extends AppCompatActivity {
 
                     TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
                     Integer serverTeamId = findGlobalTeamId(teamId);
-                    Call<ResponseBody> call = apiService.updateTeamMembers(serverTeamId, teamDTO);
-                    call.enqueue(new Callback<ResponseBody>() {
+
+                    Call<List<TeamMemebershipDTO>> call = apiService.updateTeamMembers(serverTeamId, teamDTO);
+                    call.enqueue(new Callback<List<TeamMemebershipDTO>>() {
                         @Override
-                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        public void onResponse(Call<List<TeamMemebershipDTO>> call, Response<List<TeamMemebershipDTO>> response) {
 
                             if (response.code() == 200) {
+                                List<TeamMemebershipDTO> teamMemberResponseDTO = response.body();
 
                                 deleteUserTeamConnection(teamId);
-                                for (User u : users) {
-                                    createUserTeamConnection(u.getId(), teamId);
+
+                                for(TeamMemebershipDTO con : teamMemberResponseDTO){
+                                    createUserTeamConnection(con.getUserEmail(), con.getTeamId().intValue(), con.getGlobalId().intValue());
                                 }
 
                                 intent = new Intent();
@@ -272,7 +302,7 @@ public class TeamMembersActivity extends AppCompatActivity {
                         }
 
                         @Override
-                        public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        public void onFailure(Call<List<TeamMemebershipDTO>> call, Throwable t) {
                             Log.e("tag", "Connection error!");
                         }
                     });
@@ -282,6 +312,17 @@ public class TeamMembersActivity extends AppCompatActivity {
 
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu (Menu menu) {
+        if (teamId != null && !isNetworkAvailable()) {
+            menu.findItem(R.id.menu_save).setEnabled(false);
+        }
+        else{
+            menu.findItem(R.id.menu_save).setEnabled(true);
+        }
+        return true;
     }
 
     @Override
@@ -306,12 +347,13 @@ public class TeamMembersActivity extends AppCompatActivity {
     }
 
     //inserts a new user_team_connection into the database
-    public Uri createUserTeamConnection(Integer userId, Integer teamId) {
+    public Uri createUserTeamConnection(String userEmail, Integer teamId, Integer globalConnectionId) {
 
         ContentValues values = new ContentValues();
 
         values.put(Contract.UserTeamConnection.COLUMN_TEAM_ID, teamId);
-        values.put(Contract.UserTeamConnection.COLUMN_USER_ID, userId);
+        values.put(Contract.UserTeamConnection.COLUMN_USER_ID, getUserFromDatabase(userEmail).getId());
+        values.put(Contract.UserTeamConnection.COLUMN_GLOBAL_ID, globalConnectionId);
 
         Uri uri = getContentResolver().insert(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM, values);
 
@@ -339,7 +381,7 @@ public class TeamMembersActivity extends AppCompatActivity {
             Log.i(tag, "No user in database");
         } else {
             while (cursor.moveToNext()) {
-                newUser = new User(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5));
+                newUser = new User(cursor.getInt(cursor.getColumnIndex(Contract.User.COLUMN_ID)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_EMAIL)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_NAME)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_LAST_NAME)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_COLOUR)), cursor.getString(cursor.getColumnIndex(Contract.User.COLUMN_FIREBASE_ID)));
             }
         }
 
@@ -426,6 +468,12 @@ public class TeamMembersActivity extends AppCompatActivity {
         cursor.close();
 
         return serverTeamId;
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
 }

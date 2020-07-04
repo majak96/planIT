@@ -191,7 +191,7 @@ public class HabitDetailsActivity extends AppCompatActivity {
             cursorFulfilledToday.close();
 
 
-            habit.setId(id);
+            habit.setLocalId(id);
             habit.setTitle(title);
             habit.setDescription(description);
             habit.setGoal(goal);
@@ -266,7 +266,7 @@ public class HabitDetailsActivity extends AppCompatActivity {
             this.deleteHabitDays();
         }
 
-        Uri uri = Uri.parse(Contract.Habit.CONTENT_URI_HABIT + "/" + habit.getId());
+        Uri uri = Uri.parse(Contract.Habit.CONTENT_URI_HABIT + "/" + habit.getLocalId());
         return getContentResolver().delete(uri, null, null);
     }
 
@@ -293,7 +293,7 @@ public class HabitDetailsActivity extends AppCompatActivity {
     }
 
     private void deleteHabitFulfillmentByHabit() {
-        Uri uri = Uri.parse(Contract.HabitFulfillment.CONTENT_HABIT_FULFILLMENT + "/" + Contract.Habit.TABLE_NAME + "/" + habit.getId());
+        Uri uri = Uri.parse(Contract.HabitFulfillment.CONTENT_HABIT_FULFILLMENT + "/" + Contract.Habit.TABLE_NAME + "/" + habit.getLocalId());
         getContentResolver().delete(uri, null, null);
     }
 
@@ -315,7 +315,7 @@ public class HabitDetailsActivity extends AppCompatActivity {
 
 
     private void deleteHabitDays() {
-        Uri uri = Uri.parse(Contract.HabitDayConnection.CONTENT_URI_HABIT_DAY_CONN + "/" + Contract.Habit.TABLE_NAME + "/" + habit.getId());
+        Uri uri = Uri.parse(Contract.HabitDayConnection.CONTENT_URI_HABIT_DAY_CONN + "/" + Contract.Habit.TABLE_NAME + "/" + habit.getLocalId());
         getContentResolver().delete(uri, null, null);
     }
 
@@ -338,7 +338,7 @@ public class HabitDetailsActivity extends AppCompatActivity {
                 if (updated) {
                     intent.putExtra("updated", true);
                     intent.putExtra("index", this.index);
-                    intent.putExtra("habitId", habit.getId());
+                    intent.putExtra("habitId", habit.getLocalId());
                     setResult(Activity.RESULT_OK, intent);
                 }
             }
@@ -350,7 +350,7 @@ public class HabitDetailsActivity extends AppCompatActivity {
         if (changed) {
             intent.putExtra("done", true);
             intent.putExtra("index", index);
-            intent.putExtra("habitId", habit.getId());
+            intent.putExtra("habitId", habit.getLocalId());
             intent.putExtra("totalDays", habit.getTotalNumberOfDays());
             setResult(Activity.RESULT_OK, intent);
         }

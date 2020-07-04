@@ -1,7 +1,5 @@
 package model;
 
-import com.example.planit.utils.Utils;
-
 import java.util.Objects;
 
 public class User {
@@ -13,6 +11,7 @@ public class User {
     private String email;
     private String colour;
     private String firebaseId;
+    private Long globalId;
 
     public User(String email) {
         this.email = email;
@@ -97,6 +96,14 @@ public class User {
 
     public void setFirebaseId(String firebaseId) {
         this.firebaseId = firebaseId;
+    }
+
+    public Long getGlobalId() {
+        return globalId;
+    }
+
+    public void setGlobalId(Long globalId) {
+        this.globalId = globalId;
     }
 
     @Override

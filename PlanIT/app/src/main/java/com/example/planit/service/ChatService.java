@@ -19,9 +19,9 @@ public interface ChatService {
     })
 
     @POST("chat/message")
-    Call<ResponseBody> sendMessage(@Body MessageDTO messageDTO);
+    Call<Long> sendMessage(@Body MessageDTO messageDTO);
 
     @GET("chat/all")
-    Call<List<MessageDTO>> getMessagse(@Query("teamId") Integer teamId);
+    Call<List<MessageDTO>> getMessages(@Query("teamId") Long teamId, @Query("lastId") Long lastId);
 
 }

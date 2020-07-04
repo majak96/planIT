@@ -1,8 +1,12 @@
 package com.example.planit.fragments;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -45,6 +49,8 @@ public class DailyPreviewFragment extends Fragment {
     private SimpleDateFormat viewDateFormat = new SimpleDateFormat("MMMM dd, YYYY");
     private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
     private SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    private FloatingActionButton floatingActionButton;
 
     public static DailyPreviewFragment newInstance(Long selectedDateInMilliseconds, Integer teamId) {
         Bundle args = new Bundle();
@@ -93,7 +99,7 @@ public class DailyPreviewFragment extends Fragment {
         }
 
         //floating action button for creating a new task
-        FloatingActionButton floatingActionButton = view.findViewById(R.id.fab);
+        floatingActionButton = view.findViewById(R.id.fab);
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -106,6 +112,20 @@ public class DailyPreviewFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if(teamId != null && !isNetworkAvailable()){
+            floatingActionButton.setEnabled(false);
+            floatingActionButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.gray)));
+        }
+        else {
+            floatingActionButton.setEnabled(true);
+            floatingActionButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorPrimary)));
+        }
     }
 
     /**
@@ -237,6 +257,12 @@ public class DailyPreviewFragment extends Fragment {
      */
     public void updateTaskStatusInRecyclerView(Integer position) {
         adapter.updateTaskStatus(position);
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
 }

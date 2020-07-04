@@ -3,9 +3,6 @@ package com.example.planit.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
-
-import retrofit2.http.DELETE;
 
 public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
 
@@ -30,6 +27,7 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.User.COLUMN_EMAIL + " text , "
             + Contract.User.COLUMN_NAME + " text , "
             + Contract.User.COLUMN_LAST_NAME + " text , "
+            + Contract.User.COLUMN_GLOBAL_ID  + " integer ,"
             + Contract.User.COLUMN_COLOUR + " text , "
             + Contract.User.COLUMN_FIREBASE_ID + " text "
             + ")";
@@ -37,6 +35,7 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
     private static final String TABLE_USER_TEAM_CONNECTION_CREATE = "create table "
             + Contract.UserTeamConnection.TABLE_NAME + " ( "
             + Contract.UserTeamConnection.COLUMN_ID + " integer primary key autoincrement , "
+            + Contract.UserTeamConnection.COLUMN_GLOBAL_ID  + " integer , "
             + Contract.UserTeamConnection.COLUMN_USER_ID + " integer , "
             + Contract.UserTeamConnection.COLUMN_TEAM_ID + " integer , "
             + " foreign key (" + Contract.UserTeamConnection.COLUMN_USER_ID + " ) references "+ Contract.User.TABLE_NAME + " ( " + Contract.User.COLUMN_ID + " ) ,"
@@ -47,7 +46,8 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.Message.TABLE_NAME + "("
             + Contract.Message.COLUMN_ID  + " integer primary key autoincrement , "
             + Contract.Message.COLUMN_MESSAGE + " text , "
-            + Contract.Message.COLUMN_CREATED_AT + " integer , "
+            + Contract.Message.COLUMN_CREATED_AT + " long , "
+            + Contract.Message.COLUMN_GLOBAL_ID  + " integer , "
             + Contract.Message.COLUMN_SENDER_ID + " integer , "
             + Contract.Message.COLUMN_TEAM_ID + " integer , "
             + " foreign key (" + Contract.Message.COLUMN_SENDER_ID + " ) references "+ Contract.User.TABLE_NAME + " ( " + Contract.User.COLUMN_ID + " ) ,"
@@ -57,7 +57,9 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
     private static final String TABLE_REMINDER_CREATE = "create table "
             + Contract.Reminder.TABLE_NAME + "("
             + Contract.Reminder.COLUMN_ID  + " integer primary key autoincrement , "
-            + Contract.Reminder.COLUMN_DATE + " text not null"
+            + Contract.Reminder.COLUMN_DATE + " text not null , "
+            + Contract.Reminder.COLUMN_DELETED  + " integer default 0 , "
+            + Contract.Reminder.COLUMN_GLOBAL_ID  + " integer "
             + ");";
 
     private static final String TABLE_HABIT_CREATE = "create table "
@@ -66,7 +68,9 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.Habit.COLUMN_TITLE + " text not null, "
             + Contract.Habit.COLUMN_DESCRIPTION + " text, "
             + Contract.Habit.COLUMN_GOAL + " integer default -1, "
-            + Contract.Habit.COLUMN_NUMBER_OF_DAYS + " integer default -1 "
+            + Contract.Habit.COLUMN_NUMBER_OF_DAYS + " integer default -1 ,"
+            + Contract.Habit.COLUMN_GLOBAL_ID  + " integer , "
+            + Contract.Habit.COLUMN_DELETED  + " integer default 0 "
             + ");";
 
     private static final String TABLE_HABIT_DAY_CREATE = "create table "
@@ -79,6 +83,8 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.HabitFulfillment.TABLE_NAME + "("
             + Contract.HabitFulfillment.COLUMN_ID  + " integer primary key autoincrement , "
             + Contract.HabitFulfillment.COLUMN_DATE + " text not null , "
+            + Contract.HabitFulfillment.COLUMN_DELETED  + " integer default 0 , "
+            + Contract.HabitFulfillment.COLUMN_GLOBAL_ID  + " integer ,"
             + Contract.HabitFulfillment.COLUMN_HABIT_ID + " integer ,"
             + " foreign key (" + Contract.HabitFulfillment.COLUMN_HABIT_ID + ") references  "+ Contract.Habit.TABLE_NAME + "(" + Contract.Habit.COLUMN_ID + ")"
             + ");";
@@ -86,6 +92,8 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
     private static final String TABLE_HABIT_DAY_CONNECTION_CREATE = "create table "
             + Contract.HabitDayConnection.TABLE_NAME + "("
             + Contract.HabitDayConnection.COLUMN_ID + " integer primary key autoincrement , "
+            + Contract.HabitDayConnection.COLUMN_GLOBAL_ID  + " integer , "
+            + Contract.HabitDayConnection.COLUMN_DELETED  + " integer default 0 , "
             + Contract.HabitDayConnection.COLUMN_HABIT_ID + " integer ,"
             + Contract.HabitDayConnection.COLUMN_HABIT_DAY_ID + " integer ,"
             + " foreign key (" + Contract.HabitDayConnection.COLUMN_HABIT_ID + ") references  "+ Contract.Habit.TABLE_NAME + "(" + Contract.Habit.COLUMN_ID + "),"
@@ -95,7 +103,9 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
     private static final String TABLE_HABIT_REMINDER_CONNECTION_CREATE = "create table "
             + Contract.HabitReminderConnection.TABLE_NAME + "("
             + Contract.HabitReminderConnection.COLUMN_ID + " integer primary key autoincrement , "
+            + Contract.HabitReminderConnection.COLUMN_GLOBAL_ID  + " integer ,"
             + Contract.HabitReminderConnection.COLUMN_HABIT_ID + " integer ,"
+            + Contract.HabitReminderConnection.COLUMN_DELETED  + " integer default 0 , "
             + Contract.HabitReminderConnection.COLUMN_REMINDER_ID + " integer UNIQUE ,"
             + " foreign key (" + Contract.HabitReminderConnection.COLUMN_HABIT_ID + ") references  "+ Contract.Habit.TABLE_NAME + "(" + Contract.Habit.COLUMN_ID + "),"
             + " foreign key (" + Contract.HabitReminderConnection.COLUMN_REMINDER_ID + ") references  "+ Contract.Reminder.TABLE_NAME + "(" + Contract.Reminder.COLUMN_ID + ")"
@@ -112,6 +122,8 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.Task.COLUMN_ADDRESS + " text, "
             + Contract.Task.COLUMN_REMINDER_ID + " integer, "
             + Contract.Task.COLUMN_DONE + " integer default 0, "
+            + Contract.Task.COLUMN_GLOBAL_ID  + " integer , "
+            + Contract.Task.COLUMN_DELETED  + " integer default 0 , "
             + Contract.Task.COLUMN_TEAM + " integer, "
             + Contract.Task.COLUMN_USER + " integer, "
             + Contract.Task.COLUMN_LONGITUDE + " double, "
@@ -125,12 +137,15 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
             + Contract.Label.TABLE_NAME + "("
             + Contract.Label.COLUMN_ID + " integer primary key autoincrement , "
             + Contract.Label.COLUMN_NAME + " text not null, "
+            + Contract.Label.COLUMN_GLOBAL_ID  + " integer , "
             + Contract.Label.COLUMN_COLOR + " text"
             + ")";
 
     private static final String TABLE_TASK_LABEL_CREATE = "create table "
             + Contract.TaskLabel.TABLE_NAME + "("
             + Contract.TaskLabel.COLUMN_ID + " integer primary key autoincrement , "
+            + Contract.TaskLabel.COLUMN_GLOBAL_ID  + " integer , "
+            + Contract.TaskLabel.COLUMN_DELETED  + " integer default 0 , "
             + Contract.TaskLabel.COLUMN_TASK + " integer, "
             + Contract.TaskLabel.COLUMN_LABEL + " integer, "
             + "foreign key (" + Contract.TaskLabel.COLUMN_TASK + ") references  " + Contract.Task.TABLE_NAME + "(" + Contract.Task.COLUMN_ID + "), "
@@ -179,11 +194,6 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
-        db.execSQL("DROP TABLE IF EXISTS " + Contract.Team.TABLE_NAME);
-        db.execSQL("DROP TABLE IF EXISTS " + Contract.User.TABLE_NAME);
-        db.execSQL("DROP TABLE IF EXISTS " + Contract.UserTeamConnection.TABLE_NAME);
-        db.execSQL("DROP TABLE IF EXISTS " + Contract.Message.TABLE_NAME);
-
         // drop table queries for habits
         db.execSQL("DROP TABLE IF EXISTS " + Contract.HabitDayConnection.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + Contract.HabitFulfillment.TABLE_NAME);
@@ -197,6 +207,11 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + Contract.Label.TABLE_NAME);
 
         db.execSQL("DROP TABLE IF EXISTS " + Contract.Reminder.TABLE_NAME);
+
+        db.execSQL("DROP TABLE IF EXISTS " + Contract.Team.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + Contract.User.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + Contract.UserTeamConnection.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + Contract.Message.TABLE_NAME);
       
         onCreate(db);
     }
@@ -211,23 +226,22 @@ public class DatabaseSQLiteHelper extends SQLiteOpenHelper {
 
         SQLiteDatabase db = getWritableDatabase();
 
-        db.execSQL("DELETE FROM " + Contract.Message.TABLE_NAME);
-        db.execSQL("DELETE FROM " + Contract.UserTeamConnection.TABLE_NAME);
-        db.execSQL("DELETE FROM " + Contract.Team.TABLE_NAME);
-        db.execSQL("DELETE FROM " + Contract.User.TABLE_NAME);
-
         // drop table queries for habits
         db.execSQL("DELETE FROM " + Contract.HabitDayConnection.TABLE_NAME);
         db.execSQL("DELETE FROM " + Contract.HabitFulfillment.TABLE_NAME);
         db.execSQL("DELETE FROM " + Contract.HabitReminderConnection.TABLE_NAME);
         db.execSQL("DELETE FROM " + Contract.Habit.TABLE_NAME);
-        db.execSQL("DELETE FROM " + Contract.HabitDay.TABLE_NAME);
 
         db.execSQL("DELETE FROM " + Contract.TaskLabel.TABLE_NAME);
         db.execSQL("DELETE FROM " + Contract.Task.TABLE_NAME);
         db.execSQL("DELETE FROM " + Contract.Label.TABLE_NAME);
 
         db.execSQL("DELETE FROM " + Contract.Reminder.TABLE_NAME);
+
+        db.execSQL("DELETE FROM " + Contract.Message.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.UserTeamConnection.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.Team.TABLE_NAME);
+        db.execSQL("DELETE FROM " + Contract.User.TABLE_NAME);
 
 
     }

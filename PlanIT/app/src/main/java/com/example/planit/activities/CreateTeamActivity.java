@@ -2,8 +2,11 @@ package com.example.planit.activities;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -81,6 +84,18 @@ public class CreateTeamActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onPrepareOptionsMenu (Menu menu) {
+        if (team != null && !isNetworkAvailable()) {
+            menu.findItem(R.id.menu_save).setEnabled(false);
+        }
+        else{
+            if(team!=null)
+                menu.findItem(R.id.menu_save).setEnabled(true);
+        }
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_next:
@@ -112,11 +127,11 @@ public class CreateTeamActivity extends AppCompatActivity {
                     if (team != null) {
 
                         //send serverId...
-                        TeamDTO teamDTO = new TeamDTO(teamName.getText().toString().trim(), teamDescription.getText().toString(), team.getServerTeamId());
+                        TeamDTO teamDTO = new TeamDTO(teamName.getText().toString().trim(), teamDescription.getText().toString(), team.getServerTeamId().intValue());
 
                         TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
                         //send serverId...
-                        Call<ResponseBody> call = apiService.updateTeam(team.getServerTeamId(), teamDTO);
+                        Call<ResponseBody> call = apiService.updateTeam(team.getServerTeamId().intValue(), teamDTO);
 
                         call.enqueue(new Callback<ResponseBody>() {
 
@@ -205,7 +220,7 @@ public class CreateTeamActivity extends AppCompatActivity {
         team.setId(cursor.getInt(0));
         team.setName(cursor.getString(1));
         team.setDescription(cursor.getString(2));
-        team.setServerTeamId(cursor.getInt(3));
+        team.setServerTeamId(new Long(cursor.getInt(3)));
 
         cursor.close();
 
@@ -234,5 +249,11 @@ public class CreateTeamActivity extends AppCompatActivity {
         }
 
         return values;
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }

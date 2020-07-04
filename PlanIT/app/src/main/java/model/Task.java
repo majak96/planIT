@@ -1,6 +1,5 @@
 package model;
 
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -19,6 +18,10 @@ public class Task {
     private Integer user;
     private Double longitude;
     private Double latitude;
+    private String userEmail;
+    private Long reminderId;
+    private Integer globalId;
+    private boolean deleted;
 
     private List<Label> labels = new ArrayList<Label>();
 
@@ -136,6 +139,38 @@ public class Task {
 
     public void setLatitude(Double latitude) {
         this.latitude = latitude;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
+    }
+
+    public Long getReminderId() {
+        return reminderId;
+    }
+
+    public void setReminderId(Long reminderId) {
+        this.reminderId = reminderId;
+    }
+
+    public Integer getGlobalId() {
+        return globalId;
+    }
+
+    public void setGlobalId(Integer globalId) {
+        this.globalId = globalId;
     }
 
     @Override

@@ -24,6 +24,11 @@ public class HabitContentProvider extends ContentProvider {
     private static final int HABIT_FULFILLMENT_ID = 800;
     private static final int HABIT_FULFILLMENT_HABIT_ID = 900;
     private static final int HABIT_DAY_CONNECTION_HABIT_ID = 1000;
+    private static final int REMINDER = 1100;
+    private static final int REMINDER_ID = 1200;
+    private static final int HABIT_REMINDER_CONN = 1300;
+    private static final int HABIT_REMINDER_CONN_ID = 1400;
+    private static final int HABIT_REMINDER_CONNECTION_HABIT_ID = 1500;
 
     private DatabaseSQLiteHelper database;
 
@@ -34,13 +39,17 @@ public class HabitContentProvider extends ContentProvider {
         sURIMatcher.addURI(Contract.Habit.AUTHORITY, Contract.Habit.TABLE_NAME + "/#", HABIT_ID);
         sURIMatcher.addURI(Contract.HabitDay.AUTHORITY, Contract.HabitDay.TABLE_NAME, HABIT_DAY);
         sURIMatcher.addURI(Contract.HabitDay.AUTHORITY, Contract.HabitDay.TABLE_NAME + "/#", HABIT_DAY_ID);
-        sURIMatcher.addURI(Contract.HabitDay.AUTHORITY, Contract.HabitDayConnection.TABLE_NAME, HABIT_DAY_CONNECTION);
-        sURIMatcher.addURI(Contract.HabitDay.AUTHORITY, Contract.HabitDayConnection.TABLE_NAME + "/#", HABIT_DAY_CONNECTION_ID);
-        sURIMatcher.addURI(Contract.HabitDay.AUTHORITY, Contract.HabitDayConnection.TABLE_NAME + "/" + Contract.Habit.TABLE_NAME + "/#", HABIT_DAY_CONNECTION_HABIT_ID);
+        sURIMatcher.addURI(Contract.HabitDayConnection.AUTHORITY, Contract.HabitDayConnection.TABLE_NAME, HABIT_DAY_CONNECTION);
+        sURIMatcher.addURI(Contract.HabitDayConnection.AUTHORITY, Contract.HabitDayConnection.TABLE_NAME + "/#", HABIT_DAY_CONNECTION_ID);
+        sURIMatcher.addURI(Contract.HabitDayConnection.AUTHORITY, Contract.HabitDayConnection.TABLE_NAME + "/" + Contract.Habit.TABLE_NAME + "/#", HABIT_DAY_CONNECTION_HABIT_ID);
         sURIMatcher.addURI(Contract.HabitFulfillment.AUTHORITY, Contract.HabitFulfillment.TABLE_NAME, HABIT_FULFILLMENT);
         sURIMatcher.addURI(Contract.HabitFulfillment.AUTHORITY, Contract.HabitFulfillment.TABLE_NAME + "/#", HABIT_FULFILLMENT_ID);
         sURIMatcher.addURI(Contract.HabitFulfillment.AUTHORITY, Contract.HabitFulfillment.TABLE_NAME + "/" + Contract.Habit.TABLE_NAME + "/#", HABIT_FULFILLMENT_HABIT_ID);
-
+        sURIMatcher.addURI(Contract.Reminder.AUTHORITY, Contract.Reminder.TABLE_NAME, REMINDER);
+        sURIMatcher.addURI(Contract.Reminder.AUTHORITY, Contract.Reminder.TABLE_NAME + "/#", REMINDER_ID);
+        sURIMatcher.addURI(Contract.HabitReminderConnection.AUTHORITY, Contract.HabitReminderConnection.TABLE_NAME, HABIT_REMINDER_CONN);
+        sURIMatcher.addURI(Contract.HabitReminderConnection.AUTHORITY, Contract.HabitReminderConnection.TABLE_NAME + "/#", HABIT_REMINDER_CONN_ID);
+        sURIMatcher.addURI(Contract.HabitReminderConnection.AUTHORITY, Contract.HabitReminderConnection.TABLE_NAME + "/" + Contract.Habit.TABLE_NAME + "/#", HABIT_REMINDER_CONNECTION_HABIT_ID);
     }
 
     @Override
@@ -83,7 +92,24 @@ public class HabitContentProvider extends ContentProvider {
                 break;
             case HABIT_DAY_CONNECTION_HABIT_ID:
                 queryBuilder.appendWhere(Contract.HabitDayConnection.COLUMN_HABIT_ID + "=" + uri.getLastPathSegment());
+            case HABIT_DAY_CONNECTION:
                 queryBuilder.setTables(Contract.HabitDayConnection.TABLE_NAME);
+                break;
+            case REMINDER_ID:
+                //adding the ID to the original query
+                queryBuilder.appendWhere(Contract.Reminder.COLUMN_ID + "=" + uri.getLastPathSegment());
+            case REMINDER:
+                //setting the list of tables to query
+                queryBuilder.setTables(Contract.Reminder.TABLE_NAME);
+                break;
+            case HABIT_REMINDER_CONN_ID:
+                queryBuilder.appendWhere(Contract.HabitReminderConnection.COLUMN_HABIT_ID + "=" + uri.getLastPathSegment());
+            case HABIT_REMINDER_CONN:
+                queryBuilder.setTables(Contract.HabitReminderConnection.TABLE_NAME);
+                break;
+            case HABIT_REMINDER_CONNECTION_HABIT_ID:
+                queryBuilder.appendWhere(Contract.HabitReminderConnection.COLUMN_HABIT_ID + "=" + uri.getLastPathSegment());
+                queryBuilder.setTables(Contract.HabitReminderConnection.TABLE_NAME);
                 break;
 
             default:
@@ -125,6 +151,14 @@ public class HabitContentProvider extends ContentProvider {
             case HABIT_FULFILLMENT:
                 id = db.insert(Contract.HabitFulfillment.TABLE_NAME, null, values);
                 resultUri = Uri.parse(Contract.HabitFulfillment.TABLE_NAME + "/" + id);
+                break;
+            case REMINDER:
+                id = db.insert(Contract.Reminder.TABLE_NAME, null, values);
+                resultUri = Uri.parse(Contract.Reminder.TABLE_NAME + "/" + id);
+                break;
+            case HABIT_REMINDER_CONN:
+                id = db.insert(Contract.HabitReminderConnection.TABLE_NAME, null, values);
+                resultUri = Uri.parse(Contract.HabitReminderConnection.TABLE_NAME + "/" + id);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -189,6 +223,36 @@ public class HabitContentProvider extends ContentProvider {
                 else
                     deletedRows = db.delete(Contract.HabitDayConnection.TABLE_NAME, Contract.HabitDayConnection.COLUMN_HABIT_ID + "=" + idString + " and " + selection, selectionArgs);
                 break;
+            case REMINDER:
+                deletedRows = db.delete(Contract.Reminder.TABLE_NAME, selection, selectionArgs);
+                break;
+            case REMINDER_ID:
+                idString = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection))
+                    deletedRows = db.delete(Contract.Reminder.TABLE_NAME, Contract.Reminder.COLUMN_ID + "=" + idString, null);
+                else
+                    deletedRows = db.delete(Contract.Reminder.TABLE_NAME, Contract.Reminder.COLUMN_ID + "=" + idString + " and " + selection, selectionArgs);
+
+                break;
+            case HABIT_REMINDER_CONN:
+                deletedRows = db.delete(Contract.HabitReminderConnection.TABLE_NAME, selection, selectionArgs);
+                break;
+            case HABIT_REMINDER_CONN_ID:
+                idString = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection))
+                    deletedRows = db.delete(Contract.HabitReminderConnection.TABLE_NAME, Contract.HabitReminderConnection.COLUMN_ID + "=" + idString, null);
+                else
+                    deletedRows = db.delete(Contract.HabitReminderConnection.TABLE_NAME, Contract.HabitReminderConnection.COLUMN_ID + "=" + idString + " and " + selection, selectionArgs);
+
+                break;
+            case HABIT_REMINDER_CONNECTION_HABIT_ID:
+                idString = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection))
+                    deletedRows = db.delete(Contract.HabitReminderConnection.TABLE_NAME, Contract.HabitReminderConnection.COLUMN_HABIT_ID + "=" + idString, null);
+                else
+                    deletedRows = db.delete(Contract.HabitReminderConnection.TABLE_NAME, Contract.HabitReminderConnection.COLUMN_HABIT_ID + "=" + idString + " and " + selection, selectionArgs);
+
+                break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -217,6 +281,39 @@ public class HabitContentProvider extends ContentProvider {
                     updatedRows = db.update(Contract.Habit.TABLE_NAME, values, Contract.Habit.COLUMN_ID + "=" + habitId, null);
                 else
                     updatedRows = db.update(Contract.Habit.TABLE_NAME, values, Contract.Habit.COLUMN_ID + "=" + habitId + " and " + selection, selectionArgs);
+
+                break;
+            case HABIT_FULFILLMENT:
+                updatedRows = db.update(Contract.HabitFulfillment.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            case HABIT_FULFILLMENT_ID:
+                String fulfillmentId = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection))
+                    updatedRows = db.update(Contract.HabitFulfillment.TABLE_NAME, values, Contract.HabitFulfillment.COLUMN_ID + "=" + fulfillmentId, null);
+                else
+                    updatedRows = db.update(Contract.HabitFulfillment.TABLE_NAME, values, Contract.HabitFulfillment.COLUMN_ID + "=" + fulfillmentId + " and " + selection, selectionArgs);
+
+                break;
+            case HABIT_DAY_CONNECTION:
+                updatedRows = db.update(Contract.HabitDayConnection.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            case HABIT_DAY_CONNECTION_ID:
+                String connId = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection))
+                    updatedRows = db.update(Contract.HabitDayConnection.TABLE_NAME, values, Contract.HabitDayConnection.COLUMN_ID + "=" + connId, null);
+                else
+                    updatedRows = db.update(Contract.HabitDayConnection.TABLE_NAME, values, Contract.HabitDayConnection.COLUMN_ID + "=" + connId + " and " + selection, selectionArgs);
+
+                break;
+            case REMINDER:
+                updatedRows = db.update(Contract.Reminder.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            case REMINDER_ID:
+                String reminderId = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection))
+                    updatedRows = db.update(Contract.Reminder.TABLE_NAME, values, Contract.Reminder.COLUMN_ID + "=" + reminderId, null);
+                else
+                    updatedRows = db.update(Contract.Reminder.TABLE_NAME, values, Contract.Reminder.COLUMN_ID + "=" + reminderId + " and " + selection, selectionArgs);
 
                 break;
             default:

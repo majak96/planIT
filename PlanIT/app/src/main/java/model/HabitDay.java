@@ -7,10 +7,6 @@ public class HabitDay {
     public HabitDay() {
     }
 
-    public HabitDay(Integer id, DayOfWeek day) {
-        this.id = id;
-        this.day = day;
-    }
 
     public Integer getId() {
         return id;

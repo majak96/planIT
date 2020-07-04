@@ -1,7 +1,11 @@
 package com.example.planit.fragments;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -35,10 +39,12 @@ public class TeamsOverviewFragment extends Fragment {
     private List<Team> teamsList = new ArrayList<>();
 
     private TeamsPreviewAdapter adapter;
+    private FloatingActionButton floatingActionButton;
 
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
+     *
      * @return A new instance of fragment TeamsOverviewFragment.
      */
     // TODO: Rename and change types and number of parameters
@@ -61,8 +67,8 @@ public class TeamsOverviewFragment extends Fragment {
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
 
-        FloatingActionButton fab = view.findViewById(R.id.fab_create_team);
-        fab.setOnClickListener(new View.OnClickListener() {
+        floatingActionButton = view.findViewById(R.id.fab_create_team);
+        floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(getActivity(), CreateTeamActivity.class);
@@ -71,6 +77,18 @@ public class TeamsOverviewFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (!isNetworkAvailable()) {
+            floatingActionButton.setEnabled(false);
+            floatingActionButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.lightGray)));
+        } else {
+            floatingActionButton.setEnabled(true);
+            floatingActionButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorPrimary)));
+        }
     }
 
     private void getAllTeams() {
@@ -91,10 +109,10 @@ public class TeamsOverviewFragment extends Fragment {
         cursor.close();
     }
 
-    public void updateRecycler(Integer teamId){
+    public void updateRecycler(Integer teamId) {
         Team team = getTeamFromDatabase(teamId);
         adapter.addTeam(team);
-        adapter.notifyItemChanged(teamsList.size()-1);
+        adapter.notifyItemChanged(teamsList.size() - 1);
     }
 
     //get team with the id from the database
@@ -113,6 +131,12 @@ public class TeamsOverviewFragment extends Fragment {
         cursor.close();
 
         return team;
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
 }

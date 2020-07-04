@@ -7,9 +7,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,12 +26,14 @@ import android.widget.Toast;
 
 import com.example.planit.R;
 import com.example.planit.adapters.TeamDetailAdapter;
+import com.example.planit.broadcastReceivers.ReminderBroadcastReceiver;
 import com.example.planit.database.Contract;
 import com.example.planit.service.ServiceUtils;
 import com.example.planit.service.TeamService;
 import com.example.planit.utils.SharedPreference;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import model.Team;
 import model.User;
@@ -128,6 +135,20 @@ public class TeamDetailActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        if (teamId != null && !isNetworkAvailable()) {
+            menu.findItem(R.id.menu_delete_team).setEnabled(false);
+            menu.findItem(R.id.menu_edit_team).setEnabled(false);
+            menu.findItem(R.id.menu_edit_team_members).setEnabled(false);
+        } else {
+            menu.findItem(R.id.menu_delete_team).setEnabled(true);
+            menu.findItem(R.id.menu_edit_team).setEnabled(true);
+            menu.findItem(R.id.menu_edit_team_members).setEnabled(true);
+        }
+        return true;
+    }
+
     //get team with the id from the database
     private Team getTeamFromDatabase(Integer teamId) {
         Uri taskUri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamId);
@@ -135,8 +156,14 @@ public class TeamDetailActivity extends AppCompatActivity {
         Cursor cursor = getContentResolver().query(taskUri, null, null, null, null);
         cursor.moveToFirst();
 
-        User creator = getUserFromDB(cursor.getInt(3));
-        Team team = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2), creator, cursor.getInt(4));
+        Integer id = cursor.getInt(cursor.getColumnIndex(Contract.Team.COLUMN_ID));
+        Integer serverId = cursor.getInt(cursor.getColumnIndex(Contract.Team.COLUMN_SERVER_TEAM_ID));
+        String name = cursor.getString(cursor.getColumnIndex(Contract.Team.COLUMN_TITLE));
+        String description = cursor.getString(cursor.getColumnIndex(Contract.Team.COLUMN_DESCRIPTION));
+        Integer creatorId = cursor.getInt(cursor.getColumnIndex(Contract.Team.COLUMN_CREATOR));
+        User creator = getUserFromDB(creatorId);
+
+        Team team = new Team(id, name, description, creator, serverId.longValue());
 
         if (cursor.getString(2) != null) {
             team.setDescription(cursor.getString(2));
@@ -216,45 +243,44 @@ public class TeamDetailActivity extends AppCompatActivity {
 
     private void deleteDialog() {
         DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+            Integer globalTeamId = findGlobalTeamId(teamId);
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
-                        if (deleteTeam(teamId.toString()) > 0) {
+                        TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
+                        Call<ResponseBody> call = apiService.deleteTeam(globalTeamId);
+                        call.enqueue(new Callback<ResponseBody>() {
+                            @Override
+                            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 
-                            TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
-                            Call<ResponseBody> call = apiService.deleteTeam(teamId);
-                            call.enqueue(new Callback<ResponseBody>() {
-                                @Override
-                                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-
-                                    if (response.code() == 200) {
-
+                                if (response.code() == 200) {
+                                    if (deleteTeam(teamId.toString()) > 0) {
                                         Intent newIntent = new Intent();
                                         newIntent.putExtra("position", position);
                                         newIntent.putExtra("deleted", true);
                                         setResult(Activity.RESULT_OK, newIntent);
                                         finish();
-
                                     } else {
-                                        Log.i("400", "400");
-                                        Toast t = Toast.makeText(TeamDetailActivity.this, "Can not delete team!", Toast.LENGTH_SHORT);
-                                        t.show();
+                                        Log.i(tag, "Team is not deleted");
                                     }
+
+                                } else {
+                                    Log.i("400", "400");
+                                    Toast t = Toast.makeText(TeamDetailActivity.this, "Can not delete team!", Toast.LENGTH_SHORT);
+                                    t.show();
                                 }
+                            }
 
-                                @Override
-                                public void onFailure(Call<ResponseBody> call, Throwable t) {
-                                    Toast toast = Toast.makeText(TeamDetailActivity.this, "Connection error!", Toast.LENGTH_SHORT);
-                                    toast.show();
-                                    Log.e("tag", "Connection error");
-                                }
-                            });
+                            @Override
+                            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                                Toast toast = Toast.makeText(TeamDetailActivity.this, "Connection error!", Toast.LENGTH_SHORT);
+                                toast.show();
+                                Log.e("tag", "Connection error");
+                            }
+                        });
 
-
-                        } else {
-                            Log.i(tag, "Team is not deleted");
-                        }
                         break;
                     case DialogInterface.BUTTON_NEGATIVE:
                         break;
@@ -269,9 +295,23 @@ public class TeamDetailActivity extends AppCompatActivity {
                 .show();
     }
 
-    private int deleteTeam(String teamId) {
+    private int deleteTeam(String localTeamId) {
         if (deleteConnections() > 0) {
-            Uri uri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamId);
+            deleteTeamMessages(localTeamId);
+            List<Integer> taskIds = getAllTeamTasks(Integer.parseInt(localTeamId));
+            for (Integer taskId : taskIds) {
+
+                Integer reminderId = getTaskReminder(taskId);
+
+                deleteTaskLabelsFromDatabase(taskId);
+
+                deleteTaskFromDatabase(taskId);
+                if (reminderId != -1) {
+                    deleteAndCancelReminders(reminderId);
+                }
+            }
+
+            Uri uri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + localTeamId);
             return getContentResolver().delete(uri, null, null);
         } else {
             Log.i(tag, "Error in deleting");
@@ -292,6 +332,100 @@ public class TeamDetailActivity extends AppCompatActivity {
         String selection = Contract.UserTeamConnection.COLUMN_USER_ID + " = ? and " + Contract.UserTeamConnection.COLUMN_TEAM_ID + " = ? ";
         String[] selectionArgs = new String[]{userId, teamId};
         return getContentResolver().delete(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM, selection, selectionArgs);
+    }
+
+    private int deleteTeamMessages(String teamId) {
+        String selection = Contract.Message.COLUMN_TEAM_ID + " = ? ";
+        String[] selectionArgs = new String[]{teamId};
+        return getContentResolver().delete(Contract.Message.CONTENT_URI_MESSAGE, selection, selectionArgs);
+    }
+
+    private int deleteTaskLabelsFromDatabase(Integer taskId) {
+        String selection = "task = ?";
+        String[] selectionArgs = new String[]{Integer.toString(taskId)};
+        return getContentResolver().delete(Contract.TaskLabel.CONTENT_URI_TASK_LABEL, selection, selectionArgs);
+    }
+
+    private int deleteTaskFromDatabase(Integer id) {
+        Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + id);
+        return getContentResolver().delete(taskUri, null, null);
+    }
+
+    private void deleteAndCancelReminders(Integer reminderId) {
+        Uri reminderUri = Uri.parse(Contract.Reminder.CONTENT_URI_REMINDER + "/" + reminderId);
+        int numberOfDeletedRows = getContentResolver().delete(reminderUri, null, null);
+        //cancel reminder
+        if (numberOfDeletedRows > 0) {
+            Intent alarmIntent = new Intent(this, ReminderBroadcastReceiver.class);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, reminderId, alarmIntent, PendingIntent.FLAG_NO_CREATE);
+            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+            if (alarmManager != null && pendingIntent != null) {
+                alarmManager.cancel(pendingIntent);
+            }
+        }
+    }
+
+    private Integer getTaskReminder(Integer taskId) {
+
+        Integer reminderID = -1;
+        String[] allColumns = {Contract.Task.COLUMN_REMINDER_ID};
+
+        String selection = Contract.Task.COLUMN_ID + " = ?";
+        String[] selectionArgs = new String[]{Integer.toString(taskId)};
+
+        Cursor cursor = getContentResolver().query(Contract.Task.CONTENT_URI_TASK, allColumns, selection, selectionArgs, null);
+
+        if (cursor.getCount() == 0) {
+            Log.i(tag, "Reminder does not exists");
+        } else {
+            while (cursor.moveToNext()) {
+                reminderID = cursor.getInt(0);
+            }
+        }
+        cursor.close();
+
+        return reminderID;
+    }
+
+    private List<Integer> getAllTeamTasks(Integer teamId) {
+
+        List<Integer> taskIds = new ArrayList<>();
+        String[] allColumns = {Contract.Task.COLUMN_ID};
+
+        String selection = Contract.Task.COLUMN_TEAM + " = ?";
+
+        String[] selectionArgs = new String[]{Integer.toString(teamId)};
+
+        Cursor cursor = getContentResolver().query(Contract.Task.CONTENT_URI_TASK, allColumns, selection, selectionArgs, null);
+
+        if (cursor.getCount() == 0) {
+            Log.i(tag, "Task does not exists");
+        } else {
+            while (cursor.moveToNext()) {
+                taskIds.add(cursor.getInt(0));
+            }
+        }
+        cursor.close();
+
+        return taskIds;
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    Integer findGlobalTeamId(Integer teamId) {
+        Uri teamUri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamId);
+
+        Cursor cursor = getContentResolver().query(teamUri, null, null, null, null);
+        cursor.moveToFirst();
+
+        Integer serverTeamId = cursor.getInt(4);
+        cursor.close();
+
+        return serverTeamId;
     }
 
 }

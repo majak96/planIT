@@ -102,14 +102,6 @@
             android:name="com.example.planit.database.TaskContentProvider"
             android:authorities="com.example.planit.TaskContentProvider"
             android:exported="false" />
-        <provider
-            android:name="com.example.planit.database.LabelContentProvider"
-            android:authorities="com.example.planit.LabelContentProvider"
-            android:exported="false" />
-        <provider
-            android:name="com.example.planit.database.ReminderContentProvider"
-            android:authorities="com.example.planit.ReminderContentProvider"
-            android:exported="false" />
 
         <receiver
             android:name="com.example.planit.broadcastReceivers.ReminderBroadcastReceiver"
@@ -118,6 +110,9 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED"></action>
             </intent-filter>
         </receiver>
+
+        <receiver android:name="com.example.planit.synchronization.SyncReceiver" />
+        <service android:name="com.example.planit.synchronization.SyncService" />
 
         <service android:name=".service.MyFirebaseMessagingService">
             <intent-filter>

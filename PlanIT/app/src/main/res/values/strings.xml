@@ -142,4 +142,7 @@
     <string name="location_not_allowed_message">In order to show your current position relative to the location of the task, we need to access your location. Otherwise we will only be able to show you the location of the task.</string>
     <string name="no_allow">Don\'t allow</string>
 
+    <string name="no_internet">You are not connected to the internet. Please try again later.</string>
+    <string name="task_conflict">This task was updated in the meantime. </string>
+
 </resources>
