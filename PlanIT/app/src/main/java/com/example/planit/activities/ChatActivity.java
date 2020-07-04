@@ -36,7 +36,6 @@ import model.Message;
 import model.MessageDTO;
 import model.Team;
 import model.User;
-import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -114,6 +113,7 @@ public class ChatActivity extends AppCompatActivity {
 
             Message newMessage = new Message(message, user, time);
             newMessage.setGlobalId(Long.parseLong(globalMessageId));
+            SharedPreference.setLastMessageSync(ChatActivity.this, globalMessageId);
             addMessage(newMessage);
             messages.add(newMessage);
             mMessageAdapter.notifyItemInserted(messages.size() + 1);
@@ -141,6 +141,7 @@ public class ChatActivity extends AppCompatActivity {
                             Long globalMessageId = response.body();
                             newMessage.setGlobalId(globalMessageId);
                             if (addMessage(newMessage) != null) {
+                                SharedPreference.setLastMessageSync(ChatActivity.this, globalMessageId.toString());
                                 messages.add(newMessage);
                                 mMessageAdapter.notifyItemInserted(messages.size() + 1);
                                 messageText.getText().clear();
@@ -182,11 +183,15 @@ public class ChatActivity extends AppCompatActivity {
     public void loadMessages() {
 
         ChatService apiService = ServiceUtils.getClient().create(ChatService.class);
-        Long lastId = 0l;
-        if (messages.size() > 0) {
-            lastId = messages.get(messages.size() - 1).getGlobalId();
+
+        String lastId;
+        if(SharedPreference.getLastMessageSync(ChatActivity.this).equals("")){
+            lastId="0";
         }
-        Call<List<MessageDTO>> call = apiService.getMessages(team.getServerTeamId(), lastId);
+        else{
+            lastId = SharedPreference.getLastMessageSync(ChatActivity.this);
+        }
+        Call<List<MessageDTO>> call = apiService.getMessages(team.getServerTeamId(), Long.parseLong(lastId));
 
         call.enqueue(new Callback<List<MessageDTO>>() {
             @Override
@@ -198,7 +203,12 @@ public class ChatActivity extends AppCompatActivity {
                         User sender = getUserFromDatabase(messageDTO.getSender());
                         Message newMessage = new Message(messageDTO.getMessage(), sender, messageDTO.getCreatedAt());
                         newMessage.setGlobalId(messageDTO.getMessageId());
-                        addMessage(newMessage);
+                        SharedPreference.setLastMessageSync(ChatActivity.this, messageDTO.getMessageId().toString());
+                        for(Message m : messages){
+                            if(m.getGlobalId() != messageDTO.getMessageId()){
+                                addMessage(newMessage);
+                            }
+                        }
                         messages.add(newMessage);
                     }
                 }
