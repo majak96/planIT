@@ -107,11 +107,13 @@ public class ChatActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             String message = intent.getStringExtra("message");
             Long time = intent.getLongExtra("time", 1);
+            String globalMessageId = intent.getStringExtra("globalMessageId");
             String senderEmail = intent.getStringExtra("senderEmail");
 
             User user = getUserFromDatabase(senderEmail);
 
             Message newMessage = new Message(message, user, time);
+            newMessage.setGlobalId(Long.parseLong(globalMessageId));
             addMessage(newMessage);
             messages.add(newMessage);
             mMessageAdapter.notifyItemInserted(messages.size() + 1);
@@ -125,40 +127,43 @@ public class ChatActivity extends AppCompatActivity {
             User loggedUser = getUserFromDatabase(SharedPreference.getLoggedEmail(ChatActivity.this));
             if (loggedUser != null) {
                 Message newMessage = new Message(message, loggedUser, Utils.getCurrentDateTime());
-                if (addMessage(newMessage) != null) {
 
-                    MessageDTO messageDTO = new MessageDTO(team.getServerTeamId().longValue(), message, loggedUser.getEmail(), newMessage.getCreatedAt());
+                MessageDTO messageDTO = new MessageDTO(team.getServerTeamId().longValue(), message, loggedUser.getEmail(), newMessage.getCreatedAt());
 
-                    ChatService apiService = ServiceUtils.getClient().create(ChatService.class);
-                    Call<ResponseBody> call = apiService.sendMessage(messageDTO);
-                    call.enqueue(new Callback<ResponseBody>() {
+                ChatService apiService = ServiceUtils.getClient().create(ChatService.class);
+                Call<Long> call = apiService.sendMessage(messageDTO);
+                call.enqueue(new Callback<Long>() {
 
-                        @Override
-                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    @Override
+                    public void onResponse(Call<Long> call, Response<Long> response) {
 
-                            if (response.code() == 200) {
+                        if (response.code() == 200) {
+                            Long globalMessageId = response.body();
+                            newMessage.setGlobalId(globalMessageId);
+                            if (addMessage(newMessage) != null) {
                                 messages.add(newMessage);
                                 mMessageAdapter.notifyItemInserted(messages.size() + 1);
                                 messageText.getText().clear();
                                 mMessageRecycler.scrollToPosition(messages.size() - 1);
                             } else {
-                                Toast t = Toast.makeText(ChatActivity.this, "Error in sending message!", Toast.LENGTH_SHORT);
-                                t.show();
+                                Log.i(tag, "Can not find logged user!");
                             }
+                        } else {
+                            Toast t = Toast.makeText(ChatActivity.this, "Error in sending message!", Toast.LENGTH_SHORT);
+                            t.show();
                         }
+                    }
 
-                        @Override
-                        public void onFailure(Call<ResponseBody> call, Throwable t) {
-                            Toast toast = Toast.makeText(ChatActivity.this, "Connection error!", Toast.LENGTH_SHORT);
-                            toast.show();
-                            Log.e(tag, "Connection error!");
-                        }
-                    });
+                    @Override
+                    public void onFailure(Call<Long> call, Throwable t) {
+                        Toast toast = Toast.makeText(ChatActivity.this, "Connection error!", Toast.LENGTH_SHORT);
+                        toast.show();
+                        Log.e(tag, "Connection error!");
+                    }
+                });
 
-                }
-            } else {
-                Log.i(tag, "Can not find logged user!");
             }
+
         }
     }
 
@@ -177,11 +182,11 @@ public class ChatActivity extends AppCompatActivity {
     public void loadMessages() {
 
         ChatService apiService = ServiceUtils.getClient().create(ChatService.class);
-        Long lastTime = 0l;
+        Long lastId = 0l;
         if (messages.size() > 0) {
-            lastTime = messages.get(messages.size() - 1).getCreatedAt();
+            lastId = messages.get(messages.size() - 1).getGlobalId();
         }
-        Call<List<MessageDTO>> call = apiService.getMessages(team.getServerTeamId(), lastTime);
+        Call<List<MessageDTO>> call = apiService.getMessages(team.getServerTeamId(), lastId);
 
         call.enqueue(new Callback<List<MessageDTO>>() {
             @Override
@@ -192,6 +197,7 @@ public class ChatActivity extends AppCompatActivity {
                     for (MessageDTO messageDTO : data) {
                         User sender = getUserFromDatabase(messageDTO.getSender());
                         Message newMessage = new Message(messageDTO.getMessage(), sender, messageDTO.getCreatedAt());
+                        newMessage.setGlobalId(messageDTO.getMessageId());
                         addMessage(newMessage);
                         messages.add(newMessage);
                     }
@@ -303,6 +309,7 @@ public class ChatActivity extends AppCompatActivity {
         values.put(Contract.Message.COLUMN_CREATED_AT, message.getCreatedAt());
         values.put(Contract.Message.COLUMN_SENDER_ID, message.getSender().getId());
         values.put(Contract.Message.COLUMN_TEAM_ID, team.getId());
+        values.put(Contract.Message.COLUMN_GLOBAL_ID, message.getGlobalId());
 
         Uri uri = getContentResolver().insert(Contract.Message.CONTENT_URI_MESSAGE, values);
 

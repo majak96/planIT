@@ -92,7 +92,7 @@ public class SyncService extends Service {
                     if (response.code() == 200) {
                         Log.e("200", "200");
                         syncHabits(response.body());
-                        SharedPreference.setLastSyncDate(SyncService.this, new Date());
+                        //SharedPreference.setLastSyncDate(SyncService.this, new Date());
                         success = true;
                     } else {
                         Log.e("400", "400");
@@ -114,6 +114,7 @@ public class SyncService extends Service {
                     if (response.code() == 200) {
                         Log.e("team", "200");
                         syncTeams(response.body());
+                        SharedPreference.setLastSyncDate(SyncService.this, new Date());
                        /* Call<TaskSyncDTO> callTask;
                         TaskService taskService = ServiceUtils.getClient().create(TaskService.class);
                         if (SharedPreference.getLastSyncDate(SyncService.this) != -1) {
@@ -167,11 +168,11 @@ public class SyncService extends Service {
     public List<ContentProviderOperation> syncTeamContentProvider(TeamSyncDTO syncDTO) {
         List<ContentProviderOperation> batch = new ArrayList<>();
         Map<Long, Integer> teamInsertedIndex = new HashMap<>();
-        Map<Long, Integer> userInsertedIndex = new HashMap<>();
+        Map<String, Integer> userInsertedIndex = new HashMap<>();
 
         for (User user : syncDTO.getUsers()) {
-            String selection = Contract.User.COLUMN_GLOBAL_ID + " = ?";
-            String[] selectionArgs = new String[]{Long.toString(user.getGlobalId())};
+            String selection = Contract.User.COLUMN_EMAIL + " = ?";
+            String[] selectionArgs = new String[]{user.getEmail()};
             Cursor userCursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, selection, selectionArgs, null);
             // user needs to be updated in the local storage
             ContentProviderOperation operation = null;
@@ -193,8 +194,7 @@ public class SyncService extends Service {
                 values.put(Contract.User.COLUMN_LAST_NAME, user.getLastName());
                 values.put(Contract.User.COLUMN_COLOUR, user.getColour());
                 values.put(Contract.User.COLUMN_FIREBASE_ID, user.getFirebaseId());
-                values.put(Contract.User.COLUMN_GLOBAL_ID, user.getGlobalId());
-                userInsertedIndex.put(user.getGlobalId(), batch.size());
+                userInsertedIndex.put(user.getEmail(), batch.size());
                 operation = ContentProviderOperation.newInsert(Contract.User.CONTENT_URI_USER).withValues(values).build();
 
             }
@@ -215,7 +215,7 @@ public class SyncService extends Service {
                 Uri uri = Uri.parse(Contract.Team.CONTENT_URI_TEAM + "/" + teamCursor.getInt(teamCursor.getColumnIndex(Contract.Team.COLUMN_ID)));
                 // if team is deleted
                 // TODO: DELETED CONNECTED OBJECT
-                if (team.isDeleted()) {
+               if (team.isDeleted()) {
                     operation = ContentProviderOperation.newDelete(uri).build();
                     // update if needed
                 } else {
@@ -224,32 +224,42 @@ public class SyncService extends Service {
                     values.put(Contract.Team.COLUMN_DESCRIPTION, team.getDescription());
                     operation = ContentProviderOperation.newUpdate(uri).withValues(values).build();
                 }
+                batch.add(operation);
             } else {
-                ContentValues values = new ContentValues();
-                values.put(Contract.Team.COLUMN_TITLE, team.getName());
-                values.put(Contract.Team.COLUMN_DESCRIPTION, team.getDescription());
-                values.put(Contract.Team.COLUMN_SERVER_TEAM_ID, team.getServerTeamId());
-                if (userInsertedIndex.containsKey(team.getCreatorId())) {
-                    operation = ContentProviderOperation.newInsert(Contract.Team.CONTENT_URI_TEAM)
-                            .withValues(values)
-                            .withValueBackReference(Contract.Team.COLUMN_CREATOR, userInsertedIndex.get(team.getCreatorId()))
-                            .build();
-                } else {
-                    selection = Contract.User.COLUMN_GLOBAL_ID + " = ?";
-                    selectionArgs = new String[]{Long.toString(team.getCreatorId())};
-                    Cursor userCursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, selection, selectionArgs, null);
-                    userCursor.moveToFirst();
-                    values.put(Contract.Team.COLUMN_CREATOR, userCursor.getInt(userCursor.getColumnIndex(Contract.User.COLUMN_ID)));
-                    userCursor.close();
-                    operation = ContentProviderOperation.newInsert(Contract.Team.CONTENT_URI_TEAM).withValues(values).build();
+                Boolean del= team.isDeleted();
+                Log.e("TEAM DELETED", del.toString());
+                if (!team.isDeleted()) {
+                    ContentValues values = new ContentValues();
+                    values.put(Contract.Team.COLUMN_TITLE, team.getName());
+                    values.put(Contract.Team.COLUMN_DESCRIPTION, team.getDescription());
+                    values.put(Contract.Team.COLUMN_SERVER_TEAM_ID, team.getServerTeamId());
+                    if (userInsertedIndex.containsKey(team.getCreatorEmail())) {
+                        operation = ContentProviderOperation.newInsert(Contract.Team.CONTENT_URI_TEAM)
+                                .withValues(values)
+                                .withValueBackReference(Contract.Team.COLUMN_CREATOR, userInsertedIndex.get(team.getCreatorEmail()))
+                                .build();
+                    } else {
+                        Log.e("DODAJEM GA", "DODAJEM GA");
+                        selection = Contract.User.COLUMN_EMAIL + " = ?";
+                        selectionArgs = new String[]{team.getCreatorEmail()};
+                        Cursor userCursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, selection, selectionArgs, null);
+                        userCursor.moveToFirst();
+                        values.put(Contract.Team.COLUMN_CREATOR, userCursor.getInt(userCursor.getColumnIndex(Contract.User.COLUMN_ID)));
+                        userCursor.close();
+                        operation = ContentProviderOperation.newInsert(Contract.Team.CONTENT_URI_TEAM).withValues(values).build();
+                    }
+                    teamInsertedIndex.put(team.getServerTeamId(), batch.size());
+                    batch.add(operation);
+                }else{
+
                 }
-
-                teamInsertedIndex.put(team.getServerTeamId(), batch.size());
-
 
             }
             teamCursor.close();
-            batch.add(operation);
+        }
+
+        for(Map.Entry<Long, Integer> entry : teamInsertedIndex.entrySet()) {
+            Log.e("ENTRY_ KEY", entry.getKey().toString());
         }
 
         for (TeamUserConnection conn : syncDTO.getTeamUserConnections()) {
@@ -269,30 +279,36 @@ public class SyncService extends Service {
                 } else {
                     /*
                     ContentValues values = new ContentValues();
-                    operation = ContentProviderOperation.newUpdate(uri).withValues(values).build();
-                     */
+                    operation = ContentProviderOperation.newUpdate(uri).withValues(values).build();*/
+
                 }
             } else {
                 if (!conn.isDeleted()) {
                     ContentValues values = new ContentValues();
                     values.put(Contract.UserTeamConnection.COLUMN_GLOBAL_ID, conn.getId());
 
-                    if (teamInsertedIndex.containsKey(conn.getTeamId()) && userInsertedIndex.containsKey(conn.getUser().getGlobalId())) {
+                    if (teamInsertedIndex.containsKey(conn.getTeamId()) && userInsertedIndex.containsKey(conn.getUser().getEmail())) {
                         operation = ContentProviderOperation.newInsert(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM)
                                 .withValues(values)
                                 .withValueBackReference(Contract.UserTeamConnection.COLUMN_TEAM_ID, teamInsertedIndex.get(conn.getTeamId()))
-                                .withValueBackReference(Contract.UserTeamConnection.COLUMN_USER_ID, userInsertedIndex.get(conn.getUser().getGlobalId()))
+                                .withValueBackReference(Contract.UserTeamConnection.COLUMN_USER_ID, userInsertedIndex.get(conn.getUser().getEmail()))
                                 .build();
-                    } else if (teamInsertedIndex.containsKey(conn.getTeamId()) && !userInsertedIndex.containsKey(conn.getUser().getGlobalId())) {
-                        values.put(Contract.UserTeamConnection.COLUMN_USER_ID, conn.getUser().getEmail());
+                    } else if (teamInsertedIndex.containsKey(conn.getTeamId()) && !userInsertedIndex.containsKey(conn.getUser().getEmail())) {
+                        selection = Contract.User.COLUMN_EMAIL + " = ?";
+                        selectionArgs = new String[]{conn.getUser().getEmail()};
+                        Cursor userCursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, selection, selectionArgs, null);
+                        userCursor.moveToFirst();
+                        values.put(Contract.UserTeamConnection.COLUMN_USER_ID, userCursor.getInt(userCursor.getColumnIndex(Contract.User.COLUMN_ID)));
+                        userCursor.close();
                         operation = ContentProviderOperation.newInsert(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM)
                                 .withValues(values)
                                 .withValueBackReference(Contract.UserTeamConnection.COLUMN_TEAM_ID, teamInsertedIndex.get(conn.getTeamId()))
                                 .build();
-                    } else if (!teamInsertedIndex.containsKey(conn.getTeamId()) && userInsertedIndex.containsKey(conn.getUser().getGlobalId())) {
+                    } else if (!teamInsertedIndex.containsKey(conn.getTeamId()) && userInsertedIndex.containsKey(conn.getUser().getEmail())) {
                         selection = Contract.Team.COLUMN_SERVER_TEAM_ID + " = ?";
                         selectionArgs = new String[]{Long.toString(conn.getTeamId())};
                         Cursor cursorTeam = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, selection, selectionArgs, null);
+                        cursorTeam.moveToFirst();
                         values.put(Contract.UserTeamConnection.COLUMN_TEAM_ID, cursorTeam.getInt(cursorTeam.getColumnIndex(Contract.Team.COLUMN_ID)));
                         cursorTeam.close();
                         operation = ContentProviderOperation.newInsert(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM)
@@ -303,8 +319,15 @@ public class SyncService extends Service {
                         selection = Contract.Team.COLUMN_SERVER_TEAM_ID + " = ?";
                         selectionArgs = new String[]{Long.toString(conn.getTeamId())};
                         Cursor cursorTeam = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, selection, selectionArgs, null);
+                        cursorTeam.moveToFirst();
                         values.put(Contract.UserTeamConnection.COLUMN_TEAM_ID, cursorTeam.getInt(cursorTeam.getColumnIndex(Contract.Team.COLUMN_ID)));
                         cursorTeam.close();
+                        selection = Contract.User.COLUMN_EMAIL + " = ?";
+                        selectionArgs = new String[]{conn.getUser().getEmail()};
+                        Cursor userCursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, selection, selectionArgs, null);
+                        userCursor.moveToFirst();
+                        values.put(Contract.UserTeamConnection.COLUMN_USER_ID, userCursor.getInt(userCursor.getColumnIndex(Contract.User.COLUMN_ID)));
+                        userCursor.close();
                         values.put(Contract.UserTeamConnection.COLUMN_USER_ID, conn.getUser().getEmail());
                         operation = ContentProviderOperation.newInsert(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM)
                                 .withValues(values)
@@ -345,15 +368,15 @@ public class SyncService extends Service {
                 values.put(Contract.Message.COLUMN_CREATED_AT, message.getCreatedAt());
                 values.put(Contract.Message.COLUMN_GLOBAL_ID, message.getGlobalId());
                 values.put(Contract.Message.COLUMN_MESSAGE, message.getMessage());
-                if (teamInsertedIndex.containsKey(message.getTeamId()) && userInsertedIndex.containsKey(message.getSender().getGlobalId())) {
+                if (teamInsertedIndex.containsKey(message.getTeamId()) && userInsertedIndex.containsKey(message.getSender().getEmail())) {
                     operation = ContentProviderOperation.newInsert(Contract.Message.CONTENT_URI_MESSAGE)
                             .withValues(values)
                             .withValueBackReference(Contract.Message.COLUMN_TEAM_ID, teamInsertedIndex.get(message.getTeamId()))
-                            .withValueBackReference(Contract.Message.COLUMN_SENDER_ID, userInsertedIndex.get(message.getSender().getGlobalId()))
+                            .withValueBackReference(Contract.Message.COLUMN_SENDER_ID, userInsertedIndex.get(message.getSender().getEmail()))
                             .build();
-                } else if (teamInsertedIndex.containsKey(message.getTeamId()) && !userInsertedIndex.containsKey(message.getSender().getGlobalId())) {
-                    selection = Contract.User.COLUMN_GLOBAL_ID + " = ?";
-                    selectionArgs = new String[]{Long.toString(message.getSender().getGlobalId())};
+                } else if (teamInsertedIndex.containsKey(message.getTeamId()) && !userInsertedIndex.containsKey(message.getSender().getEmail())) {
+                    selection = Contract.User.COLUMN_EMAIL+ " = ?";
+                    selectionArgs = new String[]{message.getSender().getEmail()};
                     Cursor userCursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, selection, selectionArgs, null);
                     userCursor.moveToFirst();
                     values.put(Contract.Message.COLUMN_SENDER_ID, userCursor.getInt(userCursor.getColumnIndex(Contract.User.COLUMN_ID)));
@@ -362,7 +385,7 @@ public class SyncService extends Service {
                             .withValues(values)
                             .withValueBackReference(Contract.UserTeamConnection.COLUMN_TEAM_ID, teamInsertedIndex.get(message.getTeamId()))
                             .build();
-                } else if (!teamInsertedIndex.containsKey(message.getTeamId()) && userInsertedIndex.containsKey(message.getSender().getGlobalId())) {
+                } else if (!teamInsertedIndex.containsKey(message.getTeamId()) && userInsertedIndex.containsKey(message.getSender().getEmail())) {
                     selection = Contract.Team.COLUMN_SERVER_TEAM_ID + " = ?";
                     selectionArgs = new String[]{Long.toString(message.getTeamId())};
                     Cursor cursorTeam = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, selection, selectionArgs, null);
@@ -372,7 +395,7 @@ public class SyncService extends Service {
 
                     operation = ContentProviderOperation.newInsert(Contract.Message.CONTENT_URI_MESSAGE)
                             .withValues(values)
-                            .withValueBackReference(Contract.UserTeamConnection.COLUMN_USER_ID, userInsertedIndex.get(message.getSender().getGlobalId()))
+                            .withValueBackReference(Contract.UserTeamConnection.COLUMN_USER_ID, userInsertedIndex.get(message.getSender().getEmail()))
                             .build();
                 } else {
                     selection = Contract.Team.COLUMN_SERVER_TEAM_ID + " = ?";
@@ -381,8 +404,8 @@ public class SyncService extends Service {
                     cursorTeam.moveToFirst();
                     values.put(Contract.Message.COLUMN_TEAM_ID, cursorTeam.getInt(cursorTeam.getColumnIndex(Contract.Team.COLUMN_ID)));
                     cursorTeam.close();
-                    selection = Contract.User.COLUMN_GLOBAL_ID + " = ?";
-                    selectionArgs = new String[]{Long.toString(message.getSender().getGlobalId())};
+                    selection = Contract.User.COLUMN_EMAIL + " = ?";
+                    selectionArgs = new String[]{message.getSender().getEmail()};
                     Cursor userCursor = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, selection, selectionArgs, null);
                     userCursor.moveToFirst();
                     values.put(Contract.Message.COLUMN_SENDER_ID, userCursor.getInt(userCursor.getColumnIndex(Contract.User.COLUMN_ID)));

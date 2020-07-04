@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private SyncReceiver sync;
     public static String SYNC_DATA = "SYNC_DATA";
 
-    private String synctime = "2";
+    private String synctime = "1";
     private boolean allowSync = true;
 
     @Override
@@ -163,6 +163,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         for (Team team : myTeams) {
             if(mAuth.getCurrentUser() != null){
                 FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
+                Log.e("SUBSCRIBE TO ", mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
             }
 
         }
@@ -249,6 +250,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         getAllTeams();
         for (Team team : myTeams) {
             FirebaseMessaging.getInstance().unsubscribeFromTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
+            Log.e("UNSUBSCRTIBE FROM ", mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
         }
 
         //delete all data from db
