@@ -1211,6 +1211,12 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
             taskDTO.setTeamId(Long.valueOf(team.getServerTeamId()));
         }
 
+        ArrayList<LabelDTO> labelDTOs = new ArrayList<LabelDTO>();
+        for(Label label : labels){
+            labelDTOs.add(new LabelDTO(label.getId(), label.getGlobalId(), label.getName(), label.getColor()));
+        }
+        taskDTO.setLabels(labelDTOs);
+
         Integer lastSyncDate = SharedPreference.getLastSyncDate(this);
         Log.d(TAG, "updateTeamTaskServer: LAST SYNC DATE: " + lastSyncDate);
         TaskService taskService = ServiceUtils.getClient().create(TaskService.class);

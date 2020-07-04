@@ -192,6 +192,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         switch (id) {
             case R.id.nav_calendar:
+                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 FragmentTransition.replaceFragment(this, CalendarFragment.newInstance(null, null, null), R.id.fragment_container, false);
                 break;
             case R.id.nav_habits:
