@@ -40,12 +40,15 @@ import com.example.planit.utils.SharedPreference;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import model.Team;
+import model.User;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -158,8 +161,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         */
         getAllTeams();
         for (Team team : myTeams) {
-            if(mAuth.getCurrentUser() != null)
+            if(mAuth.getCurrentUser() != null){
                 FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
+            }
+
         }
     }
 
@@ -241,10 +246,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         SharedPreference.setLastSyncDate(getApplicationContext(), null);
 
         //unsubscribe of all my topics
+        getAllTeams();
         for (Team team : myTeams) {
-            FirebaseMessaging.getInstance().unsubscribeFromTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getId());
+            FirebaseMessaging.getInstance().unsubscribeFromTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
         }
-        FirebaseAuth.getInstance().signOut();
 
         //delete all data from db
         DatabaseSQLiteHelper databaseHelper = new DatabaseSQLiteHelper(this);
@@ -475,7 +480,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             Log.i("MainActivity", "There are no teams");
         } else {
             while (cursor.moveToNext()) {
-                Team newTeam = new Team(cursor.getInt(0), cursor.getString(1), cursor.getString(2));
+                Integer id= cursor.getInt(cursor.getColumnIndex(Contract.Team.COLUMN_ID));
+                String name= cursor.getString(cursor.getColumnIndex(Contract.Team.COLUMN_TITLE));
+                String description=cursor.getString(cursor.getColumnIndex(Contract.Team.COLUMN_TITLE));
+                Integer serverTeamId= cursor.getInt(cursor.getColumnIndex(Contract.Team.COLUMN_SERVER_TEAM_ID));
+
+                Team newTeam = new Team(id, name, description, null, serverTeamId.longValue());
                 this.myTeams.add(newTeam);
             }
         }
