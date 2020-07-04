@@ -40,15 +40,12 @@ import com.example.planit.utils.SharedPreference;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessaging;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import model.Team;
-import model.User;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -72,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private SyncReceiver sync;
     public static String SYNC_DATA = "SYNC_DATA";
 
-    private String synctime = "2";
+    private String synctime = "1";
     private boolean allowSync = true;
 
     @Override
@@ -163,6 +160,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         for (Team team : myTeams) {
             if(mAuth.getCurrentUser() != null){
                 FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
+                Log.e("SUBSCRIBE TO ", mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
             }
 
         }
@@ -244,11 +242,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         SharedPreference.setLoggedColour(getApplicationContext(), "");
         SharedPreference.setLoggedLastName(getApplicationContext(), "");
         SharedPreference.setLastSyncDate(getApplicationContext(), null);
-
+        SharedPreference.setPrefLastSyncDateH(getApplicationContext(), null);
         //unsubscribe of all my topics
         getAllTeams();
         for (Team team : myTeams) {
             FirebaseMessaging.getInstance().unsubscribeFromTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
+            Log.e("UNSUBSCRTIBE FROM ", mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
         }
 
         //delete all data from db

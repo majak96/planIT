@@ -21,9 +21,6 @@ import com.example.planit.database.Contract;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
-import model.Team;
-import model.User;
-
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     private String tag = "MyFirebaseMessagingService";
@@ -34,6 +31,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         super.onMessageReceived(remoteMessage);
         String title = remoteMessage.getNotification().getTitle();
         String sender = remoteMessage.getData().get("sender");
+        String globalMessageId = remoteMessage.getData().get("globalMessageId");
+        String createdAt = remoteMessage.getData().get("createdAt");
 
         String[] parts = remoteMessage.getFrom().split("\\/");
         String partWithTeamId = parts[parts.length - 1];
@@ -41,16 +40,17 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         parts = partWithTeamId.split("\\-");
         String serverTeamId = parts[parts.length - 1];
 
-        sendNotification(title, remoteMessage.getNotification().getBody(), serverTeamId, remoteMessage.getSentTime(), sender);
+        sendNotification(title, remoteMessage.getNotification().getBody(), serverTeamId, createdAt.toString(), sender, globalMessageId);
     }
 
-    public void sendNotification(String title, String messageBody, String serverTeamId, Long time, String senderEmail) {
+    public void sendNotification(String title, String messageBody, String serverTeamId, String time, String senderEmail, String globalMessageId ) {
         // First check is chat activity of team with teamId active
         Integer localId = getLocalTeamId(Integer.parseInt(serverTeamId));
         if (ChatActivity.isActive(localId)) {
             Intent intent = new Intent("receive-message");
             intent.putExtra("message", messageBody);
-            intent.putExtra("time", time);
+            intent.putExtra("time", Long.parseLong(time));
+            intent.putExtra("globalMessageId", globalMessageId);
             intent.putExtra("senderEmail", senderEmail);
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         } else {

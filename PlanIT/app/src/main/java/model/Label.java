@@ -1,10 +1,11 @@
 package model;
 
 public class Label {
-    Integer id;
-    String name;
-    String color;
-    Integer globalId;
+    private Integer id;
+    private String name;
+    private String color;
+    private Integer globalId;
+    private boolean deleted;
 
     public Label() {
 
@@ -45,6 +46,14 @@ public class Label {
 
     public void setGlobalId(Integer globalId) {
         this.globalId = globalId;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 
     @Override

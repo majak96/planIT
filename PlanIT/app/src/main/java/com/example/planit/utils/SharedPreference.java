@@ -13,7 +13,8 @@ public class SharedPreference {
     static final String PREF_USER_LAST_NAME = "lastName";
     static final String PREF_USER_COLOUR = "colour";
     static final String PREF_USER_ID = "id";
-    static final String PREF_LAST_SYNC_DATE = "syncDate";
+    static final String PREF_LAST_SYNC_DATE_T = "syncDateT";
+    static final String PREF_LAST_SYNC_DATE_H = "syncDateHabit";
 
     static SharedPreferences getSharedPreferences(Context ctx) {
         return PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -73,15 +74,29 @@ public class SharedPreference {
     public static void setLastSyncDate(Context ctx, Date date) {
         SharedPreferences.Editor editor = getSharedPreferences(ctx).edit();
         if(date == null){
-            editor.remove(PREF_LAST_SYNC_DATE);
+            editor.remove(PREF_LAST_SYNC_DATE_T);
         } else {
-            editor.putInt(PREF_LAST_SYNC_DATE, (new Long(date.getTime()).intValue()));
+            editor.putInt(PREF_LAST_SYNC_DATE_T, (new Long(date.getTime()).intValue()));
         }
         editor.apply();
     }
 
     public static Integer getLastSyncDate(Context ctx) {
-        return getSharedPreferences(ctx).getInt(PREF_LAST_SYNC_DATE, -1);
+        return getSharedPreferences(ctx).getInt(PREF_LAST_SYNC_DATE_T, -1);
+    }
+
+    public static void setPrefLastSyncDateH(Context ctx, Date date) {
+        SharedPreferences.Editor editor = getSharedPreferences(ctx).edit();
+        if(date == null){
+            editor.remove(PREF_LAST_SYNC_DATE_H);
+        } else {
+            editor.putInt(PREF_LAST_SYNC_DATE_H, (new Long(date.getTime()).intValue()));
+        }
+        editor.apply();
+    }
+
+    public static Integer getLastSyncDateH(Context ctx) {
+        return getSharedPreferences(ctx).getInt(PREF_LAST_SYNC_DATE_H, -1);
     }
 
 }
