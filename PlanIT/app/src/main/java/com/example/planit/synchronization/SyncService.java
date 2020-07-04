@@ -24,6 +24,8 @@ import com.example.planit.service.ServiceUtils;
 import com.example.planit.service.TaskService;
 import com.example.planit.service.TeamService;
 import com.example.planit.utils.SharedPreference;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -607,6 +609,10 @@ public class SyncService extends Service {
                     values.put(Contract.Team.COLUMN_TITLE, team.getName());
                     values.put(Contract.Team.COLUMN_DESCRIPTION, team.getDescription());
                     values.put(Contract.Team.COLUMN_SERVER_TEAM_ID, team.getServerTeamId());
+
+                    FirebaseAuth mAuth = FirebaseAuth.getInstance();
+                    FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid()+"-"+ team.getServerTeamId());
+
                     if (userInsertedIndex.containsKey(team.getCreatorEmail())) {
                         operation = ContentProviderOperation.newInsert(Contract.Team.CONTENT_URI_TEAM)
                                 .withValues(values)

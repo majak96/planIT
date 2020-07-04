@@ -15,6 +15,8 @@ public class SharedPreference {
     static final String PREF_USER_ID = "id";
     static final String PREF_LAST_SYNC_DATE_T = "syncDateT";
     static final String PREF_LAST_SYNC_DATE_H = "syncDateHabit";
+    static final String LAST_MESSAGE_SYNC = "lastMessageSync";
+
 
     static SharedPreferences getSharedPreferences(Context ctx) {
         return PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -97,6 +99,16 @@ public class SharedPreference {
 
     public static Long getLastSyncDateH(Context ctx) {
         return getSharedPreferences(ctx).getLong(PREF_LAST_SYNC_DATE_H, -1);
+    }
+
+    public static void setLastMessageSync(Context ctx, String lastSync) {
+        SharedPreferences.Editor editor = getSharedPreferences(ctx).edit();
+        editor.putString(LAST_MESSAGE_SYNC, lastSync);
+        editor.apply();
+    }
+
+    public static String getLastMessageSync(Context ctx) {
+        return getSharedPreferences(ctx).getString(LAST_MESSAGE_SYNC, "");
     }
 
 }
