@@ -4,9 +4,12 @@ import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,6 +35,8 @@ import com.example.planit.R;
 import com.example.planit.adapters.TaskDetailAdapter;
 import com.example.planit.broadcastReceivers.ReminderBroadcastReceiver;
 import com.example.planit.database.Contract;
+import com.example.planit.service.ServiceUtils;
+import com.example.planit.service.TaskService;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -39,10 +44,15 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import model.CreateTaskResponseDTO;
 import model.Label;
 import model.Task;
 import model.TaskPriority;
 import model.User;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class TaskDetailActivity extends AppCompatActivity {
 
@@ -166,6 +176,15 @@ public class TaskDetailActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        if (task.getTeam() != null && !isNetworkAvailable()) {
+            menu.findItem(R.id.menu_delete_task).setEnabled(false);
+            menu.findItem(R.id.menu_edit_task).setEnabled(false);
+        }
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_delete_task:
@@ -283,23 +302,29 @@ public class TaskDetailActivity extends AppCompatActivity {
         builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
+                //personal task
+                if(task.getTeam() == null) {
+                    //first remove task labels
+                    deleteTaskLabelsFromDatabase(task.getId());
 
-                //first remove task labels
-                deleteTaskLabelsFromDatabase(task.getId());
+                    //then delete the task itself
+                    int deletedRows = deleteTaskFromDatabase(task.getId());
 
-                //then delete the task itself
-                int deletedRows = deleteTaskFromDatabase(task.getId());
+                    if (deletedRows > 0) {
+                        //delete and cancel alarms
+                        if (reminderId != null) {
+                            deleteAndCancelReminders();
+                        }
+                        intent.putExtra("deleted", true);
+                        intent.putExtra("position", taskPosition);
 
-                if (deletedRows > 0) {
-                    //delete and cancel alarms
-                    if (reminderId != null) {
-                        deleteAndCancelReminders();
+                        setResult(Activity.RESULT_OK, intent);
+                        finish();
                     }
-                    intent.putExtra("deleted", true);
-                    intent.putExtra("position", taskPosition);
-
-                    setResult(Activity.RESULT_OK, intent);
-                    finish();
+                }
+                //team tasks
+                else {
+                    deleteTeamTask(task.getGlobalId());
                 }
             }
         });
@@ -382,7 +407,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         Uri taskUri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + id);
 
         String[] allColumns = {Contract.Task.COLUMN_ID, Contract.Task.COLUMN_TITLE, Contract.Task.COLUMN_DESCRIPTION, Contract.Task.COLUMN_START_DATE, Contract.Task.COLUMN_START_TIME, Contract.Task.COLUMN_PRIORITY,
-                Contract.Task.COLUMN_ADDRESS, Contract.Task.COLUMN_DONE, Contract.Task.COLUMN_REMINDER_ID, Contract.Task.COLUMN_TEAM, Contract.Task.COLUMN_USER, Contract.Task.COLUMN_LONGITUDE, Contract.Task.COLUMN_LATITUDE};
+                Contract.Task.COLUMN_ADDRESS, Contract.Task.COLUMN_DONE, Contract.Task.COLUMN_REMINDER_ID, Contract.Task.COLUMN_TEAM, Contract.Task.COLUMN_USER, Contract.Task.COLUMN_LONGITUDE, Contract.Task.COLUMN_LATITUDE, Contract.Task.COLUMN_GLOBAL_ID};
 
         Cursor cursor = getContentResolver().query(taskUri, allColumns, null, null, null);
         cursor.moveToFirst();
@@ -452,6 +477,10 @@ public class TaskDetailActivity extends AppCompatActivity {
 
         if (!cursor.isNull(12)) {
             task.setLatitude(cursor.getDouble(12));
+        }
+
+        if(!cursor.isNull(13)){
+            task.setGlobalId(cursor.getInt(13));
         }
 
         cursor.close();
@@ -555,5 +584,49 @@ public class TaskDetailActivity extends AppCompatActivity {
         }
 
         super.finish();
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    public void deleteTeamTask(Integer globalId) {
+        Log.d(TAG, "deleteTeamTask: globalId "+globalId);
+        TaskService taskService = ServiceUtils.getClient().create(TaskService.class);
+        Call<ResponseBody> call = taskService.deleteTask(globalId);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (200 == response.code()) {
+                    //first remove task labels
+                    deleteTaskLabelsFromDatabase(taskId);
+
+                    //then delete the task itself
+                    int deletedRows = deleteTaskFromDatabase(task.getId());
+
+                    if (deletedRows > 0) {
+                        //delete and cancel alarms
+                        if (reminderId != null) {
+                            deleteAndCancelReminders();
+                        }
+                        intent.putExtra("deleted", true);
+                        intent.putExtra("position", taskPosition);
+
+                        setResult(Activity.RESULT_OK, intent);
+                        finish();
+                    }
+                } else {
+                    Toast.makeText(TaskDetailActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.d(TAG, "onFailure: FAIL");
+                Toast.makeText(TaskDetailActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

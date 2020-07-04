@@ -1,16 +1,16 @@
 package model;
 
-public class Label {
-    Integer id;
-    String name;
-    String color;
-    Integer globalId;
+public class LabelDTO {
 
-    public Label() {
+    private Integer id;
+    private String name;
+    private String color;
+    private Integer globalId;
+    private Long connectionId;
 
-    }
-
-    public Label(String name, String color) {
+    public LabelDTO(Integer id, Integer globalId, String name, String color) {
+        this.globalId = globalId;
+        this.id = id;
         this.name = name;
         this.color = color;
     }
@@ -35,10 +35,6 @@ public class Label {
         return color;
     }
 
-    public void setColor(String color) {
-        this.color = color;
-    }
-
     public Integer getGlobalId() {
         return globalId;
     }
@@ -47,8 +43,15 @@ public class Label {
         this.globalId = globalId;
     }
 
-    @Override
-    public String toString() {
-        return name;
+    public Long getConnectionId() {
+        return connectionId;
+    }
+
+    public void setConnectionId(Long connectionId) {
+        this.connectionId = connectionId;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
     }
 }
