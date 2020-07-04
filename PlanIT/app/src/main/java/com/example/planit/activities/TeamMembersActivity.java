@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import model.TeamDTO;
+import model.TeamMemebershipDTO;
 import model.User;
 import model.UserInfoDTO;
 import okhttp3.ResponseBody;
@@ -214,27 +215,37 @@ public class TeamMembersActivity extends AppCompatActivity {
                     TeamDTO teamDTO = new TeamDTO(title, description, creator, usersEmails);
 
                     TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
-                    Call<Integer> call = apiService.createTeam(teamDTO);
-                    call.enqueue(new Callback<Integer>() {
+                    Call<List<TeamMemebershipDTO>> call = apiService.createTeam(teamDTO);
+                    call.enqueue(new Callback<List<TeamMemebershipDTO>>() {
 
                         @Override
-                        public void onResponse(Call<Integer> call, Response<Integer> response) {
+                        public void onResponse(Call<List<TeamMemebershipDTO>> call, Response<List<TeamMemebershipDTO>> response) {
 
                             if (response.code() == 200) {
 
-                                Integer serverTeamId = response.body();
+                                List<TeamMemebershipDTO> teamMemberResponseDTO = response.body();
 
+                                Integer serverTeamId = teamMemberResponseDTO.get(0).getTeamId().intValue();
                                 Uri uri = createTeam(creator, title, description, serverTeamId);
                                 if (uri != null) {
                                     teamId = Integer.parseInt(uri.getLastPathSegment());
                                     FirebaseMessaging.getInstance().subscribeToTopic(mAuth.getCurrentUser().getUid() + "-" + serverTeamId);
+                                    Log.e("SUBSCRIBE TO ", mAuth.getCurrentUser().getUid() + "-" + serverTeamId);
+
                                 }else{
                                     //TODO: complete
                                 }
 
-                                for (User u : users) {
-                                    createUserTeamConnection(u.getId(), teamId);
-                                }
+                               for(TeamMemebershipDTO con : teamMemberResponseDTO){
+                                   Log.e("MAJA", con.toString());
+                                   Log.e("con.getUserEmail() ", con.getUserEmail());
+                                   Integer a = con.getTeamId().intValue();
+                                   Log.e("con.getTeamId()", a.toString());
+                                   Integer b = con.getGlobalId().intValue();
+                                   Log.e("con.getGlobalId()", b.toString());
+
+                                   createUserTeamConnection(con.getUserEmail(), con.getTeamId().intValue(), con.getGlobalId().intValue());
+                               }
 
                                 intent = new Intent();
                                 intent.putExtra("teamId", teamId);
@@ -248,7 +259,7 @@ public class TeamMembersActivity extends AppCompatActivity {
                         }
 
                         @Override
-                        public void onFailure(Call<Integer> call, Throwable t) {
+                        public void onFailure(Call<List<TeamMemebershipDTO>> call, Throwable t) {
                             Toast toast = Toast.makeText(TeamMembersActivity.this, "Connection error!", Toast.LENGTH_SHORT);
                             toast.show();
                             Log.e("tag", "Connection error!");
@@ -264,16 +275,19 @@ public class TeamMembersActivity extends AppCompatActivity {
 
                     TeamService apiService = ServiceUtils.getClient().create(TeamService.class);
                     Integer serverTeamId = findGlobalTeamId(teamId);
-                    Call<ResponseBody> call = apiService.updateTeamMembers(serverTeamId, teamDTO);
-                    call.enqueue(new Callback<ResponseBody>() {
+
+                    Call<List<TeamMemebershipDTO>> call = apiService.updateTeamMembers(serverTeamId, teamDTO);
+                    call.enqueue(new Callback<List<TeamMemebershipDTO>>() {
                         @Override
-                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        public void onResponse(Call<List<TeamMemebershipDTO>> call, Response<List<TeamMemebershipDTO>> response) {
 
                             if (response.code() == 200) {
+                                List<TeamMemebershipDTO> teamMemberResponseDTO = response.body();
 
                                 deleteUserTeamConnection(teamId);
-                                for (User u : users) {
-                                    createUserTeamConnection(u.getId(), teamId);
+
+                                for(TeamMemebershipDTO con : teamMemberResponseDTO){
+                                    createUserTeamConnection(con.getUserEmail(), con.getTeamId().intValue(), con.getGlobalId().intValue());
                                 }
 
                                 intent = new Intent();
@@ -288,7 +302,7 @@ public class TeamMembersActivity extends AppCompatActivity {
                         }
 
                         @Override
-                        public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        public void onFailure(Call<List<TeamMemebershipDTO>> call, Throwable t) {
                             Log.e("tag", "Connection error!");
                         }
                     });
@@ -333,12 +347,13 @@ public class TeamMembersActivity extends AppCompatActivity {
     }
 
     //inserts a new user_team_connection into the database
-    public Uri createUserTeamConnection(Integer userId, Integer teamId) {
+    public Uri createUserTeamConnection(String userEmail, Integer teamId, Integer globalConnectionId) {
 
         ContentValues values = new ContentValues();
 
         values.put(Contract.UserTeamConnection.COLUMN_TEAM_ID, teamId);
-        values.put(Contract.UserTeamConnection.COLUMN_USER_ID, userId);
+        values.put(Contract.UserTeamConnection.COLUMN_USER_ID, getUserFromDatabase(userEmail).getId());
+        values.put(Contract.UserTeamConnection.COLUMN_GLOBAL_ID, globalConnectionId);
 
         Uri uri = getContentResolver().insert(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM, values);
 

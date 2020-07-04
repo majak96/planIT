@@ -1,6 +1,9 @@
 package com.example.planit.service;
 
+import java.util.List;
+
 import model.TeamDTO;
+import model.TeamMemebershipDTO;
 import model.TeamSyncDTO;
 import model.UserInfoDTO;
 import okhttp3.ResponseBody;
@@ -22,7 +25,7 @@ public interface TeamService {
     })
 
     @POST("team/create")
-    Call<Integer> createTeam(@Body TeamDTO teamDTO);
+    Call<List<TeamMemebershipDTO>> createTeam(@Body TeamDTO teamDTO);
 
     @GET("team/checkMember")
     Call<UserInfoDTO> checkMember(@Query("email") String email);
@@ -34,7 +37,7 @@ public interface TeamService {
     Call<ResponseBody> updateTeam(@Path("teamId") Integer teamId, @Body TeamDTO teamDTO);
 
     @PUT("team/members/{teamId}")
-    Call<ResponseBody> updateTeamMembers(@Path("teamId") Integer teamId, @Body TeamDTO teamDTO);
+    Call<List<TeamMemebershipDTO>> updateTeamMembers(@Path("teamId") Integer teamId, @Body TeamDTO teamDTO);
 
     @GET("team/sync")
     Call<TeamSyncDTO> synchronizationTeam(@Query("email") String email, @Query("date") Long date);
