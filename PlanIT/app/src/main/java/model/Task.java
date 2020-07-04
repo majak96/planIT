@@ -21,6 +21,7 @@ public class Task {
     private String userEmail;
     private Long reminderId;
     private boolean deleted;
+    private Long globalId;
 
     private List<Label> labels = new ArrayList<Label>();
 
@@ -162,6 +163,14 @@ public class Task {
 
     public void setReminderId(Long reminderId) {
         this.reminderId = reminderId;
+    }
+
+    public Long getGlobalId() {
+        return globalId;
+    }
+
+    public void setGlobalId(Long globalId) {
+        this.globalId = globalId;
     }
 
     @Override

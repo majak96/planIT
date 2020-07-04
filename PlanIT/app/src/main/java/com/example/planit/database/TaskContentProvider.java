@@ -24,6 +24,7 @@ public class TaskContentProvider extends ContentProvider {
     private static final int LABEL_ID = 205;
     private static final int TASK_LABEL = 305;
     private static final int TASK_LABEL_ID = 405;
+    private static final int REMINDER = 1100;
 
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -34,6 +35,7 @@ public class TaskContentProvider extends ContentProvider {
         sURIMatcher.addURI(Contract.Label.AUTHORITY, Contract.Label.TABLE_NAME + "/#", LABEL_ID);
         sURIMatcher.addURI(Contract.Label.AUTHORITY, Contract.TaskLabel.TABLE_NAME, TASK_LABEL);
         sURIMatcher.addURI(Contract.Label.AUTHORITY, Contract.Label.TABLE_NAME + "/" + Contract.Task.TABLE_NAME + "/#", TASK_LABEL_ID);
+        sURIMatcher.addURI(Contract.Task.AUTHORITY, Contract.Reminder.TABLE_NAME, REMINDER);
     }
 
     @Override
@@ -79,6 +81,10 @@ public class TaskContentProvider extends ContentProvider {
                         + " AND l." + Contract.Label.COLUMN_ID + " = tl." + Contract.TaskLabel.COLUMN_LABEL
                         + " AND t." + Contract.Task.COLUMN_ID + " = ?", args);
                 break;
+            case TASK_LABEL:
+                queryBuilder.setTables(Contract.TaskLabel.TABLE_NAME);
+                cursor = queryBuilder.query(db, projection, selection, selectionArgs, null, null, sortOrder);
+                break;
 
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -118,6 +124,10 @@ public class TaskContentProvider extends ContentProvider {
                 id = db.insert(Contract.TaskLabel.TABLE_NAME, null, values);
                 retVal = Uri.parse(Contract.TaskLabel.TABLE_NAME + "/" + id);
                 break;
+            case REMINDER:
+                id = db.insert(Contract.Reminder.TABLE_NAME, null, values);
+                retVal = Uri.parse(Contract.Reminder.TABLE_NAME + "/" + id);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -150,6 +160,9 @@ public class TaskContentProvider extends ContentProvider {
             case TASK_LABEL:
                 rowsDeleted = db.delete(Contract.TaskLabel.TABLE_NAME, selection, selectionArgs);
                 break;
+            case REMINDER:
+                rowsDeleted = db.delete(Contract.Reminder.TABLE_NAME, selection, selectionArgs);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -172,6 +185,12 @@ public class TaskContentProvider extends ContentProvider {
             case TASK:
                 rowsUpdated = db.update(Contract.Task.TABLE_NAME, values, selection, selectionArgs);
                 break;
+            case LABEL:
+                rowsUpdated = db.update(Contract.Label.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            case TASK_LABEL:
+                rowsUpdated = db.update(Contract.TaskLabel.TABLE_NAME, values, selection, selectionArgs);
+                break;
             case TASK_ID:
                 String taskId = uri.getLastPathSegment();
                 if (TextUtils.isEmpty(selection)) {
@@ -180,6 +199,26 @@ public class TaskContentProvider extends ContentProvider {
                     rowsUpdated = db.update(Contract.Task.TABLE_NAME, values, Contract.Task.COLUMN_ID + "=" + taskId + " and " + selection, selectionArgs);
                 }
                 break;
+            case REMINDER:
+                rowsUpdated = db.update(Contract.Reminder.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            case LABEL_ID:
+                String labelId = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection)) {
+                    rowsUpdated = db.update(Contract.Label.TABLE_NAME, values, Contract.Label.COLUMN_ID + "=" + labelId, null);
+                } else {
+                    rowsUpdated = db.update(Contract.Label.TABLE_NAME, values, Contract.Label.COLUMN_ID + "=" + labelId + " and " + selection, selectionArgs);
+                }
+                break;
+            case TASK_LABEL_ID:
+                String task_label_id = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection)) {
+                    rowsUpdated = db.update(Contract.TaskLabel.TABLE_NAME, values, Contract.Label.COLUMN_ID + "=" + task_label_id, null);
+                } else {
+                    rowsUpdated = db.update(Contract.TaskLabel.TABLE_NAME, values, Contract.Label.COLUMN_ID + "=" + task_label_id + " and " + selection, selectionArgs);
+                }
+                break;
+
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }

@@ -21,6 +21,7 @@ import com.example.planit.broadcastReceivers.ReminderBroadcastReceiver;
 import com.example.planit.database.Contract;
 import com.example.planit.service.HabitService;
 import com.example.planit.service.ServiceUtils;
+import com.example.planit.service.TaskService;
 import com.example.planit.service.TeamService;
 import com.example.planit.utils.SharedPreference;
 
@@ -38,8 +39,12 @@ import model.HabitDayConnection;
 import model.HabitFulfillment;
 import model.HabitReminderConnection;
 import model.HabitSyncDTO;
+import model.Label;
 import model.Message;
 import model.Reminder;
+import model.Task;
+import model.TaskLabelConnection;
+import model.TaskSyncDTO;
 import model.Team;
 import model.TeamSyncDTO;
 import model.TeamUserConnection;
@@ -57,6 +62,7 @@ public class SyncService extends Service {
     private boolean success = false;
 
     private DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+    private DateFormat timeFormat = new SimpleDateFormat("HH:mm");
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -77,13 +83,17 @@ public class SyncService extends Service {
             Call<TeamSyncDTO> callTeam = null;
             if (SharedPreference.getLastSyncDate(this) != -1) {
                 date = new Date(SharedPreference.getLastSyncDate(this));
-                callHabits = apiHabitService.synchronizationHabits(email, date.getTime());
                 callTeam = apiTeamService.synchronizationTeam(email, date.getTime());
             } else {
-                callHabits = apiHabitService.synchronizationHabits(email, null);
                 callTeam = apiTeamService.synchronizationTeam(email, null);
             }
 
+            if (SharedPreference.getLastSyncDateH(this) != -1) {
+                date = new Date(SharedPreference.getLastSyncDateH(this));
+                callHabits = apiHabitService.synchronizationHabits(email, date.getTime());
+            } else {
+                callHabits = apiHabitService.synchronizationHabits(email, null);
+            }
 
             callHabits.enqueue(new Callback<HabitSyncDTO>() {
                 @Override
@@ -92,11 +102,11 @@ public class SyncService extends Service {
                     if (response.code() == 200) {
                         Log.e("200", "200");
                         syncHabits(response.body());
-                        SharedPreference.setLastSyncDate(SyncService.this, new Date());
-                        success = true;
+                        SharedPreference.setPrefLastSyncDateH(SyncService.this, new Date());
+
                     } else {
                         Log.e("400", "400");
-                        success = false;
+
                     }
                 }
 
@@ -114,19 +124,39 @@ public class SyncService extends Service {
                     if (response.code() == 200) {
                         Log.e("team", "200");
                         syncTeams(response.body());
-                       /* Call<TaskSyncDTO> callTask;
+                        Call<TaskSyncDTO> callTask = null;
+                        Date date = null;
                         TaskService taskService = ServiceUtils.getClient().create(TaskService.class);
                         if (SharedPreference.getLastSyncDate(SyncService.this) != -1) {
-                            date = new Date(SharedPreference.getLastSyncDate(this));
-                            callHabits = apiHabitService.synchronizationHabits(email, date.getTime());
+                            date = new Date(SharedPreference.getLastSyncDate(SyncService.this));
+                            callTask = taskService.synchronizationTask(email, date.getTime());
                         } else {
-                            callHabits = apiHabitService.synchronizationHabits(email, null);
-                        }*/
+                            callTask = taskService.synchronizationTask(email, null);
+                        }
 
-                        success = true;
+                        callTask.enqueue(new Callback<TaskSyncDTO>() {
+                            @Override
+                            public void onResponse(Call<TaskSyncDTO> call, Response<TaskSyncDTO> response) {
+
+                                if (response.code() == 200) {
+                                    Log.e("200", "200");
+                                    syncTasks(response.body());
+                                    SharedPreference.setLastSyncDate(SyncService.this, new Date());
+                                } else {
+                                    Log.e("400", "400");
+
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Call<TaskSyncDTO> call, Throwable t) {
+                                Log.e("tag", "Connection error");
+                            }
+                        });
+
                     } else {
                         Log.e("team", "400");
-                        success = false;
+
                     }
                 }
 
@@ -136,16 +166,29 @@ public class SyncService extends Service {
                     Log.e("team", "Connection error");
                 }
             });
-
-
         }
-
 
         sendBroadcast(intent2);
 
         stopSelf();
 
         return START_NOT_STICKY;
+    }
+
+    public void syncTasks(TaskSyncDTO taskSyncDTO) {
+        List<ContentProviderOperation> batch = syncTaskContentProvider(taskSyncDTO);
+        if (batch.size() == 0) {
+            Log.e("TASK_SYNC", "EMPTY");
+            return;
+        }
+
+        try {
+            getContentResolver().applyBatch(Contract.Task.AUTHORITY, (ArrayList<ContentProviderOperation>) batch);
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
     public void syncTeams(TeamSyncDTO teamSyncDTO) {
@@ -162,6 +205,331 @@ public class SyncService extends Service {
         } catch (RemoteException e) {
             e.printStackTrace();
         }
+    }
+
+    public List<ContentProviderOperation> syncTaskContentProvider(TaskSyncDTO taskSyncDTO) {
+        List<ContentProviderOperation> batch = new ArrayList<>();
+        Map<Long, Integer> reminderInsertedIndex = new HashMap<>();
+        Map<Long, Integer> taskInsertedIndex = new HashMap<>();
+        Map<Long, Integer> labelInsertedIndex = new HashMap<>();
+        // reminders connected to tasks
+        for (Reminder reminder : taskSyncDTO.getTaskReminders()) {
+            String selection = Contract.Reminder.COLUMN_GLOBAL_ID + " = ?";
+            String[] selectionArgs = new String[]{Long.toString(reminder.getId())};
+            Cursor cursorReminder = getContentResolver().query(Contract.Reminder.CONTENT_URI_REMINDER, null, selection, selectionArgs, null);
+            // reminder needs to be updated in the local storage
+            ContentProviderOperation operation = null;
+            if (cursorReminder.getCount() > 0) {
+                cursorReminder.moveToFirst();
+                selection = Contract.Reminder.COLUMN_GLOBAL_ID + " = ?";
+                selectionArgs = new String[]{Long.toString(reminder.getId())};
+                Uri uri = Uri.parse("content://" + Contract.Task.AUTHORITY + "/" + Contract.Reminder.TABLE_NAME );
+                // if reminder is deleted
+                // TODO: cancel alarms!
+                if (reminder.isDeleted()) {
+                    /*selection = Contract.Task.COLUMN_REMINDER_ID + " = ?";
+                    selectionArgs = new String[]{Integer.toString(cursorReminder.getInt(cursorReminder.getColumnIndex(Contract.Reminder.COLUMN_ID)))};
+                    Cursor cursorTask = getContentResolver().query(Contract.Task.CONTENT_URI_TASK, null, selection, selectionArgs, null);
+                    if(cursorTask.getCount() > 0) {
+                        cursorTask.moveToFirst();*/
+                    batch.add(ContentProviderOperation.newUpdate(Contract.Task.CONTENT_URI_TASK)
+                            .withValue(Contract.Task.COLUMN_REMINDER_ID, null).withSelection(selection, selectionArgs)
+                            .build());
+                    //}
+                    operation = ContentProviderOperation.newDelete(uri).withSelection(selection, selectionArgs).build();
+                    // cursorTask.close();
+                    // update if needed
+                } else {
+                    // TODO:  update alarms
+                    ContentValues values = new ContentValues();
+                    values.put(Contract.Reminder.COLUMN_DATE, reminder.getDate());
+                    operation = ContentProviderOperation.newUpdate(uri).withValues(values).withSelection(selection, selectionArgs).build();
+                }
+            } else {
+                // TODO: set alarms
+                if (!reminder.isDeleted()) {
+                    ContentValues values = new ContentValues();
+                    values.put(Contract.Reminder.COLUMN_GLOBAL_ID, reminder.getId().intValue());
+                    values.put(Contract.Reminder.COLUMN_DATE, reminder.getDate());
+                    reminderInsertedIndex.put(reminder.getId(), batch.size());
+                    operation = ContentProviderOperation.newInsert(Uri.parse("content://" + Contract.Task.AUTHORITY + "/" + Contract.Reminder.TABLE_NAME)).withValues(values).build();
+                }
+
+            }
+            cursorReminder.close();
+            if (operation != null)
+                batch.add(operation);
+        }
+
+        for (Label label : taskSyncDTO.getLabels()) {
+            String selection = Contract.Label.COLUMN_GLOBAL_ID + " = ?";
+            String[] selectionArgs = new String[]{Long.toString(label.getGlobalId())};
+            Cursor labelCursor = getContentResolver().query(Contract.Label.CONTENT_URI_LABEL, null, selection, selectionArgs, null);
+            // user needs to be updated in the local storage
+            ContentProviderOperation operation = null;
+            if (labelCursor.getCount() > 0) {
+                labelCursor.moveToFirst();
+                Uri uri = Uri.parse(Contract.Label.CONTENT_URI_LABEL + "/" + labelCursor.getInt(labelCursor.getColumnIndex(Contract.Label.COLUMN_ID)));
+                if (label.isDeleted()) {
+                    selection = Contract.TaskLabel.COLUMN_LABEL + " = ?";
+                    selectionArgs = new String[]{Long.toString(labelCursor.getInt(labelCursor.getColumnIndex(Contract.Label.COLUMN_ID)))};
+                    batch.add(ContentProviderOperation.newDelete(Contract.TaskLabel.CONTENT_URI_TASK_LABEL).withSelection(selection, selectionArgs).build());
+                    operation = ContentProviderOperation.newDelete(uri).build();
+                } else {
+                    ContentValues values = new ContentValues();
+                    values.put(Contract.Label.COLUMN_COLOR, label.getColor());
+                    values.put(Contract.Label.COLUMN_NAME, label.getName());
+                    operation = ContentProviderOperation.newUpdate(uri).withValues(values).build();
+                }
+
+            } else {
+                if (!label.isDeleted()) {
+                    ContentValues values = new ContentValues();
+                    values.put(Contract.Label.COLUMN_COLOR, label.getColor());
+                    values.put(Contract.Label.COLUMN_GLOBAL_ID, label.getGlobalId());
+                    values.put(Contract.Label.COLUMN_NAME, label.getName());
+                    labelInsertedIndex.put(label.getGlobalId(), batch.size());
+                    operation = ContentProviderOperation.newInsert(Contract.Label.CONTENT_URI_LABEL).withValues(values).build();
+                }
+            }
+            labelCursor.close();
+            if (operation != null)
+                batch.add(operation);
+        }
+
+        for (Task task : taskSyncDTO.getTasks()) {
+            String selection = Contract.Task.COLUMN_GLOBAL_ID + " = ?";
+            String[] selectionArgs = new String[]{Long.toString(task.getGlobalId())};
+            Cursor taskCursor = getContentResolver().query(Contract.Task.CONTENT_URI_TASK, null, selection, selectionArgs, null);
+            // user needs to be updated in the local storage
+            ContentProviderOperation operation = null;
+            if (taskCursor.getCount() > 0) {
+                taskCursor.moveToFirst();
+                Uri uri = Uri.parse(Contract.Task.CONTENT_URI_TASK + "/" + taskCursor.getInt(taskCursor.getColumnIndex(Contract.Task.COLUMN_ID)));
+                if (task.isDeleted()) {
+                    // TODO: cancel and delete reminders
+                    selection = Contract.TaskLabel.COLUMN_TASK + " = ?";
+                    selectionArgs = new String[]{Long.toString(taskCursor.getInt(taskCursor.getColumnIndex(Contract.Task.COLUMN_ID)))};
+                    batch.add(ContentProviderOperation.newDelete(Contract.TaskLabel.CONTENT_URI_TASK_LABEL).withSelection(selection, selectionArgs).build());
+                    operation = ContentProviderOperation.newDelete(uri).build();
+                } else {
+                    ContentValues values = new ContentValues();
+                    values.put(Contract.Task.COLUMN_TITLE, task.getTitle());
+                    values.put(Contract.Task.COLUMN_DESCRIPTION, task.getDescription());
+
+                    if (task.getStartDate() == null) {
+                        values.putNull(Contract.Task.COLUMN_START_DATE);
+                    } else {
+                        values.put(Contract.Task.COLUMN_START_DATE, task.getStartDate().toString());
+                    }
+                    if (task.getStartTime() == null) {
+                        values.putNull(Contract.Task.COLUMN_START_TIME);
+                    } else {
+                        values.put(Contract.Task.COLUMN_START_TIME, task.getStartTime().toString());
+                    }
+
+                    values.put(Contract.Task.COLUMN_PRIORITY, task.getPriority().toString());
+                    values.put(Contract.Task.COLUMN_ADDRESS, task.getAddress());
+                    values.put(Contract.Task.COLUMN_DONE, task.getDone());
+                    if (task.getUserEmail() != null) {
+                        selection = Contract.User.COLUMN_EMAIL + " = ?";
+                        selectionArgs = new String[]{task.getUserEmail()};
+                        Cursor user = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, selection, selectionArgs, null);
+                        user.moveToFirst();
+                        values.put(Contract.Task.COLUMN_USER, user.getInt(user.getColumnIndex(Contract.User.COLUMN_ID)));
+                        user.close();
+                    } else {
+                        values.putNull(Contract.Task.COLUMN_USER);
+                    }
+                    values.put(Contract.Task.COLUMN_LONGITUDE, task.getLongitude());
+                    values.put(Contract.Task.COLUMN_LATITUDE, task.getLatitude());
+                    if (task.getReminderId() != null) {
+                        if (reminderInsertedIndex.containsKey(task.getReminderId())) {
+                            taskInsertedIndex.put(task.getGlobalId(), batch.size());
+                            operation = ContentProviderOperation.newUpdate(uri)
+                                    .withValues(values)
+                                    .withValueBackReference(Contract.Task.COLUMN_REMINDER_ID, reminderInsertedIndex.get(task.getReminderId()))
+                                    .build();
+                        } else {
+                            selection = Contract.Reminder.COLUMN_GLOBAL_ID + " = ?";
+                            selectionArgs = new String[]{Long.toString(task.getReminderId())};
+                            Cursor reminderCursor = getContentResolver().query(Contract.Reminder.CONTENT_URI_REMINDER, null, selection, selectionArgs, null);
+                            reminderCursor.moveToFirst();
+                            values.put(Contract.Task.COLUMN_REMINDER_ID, reminderCursor.getInt(reminderCursor.getColumnIndex(Contract.Reminder.COLUMN_ID)));
+                            reminderCursor.close();
+                            taskInsertedIndex.put(task.getGlobalId(), batch.size());
+                            operation = ContentProviderOperation.newUpdate(uri)
+                                    .withValues(values)
+                                    .build();
+                        }
+                    } else {
+                        values.putNull(Contract.Task.COLUMN_REMINDER_ID);
+                        operation = ContentProviderOperation.newUpdate(uri)
+                                .withValues(values)
+                                .build();
+                    }
+                }
+
+            } else {
+                if (!task.isDeleted()) {
+                    ContentValues values = new ContentValues();
+                    values.put(Contract.Task.COLUMN_TITLE, task.getTitle());
+                    values.put(Contract.Task.COLUMN_GLOBAL_ID, task.getGlobalId());
+                    values.put(Contract.Task.COLUMN_DESCRIPTION, task.getDescription());
+
+                    if (task.getStartDate() == null) {
+                        values.putNull(Contract.Task.COLUMN_START_DATE);
+                    } else {
+                        values.put(Contract.Task.COLUMN_START_DATE, task.getStartDate().toString());
+                    }
+                    if (task.getStartTime() == null) {
+                        values.putNull(Contract.Task.COLUMN_START_TIME);
+                    } else {
+                        values.put(Contract.Task.COLUMN_START_TIME, task.getStartTime().toString());
+                    }
+
+                    values.put(Contract.Task.COLUMN_PRIORITY, task.getPriority().toString());
+                    values.put(Contract.Task.COLUMN_ADDRESS, task.getAddress());
+                    values.put(Contract.Task.COLUMN_DONE, task.getDone());
+
+                    values.put(Contract.Task.COLUMN_LONGITUDE, task.getLongitude());
+                    values.put(Contract.Task.COLUMN_LATITUDE, task.getLatitude());
+                    if (task.getTeam() != null) {
+                        selection = Contract.Team.COLUMN_SERVER_TEAM_ID + " = ?";
+                        selectionArgs = new String[]{Integer.toString(task.getTeam())};
+                        Cursor teamCursor = getContentResolver().query(Contract.Team.CONTENT_URI_TEAM, null, selection, selectionArgs, null);
+                        teamCursor.moveToFirst();
+                        values.put(Contract.Task.COLUMN_TEAM, teamCursor.getInt(teamCursor.getColumnIndex(Contract.Team.COLUMN_ID)));
+                        teamCursor.close();
+                    } else {
+                        values.putNull(Contract.Task.COLUMN_TEAM);
+                    }
+
+                    if (task.getUserEmail() != null) {
+                        selection = Contract.User.COLUMN_EMAIL + " = ?";
+                        selectionArgs = new String[]{task.getUserEmail()};
+                        Cursor user = getContentResolver().query(Contract.User.CONTENT_URI_USER, null, selection, selectionArgs, null);
+                        user.moveToFirst();
+                        values.put(Contract.Task.COLUMN_USER, user.getInt(user.getColumnIndex(Contract.User.COLUMN_ID)));
+                        user.close();
+                    } else {
+                        values.putNull(Contract.Task.COLUMN_USER);
+                    }
+
+
+                    if (task.getReminderId() != null) {
+                        if (reminderInsertedIndex.containsKey(task.getReminderId())) {
+                            taskInsertedIndex.put(task.getGlobalId(), batch.size());
+                            operation = ContentProviderOperation.newInsert(Contract.Task.CONTENT_URI_TASK)
+                                    .withValues(values)
+                                    .withValueBackReference(Contract.Task.COLUMN_REMINDER_ID, reminderInsertedIndex.get(task.getReminderId()))
+                                    .build();
+                        } else {
+                            selection = Contract.Reminder.COLUMN_GLOBAL_ID + " = ?";
+                            selectionArgs = new String[]{Long.toString(task.getReminderId())};
+                            Cursor reminderCursor = getContentResolver().query(Contract.Reminder.CONTENT_URI_REMINDER, null, selection, selectionArgs, null);
+                            reminderCursor.moveToFirst();
+                            values.put(Contract.Task.COLUMN_REMINDER_ID, reminderCursor.getInt(reminderCursor.getColumnIndex(Contract.Reminder.COLUMN_ID)));
+                            reminderCursor.close();
+                            taskInsertedIndex.put(task.getGlobalId(), batch.size());
+                            operation = ContentProviderOperation.newInsert(Contract.Task.CONTENT_URI_TASK)
+                                    .withValues(values)
+                                    .build();
+                        }
+                    } else {
+                        taskInsertedIndex.put(task.getGlobalId(), batch.size());
+                        operation = ContentProviderOperation.newInsert(Contract.Task.CONTENT_URI_TASK)
+                                .withValues(values)
+                                .build();
+                    }
+
+                }
+            }
+            taskCursor.close();
+            if (operation != null)
+                batch.add(operation);
+        }
+
+        for (TaskLabelConnection conn : taskSyncDTO.getTaskLabelConnections()) {
+            String selection = Contract.TaskLabel.COLUMN_GLOBAL_ID + " = ?";
+            String[] selectionArgs = new String[]{Long.toString(conn.getId())};
+            Cursor connCursor = getContentResolver().query(Contract.TaskLabel.CONTENT_URI_TASK_LABEL, null, selection, selectionArgs, null);
+            // team needs to be updated in the local storage
+            ContentProviderOperation operation = null;
+            if (connCursor.getCount() > 0) {
+                connCursor.moveToFirst();
+                Uri uri = Uri.parse(Contract.TaskLabel.CONTENT_URI_TASK_LABEL + "/" + connCursor.getInt(connCursor.getColumnIndex(Contract.TaskLabel.COLUMN_ID)));
+                if (conn.isDeleted()) {
+                    operation = ContentProviderOperation.newDelete(uri).build();
+                    // update if needed
+                } else {
+                    /*
+                    ContentValues values = new ContentValues();
+                    operation = ContentProviderOperation.newUpdate(uri).withValues(values).build();*/
+
+                }
+            } else {
+                if (!conn.isDeleted()) {
+                    ContentValues values = new ContentValues();
+                    values.put(Contract.TaskLabel.COLUMN_GLOBAL_ID, conn.getId());
+
+                    if (taskInsertedIndex.containsKey(conn.getTaskId()) && labelInsertedIndex.containsKey(conn.getLabelId())) {
+                        operation = ContentProviderOperation.newInsert(Contract.TaskLabel.CONTENT_URI_TASK_LABEL)
+                                .withValues(values)
+                                .withValueBackReference(Contract.TaskLabel.COLUMN_TASK, taskInsertedIndex.get(conn.getTaskId()))
+                                .withValueBackReference(Contract.TaskLabel.COLUMN_LABEL, labelInsertedIndex.get(conn.getLabelId()))
+                                .build();
+
+                    } else if (taskInsertedIndex.containsKey(conn.getTaskId()) && !labelInsertedIndex.containsKey(conn.getLabelId())) {
+                        selection = Contract.Label.COLUMN_GLOBAL_ID + " = ?";
+                        selectionArgs = new String[]{Long.toString(conn.getLabelId())};
+                        Cursor cursorLabel = getContentResolver().query(Contract.Label.CONTENT_URI_LABEL, null, selection, selectionArgs, null);
+                        cursorLabel.moveToFirst();
+                        values.put(Contract.TaskLabel.COLUMN_LABEL, cursorLabel.getInt(cursorLabel.getColumnIndex(Contract.Label.COLUMN_ID)));
+                        cursorLabel.close();
+                        operation = ContentProviderOperation.newInsert(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM)
+                                .withValues(values)
+                                .withValueBackReference(Contract.TaskLabel.COLUMN_TASK, taskInsertedIndex.get(conn.getTaskId()))
+                                .build();
+                    } else if (!taskInsertedIndex.containsKey(conn.getTaskId()) && labelInsertedIndex.containsKey(conn.getLabelId())) {
+                        selection = Contract.Task.COLUMN_GLOBAL_ID + " = ?";
+                        selectionArgs = new String[]{Long.toString(conn.getTaskId())};
+                        Cursor cursorTask = getContentResolver().query(Contract.Task.CONTENT_URI_TASK, null, selection, selectionArgs, null);
+                        cursorTask.moveToFirst();
+                        values.put(Contract.TaskLabel.COLUMN_TASK, cursorTask.getInt(cursorTask.getColumnIndex(Contract.Task.COLUMN_ID)));
+                        cursorTask.close();
+                        operation = ContentProviderOperation.newInsert(Contract.UserTeamConnection.CONTENT_URI_USER_TEAM)
+                                .withValues(values)
+                                .withValueBackReference(Contract.TaskLabel.COLUMN_LABEL, labelInsertedIndex.get(conn.getLabelId()))
+                                .build();
+                    } else {
+                        selection = Contract.Task.COLUMN_GLOBAL_ID + " = ?";
+                        selectionArgs = new String[]{Long.toString(conn.getTaskId())};
+                        Cursor cursorTask = getContentResolver().query(Contract.Task.CONTENT_URI_TASK, null, selection, selectionArgs, null);
+                        cursorTask.moveToFirst();
+                        values.put(Contract.TaskLabel.COLUMN_TASK, cursorTask.getInt(cursorTask.getColumnIndex(Contract.Task.COLUMN_ID)));
+                        cursorTask.close();
+                        selection = Contract.Label.COLUMN_GLOBAL_ID + " = ?";
+                        selectionArgs = new String[]{Long.toString(conn.getLabelId())};
+                        Cursor cursorLabel = getContentResolver().query(Contract.Label.CONTENT_URI_LABEL, null, selection, selectionArgs, null);
+                        cursorLabel.moveToFirst();
+                        values.put(Contract.TaskLabel.COLUMN_LABEL, cursorLabel.getInt(cursorLabel.getColumnIndex(Contract.Label.COLUMN_ID)));
+                        cursorLabel.close();
+                        operation = ContentProviderOperation.newInsert(Contract.TaskLabel.CONTENT_URI_TASK_LABEL)
+                                .withValues(values)
+                                .build();
+                    }
+                }
+            }
+
+            if (operation != null)
+                batch.add(operation);
+
+            connCursor.close();
+
+        }
+
+        return batch;
     }
 
     public List<ContentProviderOperation> syncTeamContentProvider(TeamSyncDTO syncDTO) {
@@ -451,14 +819,14 @@ public class SyncService extends Service {
                 } else {
                     // TODO:  update alarms
                     ContentValues values = new ContentValues();
-                    values.put(Contract.Reminder.COLUMN_DATE, format.format(reminder.getDate()));
+                    values.put(Contract.Reminder.COLUMN_DATE, timeFormat.format(reminder.getDate()));
                     operation = ContentProviderOperation.newUpdate(uri).withValues(values).build();
                 }
             } else {
                 // TODO: set alarms
                 ContentValues values = new ContentValues();
                 values.put(Contract.Reminder.COLUMN_GLOBAL_ID, reminder.getId().intValue());
-                values.put(Contract.Reminder.COLUMN_DATE, format.format(reminder.getDate()));
+                values.put(Contract.Reminder.COLUMN_DATE, timeFormat.format(reminder.getDate()));
                 reminderInsertedIndex.put(reminder.getId(), batch.size());
                 operation = ContentProviderOperation.newInsert(Contract.Reminder.CONTENT_URI_REMINDER).withValues(values).build();
 
@@ -495,17 +863,20 @@ public class SyncService extends Service {
                     operation = ContentProviderOperation.newUpdate(uri).withValues(values).build();
                 }
             } else {
-                ContentValues values = new ContentValues();
-                values.put(Contract.Habit.COLUMN_TITLE, habit.getTitle());
-                values.put(Contract.Habit.COLUMN_DESCRIPTION, habit.getDescription());
-                values.put(Contract.Habit.COLUMN_NUMBER_OF_DAYS, habit.getNumberOfDays());
-                values.put(Contract.Habit.COLUMN_GOAL, habit.getGoal());
-                values.put(Contract.Habit.COLUMN_GLOBAL_ID, habit.getId());
-                habitInsertedIndex.put(habit.getId(), batch.size());
-                operation = ContentProviderOperation.newInsert(Contract.Habit.CONTENT_URI_HABIT).withValues(values).build();
+                if(!habit.getDeleted()) {
+                    ContentValues values = new ContentValues();
+                    values.put(Contract.Habit.COLUMN_TITLE, habit.getTitle());
+                    values.put(Contract.Habit.COLUMN_DESCRIPTION, habit.getDescription());
+                    values.put(Contract.Habit.COLUMN_NUMBER_OF_DAYS, habit.getNumberOfDays());
+                    values.put(Contract.Habit.COLUMN_GOAL, habit.getGoal());
+                    values.put(Contract.Habit.COLUMN_GLOBAL_ID, habit.getId());
+                    habitInsertedIndex.put(habit.getId(), batch.size());
+                    operation = ContentProviderOperation.newInsert(Contract.Habit.CONTENT_URI_HABIT).withValues(values).build();
+                }
             }
             cursorHabit.close();
-            batch.add(operation);
+            if(operation != null)
+                batch.add(operation);
         }
 
         for (HabitFulfillment fulfillment : syncDTO.getHabitFulfillment()) {
